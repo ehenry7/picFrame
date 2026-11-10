@@ -293,7 +293,7 @@ class CountryFlagDrawingTests(unittest.TestCase):
         self.assertTrue(self.namespace["draw_text_with_outline"].called)
         self.http.assert_not_called()
 
-    def test_weather_renders_when_clock_is_disabled(self):
+    def test_weather_renders_temperature_and_icon_bottom_right(self):
         pygame.font.init()
         self.addCleanup(pygame.font.quit)
         font = pygame.font.Font(None, 20)
@@ -319,11 +319,15 @@ class CountryFlagDrawingTests(unittest.TestCase):
         rendered_text = [
             call.args[1] for call in self.namespace["draw_text_with_outline"].call_args_list
         ]
-        self.assertEqual(rendered_text, ["Haifa 20°C Clear sky"])
+        self.assertEqual(rendered_text, ["20°C"])
         weather_calls = self.namespace["draw_text_with_outline"].call_args_list
-        self.assertTrue(all(call.args[5][0] >= 15 for call in weather_calls))
-        self.assertTrue(all(call.args[2].get_height() <= 30 for call in weather_calls))
         self.assertEqual(len(weather_calls), 1)
+        text_x, text_y = weather_calls[0].args[5]
+        self.assertGreater(text_x, 400)  # Right half of the display.
+        self.assertGreater(text_y, 450)  # Bottom area of the display.
+        self.assertTrue(weather_calls[0].args[2].get_height() <= 30)
+        icon_call = self.namespace["load_icon"].call_args_list[-1]
+        self.assertEqual(icon_call.args[0], "01d")
 
     def test_miss_and_disabled_flag_do_not_draw(self):
         screen = pygame.Surface((400, 300), pygame.SRCALPHA)

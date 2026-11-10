@@ -105,6 +105,66 @@ function attachPhotoLightboxActions(lightbox) {
         location.innerHTML = '<i class="fas fa-map-marker-alt" aria-hidden="true"></i>';
         bar.append(location);
         let locationDialog;
+
+        const dateBtn = document.createElement('button');
+        dateBtn.type = 'button';
+        dateBtn.title = dateBtn.ariaLabel = labels.editDate;
+        dateBtn.innerHTML = '<i class="fas fa-calendar" aria-hidden="true"></i>';
+        bar.append(dateBtn);
+        let dateDialog;
+        dateBtn.addEventListener('click', async () => {
+            try {
+                const details = await photoEditor.details(photo);
+                dateDialog = document.createElement('dialog');
+                const form = document.createElement('form');
+                const label = document.createElement('label');
+                label.textContent = labels.captureDate;
+                const input = document.createElement('input');
+                input.type = 'date';
+                const raw = details.date || '';
+                if (raw) {
+                    input.value = raw.split('T')[0];
+                }
+                label.append(input);
+                form.append(label);
+                const status = document.createElement('p');
+                status.setAttribute('role', 'status');
+                form.append(status);
+                if (details.manual_date) {
+                    const hint = document.createElement('p');
+                    hint.style.cssText = 'font-size:0.8em;color:#888';
+                    hint.textContent = labels.dateOverride;
+                    form.append(hint);
+                }
+                async function persistDate(value) {
+                    const buttons = form.querySelectorAll('button');
+                    buttons.forEach(button => button.disabled = true);
+                    try {
+                        await photoEditor.date(photo, value);
+                        dateDialog.close();
+                    } catch (error) {
+                        status.textContent = error.message;
+                    } finally { buttons.forEach(button => button.disabled = false); }
+                }
+                for (const key of ['save', 'clear', 'cancel']) {
+                    const button = document.createElement('button');
+                    button.type = key === 'save' ? 'submit' : 'button';
+                    button.textContent = labels[key];
+                    if (key === 'clear') button.onclick = () => persistDate('');
+                    if (key === 'cancel') button.onclick = () => dateDialog.close();
+                    form.append(button);
+                }
+                form.onsubmit = event => {
+                    event.preventDefault();
+                    persistDate(input.value);
+                };
+                dateDialog.append(form);
+                slide.slideNode.closest('.glightbox-container').append(dateDialog);
+                dateDialog.onclose = () => dateDialog.remove();
+                dateDialog.showModal();
+            } catch (error) { alert(error.message); }
+        });
+
         location.addEventListener('click', async () => {
             try {
                 const details = await photoEditor.details(photo);
@@ -221,6 +281,7 @@ function attachPhotoLightboxActions(lightbox) {
         cleanup = () => {
             toolbarSlide = null;
             locationDialog?.remove();
+            dateDialog?.remove();
             observers.forEach(observer => observer.disconnect());
             bar.remove();
         };

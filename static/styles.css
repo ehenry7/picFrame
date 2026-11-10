@@ -422,3 +422,144 @@ button:hover {
 [dir="rtl"] .status-error { border-right-color: #ef4444; }
 [dir="rtl"] .status-warning { border-right-color: #f59e0b; }
 [dir="rtl"] .status-info { border-right-color: #3b82f6; }
+
+/* --- Mobile responsiveness --- */
+@media (max-width: 639px) {
+  /* Make inline min-width styles not break mobile */
+  .tabcontent label[style*="min-width"] {
+    min-width: 100% !important;
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  /* Inputs should be full width on mobile */
+  .tabcontent input[type="number"],
+  .tabcontent input[type="text"],
+  .tabcontent input[type="time"],
+  .tabcontent input[type="url"],
+  .tabcontent input[type="password"],
+  .tabcontent input[type="date"],
+  .tabcontent input[type="range"],
+  .tabcontent select {
+    width: 100% !important;
+  }
+
+  /* Grid layouts: force single column on mobile */
+  .tabcontent .grid.grid-cols-2 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Tabs: horizontal scroll, smaller text */
+  .tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+
+  .tablink {
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    white-space: nowrap;
+  }
+
+  /* Main nav: horizontal scroll on mobile */
+  .main-nav {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .main-nav::-webkit-scrollbar { display: none; }
+
+  .main-nav-link {
+    flex-shrink: 0;
+    white-space: nowrap;
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  /* Container: less padding on mobile */
+  .container {
+    padding: 0.5rem;
+    margin: 0;
+    border-radius: 0;
+    max-width: 100%;
+  }
+
+  /* Logout link: adjust position */
+  .logout-link {
+    top: 8px;
+    right: 8px;
+    font-size: 0.8em;
+  }
+  [dir="rtl"] .logout-link {
+    right: auto;
+    left: 8px;
+  }
+
+  /* Photo grid: smaller tiles */
+  .photo-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)) !important;
+    gap: 0.5rem !important;
+    padding: 0.25rem !important;
+  }
+
+  /* Photo lightbox actions: smaller, scrollable */
+  .photo-lightbox-actions {
+    bottom: 4px;
+    padding: 6px;
+    gap: 4px;
+    max-width: calc(100vw - 8px);
+  }
+  .photo-lightbox-actions input {
+    width: 120px;
+  }
+  .photo-lightbox-actions select {
+    max-width: 100px;
+  }
+  .photo-lightbox-actions button {
+    padding: 4px;
+  }
+  .photo-lightbox-actions > label {
+    font-size: 10px;
+  }
+
+  /* Form fieldsets: less padding */
+  fieldset {
+    padding: 0.75rem;
+    margin-top: 0.5rem;
+  }
+
+  /* Buttons: full width, larger touch targets */
+  .tabcontent button {
+    min-height: 44px;
+    font-size: 0.9rem;
+  }
+
+  /* Language selector: smaller */
+  .language-selector {
+    font-size: 0.75rem;
+  }
+
+  /* Live preview: smaller */
+  #live-preview-box {
+    width: 200px !important;
+    height: 125px !important;
+  }
+
+  /* Dialog forms on mobile */
+  dialog form {
+    padding: 1rem;
+    max-width: 90vw;
+  }
+  dialog input {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+  dialog button {
+    width: auto;
+    display: inline-block;
+    margin: 0 4px;
+  }
+}

@@ -30,27 +30,27 @@ def register_photo_edit_routes(app, prepared_root, translate):
             photo = data.get("photo")
             path = prepared_photo(photo)
             if request.method == "POST":
-                location = data.get("location")
-                if location is not None:
-                    if not isinstance(location, dict) or set(location) != {"city", "country"}:
-                        raise ValueError("Provide city and country.")
-                    if any(not isinstance(value, str) or len(value) > 160 for value in location.values()):
-                        raise ValueError("Location fields must be text of at most 160 characters.")
-                    location = {key: value.strip() for key, value in location.items()}
-                    codes = _preview_country_codes()
-                    country = location["country"]
-                    if country and country.lower() not in codes and country.casefold() not in {
-                            name.casefold() for name in codes.values()}:
-                        raise ValueError("Choose a country from the list.")
-                    if country.lower() in codes:
-                        location["country"] = codes[country.lower()]
-                date = data.get("date")
-                if date is not None:
-                    date = validate_date(date)
                 changes = {}
-                if location is not None:
+                if "location" in data:
+                    location = data.get("location")
+                    if location is not None:
+                        if not isinstance(location, dict) or set(location) != {"city", "country"}:
+                            raise ValueError("Provide city and country.")
+                        if any(not isinstance(value, str) or len(value) > 160 for value in location.values()):
+                            raise ValueError("Location fields must be text of at most 160 characters.")
+                        location = {key: value.strip() for key, value in location.items()}
+                        codes = _preview_country_codes()
+                        country = location["country"]
+                        if country and country.lower() not in codes and country.casefold() not in {
+                                name.casefold() for name in codes.values()}:
+                            raise ValueError("Choose a country from the list.")
+                        if country.lower() in codes:
+                            location["country"] = codes[country.lower()]
                     changes["location"] = location
                 if "date" in data:
+                    date = data.get("date")
+                    if date is not None:
+                        date = validate_date(date)
                     changes["date"] = date
                 if changes:
                     update_edit(photo, changes)

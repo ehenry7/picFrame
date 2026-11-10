@@ -1081,7 +1081,6 @@ def draw_overlay(screen, screen_width, screen_height, config, main_font, photo_m
         
         # Place the block at the top of the display with 15px padding.
         block_y = 15 + offset_y
-        clock_block_bottom = block_y + max_height
 
         # --- Draw the semi-transparent background ---
         if config.get("clock_background_enabled", False):
@@ -1112,129 +1111,120 @@ def draw_overlay(screen, screen_width, screen_height, config, main_font, photo_m
             
             current_x += el['surface'].get_width()
 
-    # Draw current weather below the clock.
-    if (
-        config.get("show_weather", False) and weather_and_forecast
-    ) or (show_clock and config.get("show_tides", False)):
+    # Draw the current weather (icon + temperature) in the bottom-right corner.
+    if config.get("show_weather", False) and weather_and_forecast:
         current_weather = (weather_and_forecast or {}).get("current") or {}
         units = current_weather.get("units", {})
         temperature_unit = units.get("temperature", "°C")
-        weather_parts = []
-
         temperature = current_weather.get("main", {}).get("temp")
-        conditions = (current_weather.get("weather") or [{}])[0].get("description")
-        current_parts = []
-        if current_weather.get("city"):
-            current_parts.append(current_weather["city"])
-        if temperature is not None:
-            current_parts.append(f"{round(temperature)}{temperature_unit}")
-        if conditions:
-            current_parts.append(conditions.capitalize())
-        if current_parts:
-            weather_parts.append("  ".join(current_parts))
 
-        if weather_parts:
+        if temperature is not None:
             weather_font_size = max(16, min(30, int(main_font.get_height() * 0.4)))
             weather_font = load_font(
                 config.get("clock_font_path", get_default_font_path()),
                 weather_font_size,
             )
-            max_line_width = max(1, screen_width - 30)
-            weather_lines = []
-            for text in weather_parts:
-                words = text.split()
-                line_words = []
-                for word in words:
-                    candidate = " ".join(line_words + [word])
-                    if line_words and weather_font.size(candidate)[0] > max_line_width:
-                        weather_lines.append(" ".join(line_words))
-                        line_words = [word]
-                    else:
-                        line_words.append(word)
-                if line_words:
-                    weather_lines.append(" ".join(line_words))
-
+            temperature_text = f"{round(temperature)}{temperature_unit}"
+            text_surface = weather_font.render(temperature_text, True, text_color)
             line_height = weather_font.get_linesize()
-            weather_y = clock_block_bottom + 6
-            for line in weather_lines:
-                line_surface = weather_font.render(line, True, text_color)
-                line_x = max(15, (screen_width - line_surface.get_width()) // 2)
-                if config.get("clock_background_enabled", False):
-                    bg_color = parse_color(config.get("clock_background_color", "#00000080"))
-                    if len(bg_color) == 3:
-                        bg_color += (128,)
-                    bg_surface = pygame.Surface(
-                        (screen_width, line_height + 8), pygame.SRCALPHA)
-                    bg_surface.fill(bg_color)
-                    screen.blit(bg_surface, (0, weather_y - 4))
-                draw_text_with_outline(
-                    screen, line, weather_font, text_color, outline_color,
-                    (line_x, weather_y), anchor="topleft",
-                )
-                weather_y += line_height
 
-        # --- Bottom block for tides ---
-        if show_clock and config.get("show_tides", False):
-            tide_text = None
-            font_to_use = main_font
+            weather_icon = None
+            icon_code = (current_weather.get("weather") or [{}])[0].get("icon")
+            if icon_code:
+                icon_size = int(line_height * 1.8)
+                weather_icon = load_icon(icon_code, icon_size)
+                if weather_icon is None and icon_code.endswith("n"):
+                    # Fall back to the day icon when the night variant is missing.
+                    weather_icon = load_icon(icon_code[:-1] + "d", icon_size)
 
-            if tides_data:
-                tide_parts = []
-                today = datetime.now().date()
-                tomorrow = today + timedelta(days=1)
-                day_map = {'Mon':'Lun', 'Tue':'Mar', 'Wed':'Mer', 'Thu':'Jeu', 'Fri':'Ven', 'Sat':'Sam', 'Sun':'Dim'}
+            margin = 15
+            icon_width = weather_icon.get_width() + 4 if weather_icon else 0
+            block_width = icon_width + text_surface.get_width()
+            block_height = max(
+                line_height, weather_icon.get_height() if weather_icon else 0)
+            block_x = screen_width - margin - block_width
+            block_top = screen_height - margin - block_height
+            text_y = block_top + (block_height - line_height) // 2
 
-                # Show the next four tides for a useful view of the coming days.
-                for tide in tides_data[:4]:
-                    tide_dt = datetime.fromisoformat(tide['time']).astimezone()
-                    tide_date = tide_dt.date()
+            if config.get("clock_background_enabled", False):
+                bg_color = parse_color(config.get("clock_background_color", "#00000080"))
+                if len(bg_color) == 3:
+                    bg_color += (128,)
+                bg_surface = pygame.Surface(
+                    (block_width + 16, block_height + 8), pygame.SRCALPHA)
+                bg_surface.fill(bg_color)
+                screen.blit(bg_surface, (block_x - 8, block_top - 4))
 
-                    if tide_date == today: day_str = "Auj."
-                    elif tide_date == tomorrow: day_str = "Dem."
-                    else: day_str = day_map.get(tide_dt.strftime('%a'), tide_dt.strftime('%a'))
+            if weather_icon:
+                icon_y = block_top + (block_height - weather_icon.get_height()) // 2
+                screen.blit(weather_icon, (block_x, icon_y))
+            draw_text_with_outline(
+                screen, temperature_text, weather_font, text_color, outline_color,
+                (block_x + icon_width, text_y), anchor="topleft",
+            )
 
-                    type_str = "PM" if tide['type'] == 'high' else "BM"
-                    time_str = tide_dt.strftime('%H:%M')
-                    
-                    tide_parts.append(f"{day_str} {type_str}: {time_str}")
-                
-                if tide_parts:
-                    tide_text = " | ".join(tide_parts)
-            else:
-                # Show a message if the feature is enabled but no data is available.
-                tide_text = _("Données de marée non disponibles")
-                try:
-                    # Use a slightly smaller font for the error message.
-                    font_path = config.get("clock_font_path", get_default_font_path())
-                    font_size = int(main_font.get_height() * 0.8) # 80% de la taille de la police principale
-                    font_to_use = load_font(font_path, font_size)
-                except Exception as e:
-                    logger.info(f"[Display] Error loading font for tide message: {e}")
-                    font_to_use = main_font # Fallback
+    # --- Bottom block for tides ---
+    if show_clock and config.get("show_tides", False):
+        tide_text = None
+        font_to_use = main_font
 
-            if tide_text:
-                tide_offset_x = int(config.get("tide_offset_x", 0))
-                tide_offset_y = int(config.get("tide_offset_y", 0))
+        if tides_data:
+            tide_parts = []
+            today = datetime.now().date()
+            tomorrow = today + timedelta(days=1)
+            day_map = {'Mon':'Lun', 'Tue':'Mar', 'Wed':'Mer', 'Thu':'Jeu', 'Fri':'Ven', 'Sat':'Sam', 'Sun':'Dim'}
 
-                tide_surface = font_to_use.render(tide_text, True, text_color)
-                tide_rect = tide_surface.get_rect(centerx=(screen_width // 2) + tide_offset_x, bottom=(screen_height - 15) + tide_offset_y)
+            # Show the next four tides for a useful view of the coming days.
+            for tide in tides_data[:4]:
+                tide_dt = datetime.fromisoformat(tide['time']).astimezone()
+                tide_date = tide_dt.date()
 
-                # --- Add a background for tides ---
-                if config.get("clock_background_enabled", False):
-                    bg_color_hex = config.get("clock_background_color", "#00000080")
-                    bg_color_rgba = parse_color(bg_color_hex)
+                if tide_date == today: day_str = "Auj."
+                elif tide_date == tomorrow: day_str = "Dem."
+                else: day_str = day_map.get(tide_dt.strftime('%a'), tide_dt.strftime('%a'))
 
-                    if len(bg_color_rgba) == 3:
-                        bg_color_rgba = bg_color_rgba + (128,)
+                type_str = "PM" if tide['type'] == 'high' else "BM"
+                time_str = tide_dt.strftime('%H:%M')
 
-                    # Create a background surface across the full display width.
-                    bg_height = tide_rect.height + 10  # Ajouter 5px de padding en haut et en bas
-                    bg_surface = pygame.Surface((screen_width, bg_height), pygame.SRCALPHA)
-                    bg_surface.fill(bg_color_rgba)
-                    # Position the background vertically to frame the text.
-                    screen.blit(bg_surface, (0, tide_rect.top - 5))
+                tide_parts.append(f"{day_str} {type_str}: {time_str}")
 
-                draw_text_with_outline(screen, tide_text, font_to_use, text_color, outline_color, tide_rect.topleft, anchor="topleft")
+            if tide_parts:
+                tide_text = " | ".join(tide_parts)
+        else:
+            # Show a message if the feature is enabled but no data is available.
+            tide_text = _("Données de marée non disponibles")
+            try:
+                # Use a slightly smaller font for the error message.
+                font_path = config.get("clock_font_path", get_default_font_path())
+                font_size = int(main_font.get_height() * 0.8) # 80% de la taille de la police principale
+                font_to_use = load_font(font_path, font_size)
+            except Exception as e:
+                logger.info(f"[Display] Error loading font for tide message: {e}")
+                font_to_use = main_font # Fallback
+
+        if tide_text:
+            tide_offset_x = int(config.get("tide_offset_x", 0))
+            tide_offset_y = int(config.get("tide_offset_y", 0))
+
+            tide_surface = font_to_use.render(tide_text, True, text_color)
+            tide_rect = tide_surface.get_rect(centerx=(screen_width // 2) + tide_offset_x, bottom=(screen_height - 15) + tide_offset_y)
+
+            # --- Add a background for tides ---
+            if config.get("clock_background_enabled", False):
+                bg_color_hex = config.get("clock_background_color", "#00000080")
+                bg_color_rgba = parse_color(bg_color_hex)
+
+                if len(bg_color_rgba) == 3:
+                    bg_color_rgba = bg_color_rgba + (128,)
+
+                # Create a background surface across the full display width.
+                bg_height = tide_rect.height + 10  # Ajouter 5px de padding en haut et en bas
+                bg_surface = pygame.Surface((screen_width, bg_height), pygame.SRCALPHA)
+                bg_surface.fill(bg_color_rgba)
+                # Position the background vertically to frame the text.
+                screen.blit(bg_surface, (0, tide_rect.top - 5))
+
+            draw_text_with_outline(screen, tide_text, font_to_use, text_color, outline_color, tide_rect.topleft, anchor="topleft")
 
 
     # --- Sigalou change 2026-01-25: show photo metadata at the bottom of the display ---
@@ -1941,10 +1931,16 @@ def start_slideshow():
 
         try:
             import locale
-            locale.setlocale(locale.LC_TIME, 'fr_FR.UTF-8')
-            logger.debug(f"📸 Locale set to fr_FR.UTF-8.")
-        except locale.Error:
-            logger.warning("Warning: fr_FR.UTF-8 locale is unavailable. Dates will be in English.")
+            # Use English day and month names for on-screen dates.
+            for english_locale in ("en_US.UTF-8", "en_GB.UTF-8", "C"):
+                try:
+                    locale.setlocale(locale.LC_TIME, english_locale)
+                    logger.debug(f"📸 LC_TIME locale set to {english_locale}.")
+                    break
+                except locale.Error:
+                    continue
+        except Exception as e:
+            logger.warning(f"Warning: could not set an English date locale: {e}")
 
         # --- Physical button handling ---
         button_enabled = config.get("button_enabled", False)

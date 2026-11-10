@@ -52,6 +52,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ _('Configuration') }} - PictureFrame</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
@@ -2131,6 +2132,9 @@
                 strength: {{ _('Filter strength') | tojson }},
                 before: {{ _('Hold to view Before') | tojson }},
                 location: {{ _('Edit location') | tojson }},
+                editDate: {{ _('Edit capture date') | tojson }},
+                captureDate: {{ _('Capture date') | tojson }},
+                dateOverride: {{ _('Date manually overridden') | tojson }},
                 city: {{ _('City') | tojson }},
                 country: {{ _('Country') | tojson }},
                 save: {{ _('Save') | tojson }},
