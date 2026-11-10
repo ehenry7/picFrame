@@ -4,9 +4,12 @@ import re
 from polib import pofile
 from deep_translator import GoogleTranslator
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(errors="replace")
+
 def protect_placeholders(text):
     """Remplace les placeholders par des balises non traduisibles."""
-    placeholders = re.findall(r'%\([a-zA-Z0-9_]+\)s|%s|%d|%%', text)
+    placeholders = re.findall(r'%\([a-zA-Z0-9_]+\)[a-zA-Z]|%[sdif]|%%', text)
     protected_text = text
     for i, p in enumerate(placeholders):
         protected_text = protected_text.replace(p, f'<span class="notranslate">{i}</span>', 1)
@@ -20,45 +23,66 @@ def restore_placeholders(text, placeholders):
 
 def translate_po_file(file_path, target_lang):
     """
-    Traduit les entrées non traduites dans un fichier .po en utilisant Google Translate.
+    Translate untranslated entries in a .po file using Google Translate.
     """
     try:
+        if target_lang == "he":
+            target_lang = "iw"
+
         po = pofile(file_path)
-        untranslated_entries = [e for e in po if not e.translated()]
+        untranslated_entries = [
+            entry for entry in po
+            if not entry.obsolete and (
+                not entry.translated()
+                or (
+                    entry.msgid_plural
+                    and any(not translation for translation in entry.msgstr_plural.values())
+                )
+            )
+        ]
         
         if not untranslated_entries:
-            print(f"✅ Aucune nouvelle entrée à traduire dans {file_path}.")
-            return
+            print(f"✅ No new entries to translate in {file_path}.")
+            return True
 
-        print(f"Trouvé {len(untranslated_entries)} entrées à traduire vers '{target_lang}'...")
+        print(f"Found {len(untranslated_entries)} entries to translate into '{target_lang}'...")
 
+        failed_entries = []
         for i, entry in enumerate(untranslated_entries):
             try:
-                # Protéger les placeholders
-                protected_text, placeholders = protect_placeholders(entry.msgid)
-                
-                # Traduire le texte protégé
-                translated_protected_text = GoogleTranslator(source='auto', target=target_lang).translate(protected_text)
-                
-                # Restaurer les placeholders
-                final_translated_text = restore_placeholders(translated_protected_text, placeholders)
-                
-                # Supprimer le flag 'fuzzy' si présent pour forcer l'affichage
+                def translate_text(text):
+                    protected_text, placeholders = protect_placeholders(text)
+                    translated_text = GoogleTranslator(source='auto', target=target_lang).translate(protected_text)
+                    return restore_placeholders(translated_text, placeholders)
+
+                final_translated_text = translate_text(entry.msgid)
+                if entry.msgid_plural:
+                    plural_translation = translate_text(entry.msgid_plural)
+                    entry.msgstr_plural = {
+                        index: final_translated_text if index == 0 else plural_translation
+                        for index in entry.msgstr_plural
+                    }
+                else:
+                    entry.msgstr = final_translated_text
+
                 if 'fuzzy' in entry.flags:
                     entry.flags.remove('fuzzy')
-                
-                entry.msgstr = final_translated_text
                 print(f"  ({i+1}/{len(untranslated_entries)}) '{entry.msgid[:30]}...' -> '{final_translated_text[:30]}...'")
-                time.sleep(0.5) # Délai pour respecter l'API
+                time.sleep(0.5) # Wait to respect API rate limits.
             except Exception as e:
-                print(f"  ❌ Impossible de traduire l'entrée : '{entry.msgid}'. Erreur : {e}")
+                failed_entries.append(entry.msgid)
+                print(f"  ❌ Unable to translate entry: '{entry.msgid}'. Error: {e}")
 
         print(f"Sauvegarde du fichier traduit dans {file_path}...")
         po.save()
-        print("✅ Traduction terminée.")
+        print("✅ Translation complete.")
+        if failed_entries:
+            print(f"❌ {len(failed_entries)} entrie(s) were not translated.")
+            return False
+        return True
 
     except Exception as e:
-        print(f"Une erreur est survenue : {e}")
+        print(f"An error occurred: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":
@@ -70,4 +94,5 @@ if __name__ == "__main__":
     po_file_path = sys.argv[1]
     lang_code = sys.argv[2]
     
-    translate_po_file(po_file_path, lang_code)
+    if not translate_po_file(po_file_path, lang_code):
+        sys.exit(1)

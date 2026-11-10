@@ -7,16 +7,16 @@
 **/*.log
 logs/
 
-# Data Pimmich
+# PictureFrame data
 config/
+credentials.json
 static/backups/
 static/prepared/  
 static/photos/
 cache/
 models/
 venv/
-static/.backups/immich/100_0247.jpg
-static/.backups/immich/100_0550.jpg
-static/.backups/immich/IMG_20200705_135052.jpg
+static/.backups/
 templates/configure.html.jinja.bak
-Pimmich.code-workspace
+*.code-workspace
+scripts/_untranslated.json

@@ -1,20 +1,69 @@
 <!DOCTYPE html>
-<html lang="{{ get_locale() }}">
+{% macro date_format_help() %}
+<details class="text-xs text-gray-600 mt-2">
+    <summary class="cursor-pointer">{{ _("Date format reference") }}</summary>
+    <p class="mt-1">{{ _("Combine these codes with spaces or punctuation. Month and weekday names follow the slideshow's system locale.") }}</p>
+    <ul class="list-disc ml-5 mt-1">
+        <li><code>%Y</code> — {{ _("Four-digit year") }} (2026); <code>%y</code> — {{ _("Two-digit year") }} (26)</li>
+        <li><code>%m</code> — {{ _("Month number") }} (01–12); <code>%d</code> — {{ _("Day of month") }} (01–31)</li>
+        <li><code>%B</code> / <code>%b</code> — {{ _("Full / abbreviated month name") }}</li>
+        <li><code>%A</code> / <code>%a</code> — {{ _("Full / abbreviated weekday name") }}</li>
+        <li><code>%H</code> / <code>%I</code> — {{ _("Hour (24-hour / 12-hour)") }}; <code>%p</code> — AM/PM</li>
+        <li><code>%M</code> / <code>%S</code> — {{ _("Minute / second") }}; <code>%%</code> — %</li>
+    </ul>
+    <p class="mt-1">{{ _("Examples (15 June 2020):") }}</p>
+    <ul class="list-disc ml-5">
+        <li><code>%Y</code> → 2020</li>
+        <li><code>%d/%m/%Y</code> → 15/06/2020</li>
+        <li><code>%m/%d/%Y</code> → 06/15/2020</li>
+        <li><code>%Y-%m-%d</code> → 2020-06-15</li>
+        <li><code>%d %B %Y</code> → 15 June 2020</li>
+        <li><code>%B %Y</code> → June 2020</li>
+    </ul>
+</details>
+{% endmacro %}
+{% macro extra_filter_options(active_filter) %}
+{% for value, label in [
+    ('auto_enhance', _('Auto Enhance')),
+    ('vivid', _('Vivid')),
+    ('warm', _('Warm')),
+    ('cool', _('Cool')),
+    ('dramatic_bw', _('Dramatic B&W')),
+    ('soft_glow', _('Soft Glow')),
+    ('sharpen', _('Sharpen')),
+    ('duotone', _('Duotone')),
+    ('posterize', _('Posterize')),
+    ('matte', _('Matte')),
+    ('film_grain', _('Film Grain')),
+    ('pencil_sketch', _('Pencil Sketch')),
+    ('selective_red', _('Selective Color - Red')),
+    ('selective_green', _('Selective Color - Green')),
+    ('selective_blue', _('Selective Color - Blue')),
+    ('tilt_shift', _('Tilt Shift')),
+    ('cinematic', _('Cinematic')),
+    ('cross_process', _('Cross Process')),
+    ('watercolor', _('Watercolor')),
+    ('dark_vignette', _('Vignette - Dark Edges'))
+] %}
+<option value="{{ value }}" {% if active_filter == value %}selected{% endif %}>{{ label }}</option>
+{% endfor %}
+{% endmacro %}
+<html lang="{{ get_locale() }}" dir="{{ 'rtl' if get_locale() == 'he' else 'ltr' }}">
 
 <head>
     <meta charset="UTF-8">
-    <title>{{ _('Configuration') }} - Pimmich</title>
+    <title>{{ _('Configuration') }} - PictureFrame</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <!-- GLightbox CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
-    <!-- Font Awesome pour les icônes -->
+    <!-- Font Awesome icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <!-- Chart.js pour les graphiques -->
+    <!-- Chart.js charts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* Amélioration pour le défilement des onglets sur mobile */
+        /* Improve tab scrolling on mobile */
         .tabs::-webkit-scrollbar {
             display: none;
             /* Chrome, Safari, Opera */
@@ -27,7 +76,7 @@
             /* Firefox */
         }
 
-        /* Styles pour les groupes d'actions et les barres de progression */
+        /* Styles for action groups and progress bars */
         .action-group {
             margin-bottom: 20px;
         }
@@ -68,20 +117,20 @@
             box-shadow: 0 0 5px rgba(107, 114, 142, 0.5);
         }
 
-        /* Styles pour la nouvelle navigation par groupes */
+        /* Styles for the new group navigation */
         .main-nav-link {
             padding: 0.75rem 1.5rem;
             cursor: pointer;
             font-weight: 500;
             background-color: #E06666;
-            /* Fond rouge pastel inspiré du logo */
+            /* Pastel red background inspired by the logo */
             color: #FFFFFF;
-            /* Texte blanc pour le contraste */
+            /* White text for contrast */
             border-radius: 0.375rem;
             /* rounded-md */
             transition: all 0.2s ease-in-out;
             border: 1px solid transparent;
-            /* Pour éviter un saut de layout au survol/clic */
+            /* Prevent layout shifts on hover/click */
         }
 
         .main-nav-link:hover {
@@ -94,14 +143,14 @@
         .main-nav-link.active {
             background-color: white;
             color: #005a9e;
-            /* Un bleu plus sobre et foncé */
+            /* A more subtle, darker blue */
             box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
             /* shadow-sm */
             border-color: #D1D5DB;
             /* gray-300 */
         }
 
-        /* Animation de pulsation pour le bouton play */
+        /* Pulse animation for the play button */
         @keyframes pulse-ring {
             0% {
                 box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7);
@@ -130,7 +179,7 @@
         <p id="global-toast-message"></p>
     </div>
 
-    <!-- Messages flash -->
+    <!-- Flash messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
     <div id="flash-container" class="relative z-10 max-w-xl mx-auto mt-4 space-y-2">
@@ -154,7 +203,7 @@
     </div>
 
     <script>
-        // Disparition automatique après 4 secondes
+        // Automatically hide after 4 seconds.
         setTimeout(() => {
             const messages = document.querySelectorAll('.flash-message');
             messages.forEach(msg => {
@@ -178,35 +227,15 @@
                 <a href="?lang=en"
                     class="{% if current_lang == 'en' %}font-bold text-indigo-600{% else %}text-blue-600 hover:underline{% endif %}">EN</a>
                 |
-                <a href="?lang=es"
-                    class="{% if current_lang == 'es' %}font-bold text-indigo-600{% else %}text-blue-600 hover:underline{% endif %}">ES</a>
-                |
-                <a href="?lang=de"
-                    class="{% if current_lang == 'de' %}font-bold text-indigo-600{% else %}text-blue-600 hover:underline{% endif %}">DE</a>
-                |
-                <a href="?lang=ja"
-                    class="{% if current_lang == 'ja' %}font-bold text-indigo-600{% else %}text-blue-600 hover:underline{% endif %}">JA</a>
+                <a href="?lang=he"
+                    class="{% if current_lang == 'he' %}font-bold text-indigo-600{% else %}text-blue-600 hover:underline{% endif %}">HE</a>
             </div>
             <div class="logout-link">
                 <a href="/logout">{{ _('Se déconnecter') }}</a>
             </div>
         </div>
         <div class="flex justify-between items-center mb-2 h-auto py-2">
-            <div class="flex items-center gap-4">
-                <a href="https://github.com/gotenash" target="_blank" rel="noopener noreferrer">
-                    <img src="{{ url_for('static', filename='gotenash.jpg') }}" alt="Avatar Gotenash"
-                        class="h-16 w-16 rounded-full object-cover shadow-md">
-                </a>
-                <a href="https://github.com/Sigalou" target="_blank" rel="noopener noreferrer">
-                    <img src="{{ url_for('static', filename='sigalou.png') }}" alt="Avatar Sigalou"
-                        class="h-16 w-16 rounded-full object-cover shadow-md">
-                </a>
-                <a href="https://www.gadgetaulab.fr" target="_blank" rel="noopener noreferrer">
-                    <img src="{{ url_for('static', filename='logo_gadgeto.png') }}" alt="Logo Gadgetaulab" class="h-16">
-                </a>
-            </div>
-
-            <img src="{{ url_for('static', filename='pimmich_logo.png') }}" alt="Logo Pimmich" class="h-16">
+            <img src="{{ url_for('static', filename='pictureframe_logo.svg') }}" alt="Logo PictureFrame" class="h-16">
 
             <div id="live-preview-container" class="cadre-bois p-4 flex flex-col items-center">
                 <p id="live-preview-status" class="text-gray-500 italic hidden">{{ _("Le diaporama est arrêté.") }}</p>
@@ -215,7 +244,7 @@
                     <img id="live-preview-image" src="" alt="{{ _('Photo en cours') }}"
                         class="max-w-full max-h-full object-contain">
 
-                    <!-- Boutons de contrôle toujours visibles, en bas de l'image -->
+                    <!-- Control buttons always visible at the bottom of the image -->
                     <div id="live-preview-controls"
                         class="absolute bottom-2 left-0 right-0 flex items-center justify-center gap-3 hidden">
                         <button type="button"
@@ -240,10 +269,12 @@
                         </button>
                     </div>
                 </div>
+                <p id="live-preview-metadata" class="hidden mt-2 w-64 truncate text-sm text-gray-600" dir="auto"></p>
+                <p id="live-preview-location" class="hidden mt-1 w-64 truncate text-sm text-gray-600" dir="auto"></p>
             </div>
         </div>
 
-        <!-- Nouvelle navigation par groupes -->
+        <!-- New group navigation -->
         <div id="main-nav" class="flex justify-center space-x-1 sm:space-x-2 p-1 bg-transparent rounded-lg mb-4">
             <button class="main-nav-link inline-flex items-center" data-group="group-diaporama"><i
                     class="fas fa-desktop fa-fw mr-2"></i>{{ _('Diaporama') }}</button>
@@ -256,7 +287,7 @@
                     class="fas fa-server fa-fw mr-2"></i>{{ _('Système') }}</button>
         </div>
 
-        <!-- Conteneurs de sous-navigation pour chaque groupe -->
+        <!-- Sub-navigation containers for each group -->
         <div id="group-diaporama" class="sub-nav-group hidden">
             <div class="tabs flex overflow-x-auto pb-2">
                 <button class="tablink inline-flex items-center" onclick="openTab(event, 'tab-affichage')"
@@ -265,9 +296,6 @@
                 <button class="tablink inline-flex items-center" onclick="openTab(event, 'tab-heure')"
                     title="{{ _('Configurez l\'affichage de l\'heure, la météo et les marées.') }}"><i
                         class="fas fa-clock fa-fw mr-2"></i>{{ _('Horloge & Infos') }}</button>
-                <button class="tablink inline-flex items-center" onclick="openTab(event, 'tab-vocal')"
-                    title="{{ _('Configurez le contrôle vocal du diaporama.') }}"><i
-                        class="fas fa-microphone-alt fa-fw mr-2"></i>{{ _('Vocal') }}</button>
                 <button class="tablink inline-flex items-center" onclick="openTab(event, 'tab-metadata')"><i
                         class="fas fa-info-circle fa-fw mr-2"></i>{{ _('Métadonnées') }}</button>
             </div>
@@ -276,7 +304,7 @@
         <div id="group-contenu" class="sub-nav-group hidden">
             <div class="tabs flex overflow-x-auto pb-2">
                 <button class="tablink inline-flex items-center" onclick="openTab(event, 'tab-sources')"
-                    title="{{ _('Configurez les sources de photos (Immich, Samba, USB...).') }}"><i
+                    title="{{ _('Configurez les sources de photos.') }}"><i
                         class="fas fa-folder-open fa-fw mr-2"></i>{{ _('Sources') }}</button>
                 <button class="tablink inline-flex items-center" onclick="openTab(event, 'tab-apercu')"
                     title="{{ _('Visualisez et gérez toutes les photos prêtes pour le diaporama.') }}"><i
@@ -293,9 +321,6 @@
 
         <div id="group-interactions" class="sub-nav-group hidden">
             <div class="tabs flex overflow-x-auto pb-2">
-                <button class="tablink inline-flex items-center" onclick="openTab(event, 'tab-telegram')"
-                    title="{{ _('Configurez la réception de photos via le bot Telegram.') }}"><i
-                        class="fab fa-telegram-plane fa-fw mr-2"></i>{{ _('Telegram') }}</button>
                 <button class="tablink inline-flex items-center" onclick="openTab(event, 'tab-validation')"
                     title="{{ _('Validez ou rejetez les photos envoyées par les invités.') }}"><i
                         class="fas fa-check-circle fa-fw mr-2"></i>{{ _('Validation') }} <span id="pending-count-badge"
@@ -312,7 +337,7 @@
                     title="{{ _('Gérez les paramètres Wi-Fi et réseau.') }}"><i class="fas fa-wifi fa-fw mr-2"></i>{{
                     _('Réseau') }}</button>
                 <button class="tablink inline-flex items-center" onclick="openTab(event, 'tab-maintenance')"
-                    title="{{ _('Gérez les mises à jour, sauvegardes et contrôles système.') }}"><i
+                    title="{{ _('Gérez les sauvegardes et contrôles système.') }}"><i
                         class="fas fa-tools fa-fw mr-2"></i>{{ _('Maintenance') }}</button>
                 <button class="tablink inline-flex items-center" onclick="openTab(event, 'tab-stats')"
                     title="{{ _('Consultez les statistiques d\'utilisation du système.') }}"><i
@@ -350,14 +375,14 @@
 
                     <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="p-3 bg-gray-50 rounded border">
-                            <h4 class="font-semibold text-sm mb-2"><i class="fas fa-calendar-day mr-2"></i>{{ _("Horaires Semaine (Lun-Ven)") }}</h4>
+                            <h4 class="font-semibold text-sm mb-2"><i class="fas fa-calendar-day mr-2"></i>{{ _("Horaires Semaine (Dim-Jeu)") }}</h4>
                             <label for="active_start_weekday" class="block text-xs text-gray-600 mb-1">{{ _("Allumage :") }}</label>
                             <input type="time" id="active_start_weekday" name="active_start_weekday" value="{{ config.get('active_start_weekday', config.get('active_start', '07:00')) }}" class="w-full mb-2">
                             <label for="active_end_weekday" class="block text-xs text-gray-600 mb-1">{{ _("Extinction :") }}</label>
                             <input type="time" id="active_end_weekday" name="active_end_weekday" value="{{ config.get('active_end_weekday', config.get('active_end', '22:00')) }}" class="w-full">
                         </div>
                         <div class="p-3 bg-gray-50 rounded border">
-                            <h4 class="font-semibold text-sm mb-2"><i class="fas fa-calendar-plus mr-2"></i>{{ _("Horaires Weekend (Sam-Dim)") }}</h4>
+                            <h4 class="font-semibold text-sm mb-2"><i class="fas fa-calendar-plus mr-2"></i>{{ _("Horaires Weekend (Ven-Sam)") }}</h4>
                             <label for="active_start_weekend" class="block text-xs text-gray-600 mb-1">{{ _("Allumage :") }}</label>
                             <input type="time" id="active_start_weekend" name="active_start_weekend" value="{{ config.get('active_start_weekend', config.get('active_start', '07:00')) }}" class="w-full mb-2">
                             <label for="active_end_weekend" class="block text-xs text-gray-600 mb-1">{{ _("Extinction :") }}</label>
@@ -404,8 +429,13 @@
                         </label>
                     </div>
                     <div style="display: flex; align-items: center; margin-top: 8px;">
-                        <label for="pan_zoom_factor" style="min-width: 200px;">{{ _("Amplitude du zoom (ex: 1.15 pour 15%% de zoom) :") }}</label>
-                        <input type="number" step="0.01" id="pan_zoom_factor" name="pan_zoom_factor"
+                        <label for="pan_zoom_start_factor" style="min-width: 200px;">{{ _("Start zoom (1.00 = full image):") }}</label>
+                        <input type="number" min="0.01" step="0.01" id="pan_zoom_start_factor" name="pan_zoom_start_factor"
+                            value="{{ config.get('pan_zoom_start_factor', 1.0) }}">
+                    </div>
+                    <div style="display: flex; align-items: center; margin-top: 8px;">
+                        <label for="pan_zoom_factor" style="min-width: 200px;">{{ _("End zoom (1.15 = 15%% zoom):") }}</label>
+                        <input type="number" min="1" step="0.01" id="pan_zoom_factor" name="pan_zoom_factor"
                             value="{{ config.get('pan_zoom_factor', 1.15) }}">
                     </div>
                     <div style="margin-top: 16px;">
@@ -421,6 +451,8 @@
                     <div class="flex items-center mt-2">
                         <label for="transition_type" class="w-52 flex-shrink-0">{{ _("Type de transition :") }}</label>
                         <select name="transition_type" id="transition_type">
+                            <option value="random" {% if config.get('transition_type')=='random' %}selected{% endif %}>{{
+                                _('Random') }}</option>
                             <option value="fade" {% if config.get('transition_type')=='fade' %}selected{% endif %}>{{
                                 _('Fondu enchaîné') }}</option>
                             <option value="slide_left" {% if config.get('transition_type')=='slide_left' %}selected{%
@@ -497,16 +529,16 @@
                     </div>
                 </fieldset>
 
-                <!-- NOUVEAU BLOC POUR LA PRISE CONNECTÉE -->
+                <!-- NEW SMART PLUG SECTION -->
                 <fieldset class="mt-6">
                     <legend>
                         <h3><i class="fas fa-plug mr-2"></i>{{ _("Gestion de l'alimentation (Prise Connectée)") }}</h3>
                     </legend>
-                    <p class="text-sm text-gray-600 mb-3">{{ _("Si votre écran ne se met pas complètement en veille, vous pouvez utiliser une prise connectée (Wi-Fi) pour couper son alimentation. Pimmich enverra une simple requête HTTP aux URLs que vous spécifiez.") }}<br>
+                    <p class="text-sm text-gray-600 mb-3">{{ _("Si votre écran ne se met pas complètement en veille, vous pouvez utiliser une prise connectée (Wi-Fi) pour couper son alimentation. PictureFrame enverra une simple requête HTTP aux URLs que vous spécifiez.") }}<br>
                     <strong>{{ _("Exemples d'URLs :") }}</strong>
                     <ul class="list-disc list-inside text-xs text-gray-500 mt-1">
                         <li><strong>Tasmota:</strong> `http://IP_PRISE/cm?cmnd=Power%20On`</li>
-                        <li><strong>Home Assistant (Webhook):</strong> `http://IP_HA:8123/api/webhook/pimmich_on`</li>
+                        <li><strong>Home Assistant (Webhook):</strong> `http://IP_HA:8123/api/webhook/pictureframe_on`</li>
                         <li><strong>Shelly:</strong> `http://IP_PRISE/relay/0?turn=on`</li>
                         <li><strong>Kasa (via passerelle):</strong> `http://IP_PASSERELLE:PORT/on`</li>
                     </ul>
@@ -570,7 +602,7 @@
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="http://...">
                             <p class="text-xs text-gray-500 mt-1">
                                 {{ _("Pour Home Assistant, utilisez l'URL de l'API des états :") }}<br>
-                                `http://IP_HA:8123/api/states/sensor.pimmich_plug_status`
+                                `http://IP_HA:8123/api/states/sensor.pictureframe_plug_status`
                             </p>
                         </div>
                         <div>
@@ -685,59 +717,45 @@
                     <div style="display: flex; align-items: center; margin-bottom: 8px;">
                         <label for="date_format" style="min-width: 200px;">{{ _("Format de la date :") }}</label>
                         <input type="text" name="date_format" value="{{ config.get('date_format', '%A %d %B %Y') }}">
+                        {{ date_format_help() }}
                     </div>
                 </fieldset>
 
                 <fieldset class="mt-6">
-                    <legend><strong>{{ _("Affichage de la météo (OpenWeatherMap)") }}</strong></legend>
+                    <legend><strong>Weather display (Open-Meteo)</strong></legend>
 
                     <div style="margin-bottom: 8px;">
                         <label>
-                            <input type="checkbox" name="show_weather" {% if config.get('show_weather', False) %}checked{% endif %}> <span class="ml-2">{{ _("Afficher la météo") }}</span>
+                            <input type="checkbox" name="show_weather" {% if config.get('show_weather', False) %}checked{% endif %}> <span class="ml-2">Show weather</span>
                         </label>
                     </div>
 
                     <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                        <label for="weather_city" style="min-width: 200px;">{{ _("Ville :") }}</label>
-                        <input type="text" id="weather_city" name="weather_city"
-                            value="{{ config.get('weather_city', 'Paris') }}">
-                    </div>
-
-                    <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                        <label for="weather_api_key" style="min-width: 200px;">{{ _("Clé API :") }}</label>
-                        <div class="relative flex-grow">
-                            <input type="password" id="weather_api_key" name="weather_api_key"
-                                value="{{ config.get('weather_api_key', '') }}" class="w-full pr-10">
-                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
-                                <button type="button"
-                                    class="toggle-password-btn text-gray-500 hover:bg-gray-200 rounded-md transition-colors w-auto p-2 flex items-center justify-center mt-0 bg-transparent border-none font-normal"
-                                    data-target="weather_api_key" title="{{ _('Afficher/Cacher la clé API') }}">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mt-2 mb-4">
-                        <button type="button" id="testWeatherApiKeyBtn"
-                            class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded text-sm">{{
-                            _("Tester la clé API et la ville") }}</button>
-                        <span id="weatherApiTestResult" class="ml-4 font-medium"></span>
-                    </div>
-
-                    <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                        <label for="weather_units" style="min-width: 200px;">{{ _("Unités :") }}</label>
-                        <select name="weather_units" id="weather_units">
-                            <option value="metric" {% if config.get('weather_units')=='metric' %}selected{% endif %}>{{
-                                _('Celsius') }}</option>
-                            <option value="imperial" {% if config.get('weather_units')=='imperial' %}selected{% endif
-                                %}>{{ _('Fahrenheit') }}</option>
+                        <label for="weather_city" style="min-width: 200px;">City:</label>
+                        <select id="weather_city" name="weather_city">
+                            {% for city in weather_cities %}
+                            <option value="{{ city.name }}" {% if config.get('weather_city') == city.name %}selected{% endif %}>
+                                {{ city.name }}
+                            </option>
+                            {% endfor %}
                         </select>
                     </div>
 
                     <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                        <label for="weather_update_interval_minutes" style="min-width: 200px;">{{ _("Intervalle de MàJ
-                            (min) :") }}</label>
+                        <p class="text-sm text-gray-600">Weather data is provided by Open-Meteo. No API key is required.</p>
+                    </div>
+
+                    <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                        <label for="weather_units" style="min-width: 200px;">Units:</label>
+                        <select name="weather_units" id="weather_units">
+                            <option value="metric" {% if config.get('weather_units')=='metric' %}selected{% endif %}>Celsius</option>
+                            <option value="imperial" {% if config.get('weather_units')=='imperial' %}selected{% endif
+                                %}>Fahrenheit</option>
+                        </select>
+                    </div>
+
+                    <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                        <label for="weather_update_interval_minutes" style="min-width: 200px;">Update interval (minutes):</label>
                         <input type="number" name="weather_update_interval_minutes"
                             value="{{ config.get('weather_update_interval_minutes', 30) }}">
                     </div>
@@ -854,69 +872,6 @@
 
 
             <div id="tab-sources" class="tabcontent">
-                <fieldset>
-                    <legend>
-                        <h3>{{ _("Configuration de l'album photo Immich") }}</h3>
-                    </legend>
-
-
-
-                    <label for="album_name">{{ _("Nom technique de l'album Immich :") }}</label>
-                    <input type="text" id="album_name" name="album_name" value="{{ config.album_name }}">
-
-
-                    <label for="immich_url">{{ _("URL du serveur Immich :") }}</label>
-                    <input type="url" id="immich_url" name="immich_url" value="{{ config.immich_url }}">
-
-                    <label for="immich_token">{{ _("Token d'accès Immich :") }}</label>
-                    <div class="relative mt-1">
-                        <input type="password" id="immich_token" name="immich_token" value="{{ config.immich_token }}"
-                            class="block w-full rounded-md border-gray-300 shadow-sm pr-10">
-                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
-                            <button type="button"
-                                class="toggle-password-btn text-gray-500 hover:bg-gray-200 rounded-md transition-colors w-auto p-2 flex items-center justify-center mt-0 bg-transparent border-none font-normal"
-                                data-target="immich_token" title="{{ _('Afficher/Cacher le token') }}">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <label for="max_photos_to_download_immich" class="block text-sm font-medium text-gray-700">{{
-                        _('Limite de photos à télécharger (Immich)') }}</label>
-                    <input type="number" id="max_photos_to_download_immich" name="max_photos_to_download_immich"
-                        value="{{ config.get('max_photos_to_download', {}).get('immich', 10) }}"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                        placeholder="10">
-                    <p class="mt-2 text-sm text-gray-500">{{ _("Nombre maximum de photos à récupérer depuis Immich.
-                        Mettez 0, -1 ou laissez vide pour ne pas avoir de limite.") }}</p>
-                    <div style="margin-bottom: 8px;">
-                        <label>
-                            <input type="checkbox" name="random_content_in_album" {% if
-                                config.get('random_content_in_album', True) %}checked{% endif %}>
-                            {{ _("Récupération aléatoire des images dans l\'album (Immich)") }}
-                        </label>
-                    </div>
-                    <hr class="my-4">
-                    <h5 class="text-lg font-semibold mt-2">{{ _("Mise à jour automatique (Immich)") }}</h5>
-                    <div class="form-check form-switch my-3">
-                        <input class="form-check-input" type="checkbox" id="immich_auto_update" name="immich_auto_update" {% if config.get('immich_auto_update') %}checked{% endif %}>
-                        <label class="form-check-label ml-2" for="immich_auto_update">{{ _("Activer la mise à jour automatique") }}</label>
-                    </div>
-                    <label for="immich_update_interval_hours">{{ _("Intervalle de mise à jour (heures):") }}</label>
-                    <input type="number" id="immich_update_interval_hours" name="immich_update_interval_hours"
-                        value="{{ config.get('immich_update_interval_hours', 24) }}" min="1">
-
-                    <div id="immich-worker-status-container" class="mt-4 p-3 bg-gray-100 rounded-lg border">
-                        <p><strong>{{ _("État du service :") }}</strong> <span id="immich-worker-status-message"
-                                class="font-mono">...</span></p>
-                        <p><strong>{{ _("Dernière mise à jour :") }}</strong> <span id="immich-last-update-time"
-                                class="font-mono">...</span></p>
-                        <p><strong>{{ _("Prochaine mise à jour :") }}</strong> <span id="immich-next-update-time"
-                                class="font-mono">...</span></p>
-                    </div>
-
-
-                </fieldset>
-
                 <fieldset class="mt-4">
                     <legend>
                         <h3>{{ _("Sources à afficher dans le diaporama") }}</h3>
@@ -924,377 +879,23 @@
                     <p class="mb-3 text-gray-700">{{ _("Sélectionnez les sources de photos à inclure dans le diaporama.
                         Les photos seront mélangées entre les sources sélectionnées.") }}</p>
 
+                    {% for source, label in source_labels.items() if source not in ['usb', 'smartphone', 'invités'] %}
                     <div class="form-check form-switch my-2">
-                        <input class="form-check-input" type="checkbox" id="display_source_immich" name="display_sources" value="immich" {% if 'immich' in config.display_sources %}checked{% endif %}>
-                        <label class="form-check-label ml-2" for="display_source_immich">{{ _("Photos Immich") }}</label>
+                        <input class="form-check-input" type="checkbox" id="display_source_extra_{{ loop.index }}" name="display_sources" value="{{ source }}" {% if source in config.display_sources %}checked{% endif %}>
+                        <label class="form-check-label ml-2" for="display_source_extra_{{ loop.index }}">{{ label }}</label>
                     </div>
+                    {% endfor %}
                     <div class="form-check form-switch my-2">
                         <input class="form-check-input" type="checkbox" id="display_source_usb" name="display_sources" value="usb" {% if 'usb' in config.display_sources %}checked{% endif %}>
                         <label class="form-check-label ml-2" for="display_source_usb">{{ _("Photos USB") }}</label>
-                    </div>
-                    <div class="form-check form-switch my-2">
-                        <input class="form-check-input" type="checkbox" id="display_source_samba" name="display_sources" value="samba" {% if 'samba' in config.display_sources %}checked{% endif %}>
-                        <label class="form-check-label ml-2" for="display_source_samba">{{ _("Photos Samba") }}</label>
                     </div>
                     <div class="form-check form-switch my-2">
                         <input class="form-check-input" type="checkbox" id="display_source_smartphone" name="display_sources" value="smartphone" {% if 'smartphone' in config.display_sources %}checked{% endif %}>
                         <label class="form-check-label ml-2" for="display_source_smartphone">{{ _("Photos Smartphone") }}</label>
                     </div>
                     <div class="form-check form-switch my-2">
-                        <input class="form-check-input" type="checkbox" id="display_source_telegram" name="display_sources" value="telegram" {% if 'telegram' in config.display_sources %}checked{% endif %}>
-                        <label class="form-check-label ml-2" for="display_source_telegram">{{ _('Photos reçues par Telegram') }}</label>
-                    </div>
-                    <div class="form-check form-switch my-2">
                         <input class="form-check-input" type="checkbox" id="display_source_invites" name="display_sources" value="invités" {% if 'invités' in config.display_sources %}checked{% endif %}>
                         <label class="form-check-label ml-2" for="display_source_invites">{{ _('Photos des invités (validées)') }}</label>
-                    </div>
-                </fieldset>
-                <fieldset class="mt-4">
-                    <legend>
-                        <h3>{{ _("Configuration du partage Samba (Windows)") }}</h3>
-                    </legend>
-                    <label for="smb_host">{{ _("Serveur :") }}</label>
-                    <input type="text" id="smb_host" name="smb_host" value="{{ config.get('smb_host', '') }}"
-                        placeholder="{{ _('ex: 192.168.1.50 ou MON-NAS') }}">
-
-                    <label for="smb_share">{{ _("Nom du partage :") }}</label>
-                    <input type="text" id="smb_share" name="smb_share" value="{{ config.get('smb_share', '') }}"
-                        placeholder="{{ _('ex: Photos') }}">
-
-                    <label for="smb_path">{{ _("Chemin dans le partage (optionnel) :") }}</label>
-                    <input type="text" id="smb_path" name="smb_path" value="{{ config.get('smb_path', '') }}"
-                        placeholder="{{ _('ex: Famille/2024') }}">
-
-                    <label for="smb_user">{{ _("Nom d'utilisateur (optionnel) :") }}</label>
-                    <input type="text" id="smb_user" name="smb_user" value="{{ config.get('smb_user', '') }}">
-
-                    <label for="smb_password">{{ _("Mot de passe (optionnel) :") }}</label>
-                    <div class="relative mt-1">
-                        <input type="password" id="smb_password" name="smb_password"
-                            value="{{ config.get('smb_password', '') }}" class="block w-full rounded-md border-gray-300 shadow-sm pr-10">
-                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
-                            <button type="button"
-                                class="toggle-password-btn text-gray-500 hover:bg-gray-200 rounded-md transition-colors w-auto p-2 flex items-center justify-center mt-0 bg-transparent border-none font-normal"
-                                data-target="smb_password" title="{{ _('Afficher/Cacher le mot de passe') }}">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="mt-4">
-                        <button type="button" id="samba-test-btn"
-                            class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">{{ _("Tester la
-                            connexion") }}</button>
-                        <span id="samba-test-status" class="ml-4 font-medium"></span>
-                    </div>
-
-                    <hr class="my-4">
-                    <h5 class="text-lg font-semibold mt-2">{{ _("Mise à jour automatique (Samba)") }}</h5>
-                    <div class="form-check form-switch my-3">
-                        <input class="form-check-input" type="checkbox" id="smb_auto_update" name="smb_auto_update" {% if config.get('smb_auto_update') %}checked{% endif %}>
-                        <label class="form-check-label ml-2" for="smb_auto_update">{{ _("Activer la mise à jour automatique") }}</label>
-                    </div>
-                    <label for="smb_update_interval_hours">{{ _("Intervalle de mise à jour (heures):") }}</label>
-                    <input type="number" id="smb_update_interval_hours" name="smb_update_interval_hours"
-                        value="{{ config.get('smb_update_interval_hours', 24) }}" min="1">
-
-                    <div id="samba-worker-status-container" class="mt-4 p-3 bg-gray-100 rounded-lg border">
-                        <p><strong>{{ _("État du service :") }}</strong> <span id="samba-worker-status-message"
-                                class="font-mono">...</span></p>
-                        <p><strong>{{ _("Dernière mise à jour :") }}</strong> <span id="samba-last-update-time"
-                                class="font-mono">...</span></p>
-                        <p><strong>{{ _("Prochaine mise à jour :") }}</strong> <span id="samba-next-update-time"
-                                class="font-mono">...</span></p>
-                    </div>
-
-                </fieldset>
-
-                <fieldset class="mt-4">
-                    <legend>
-                        <h3>{{ _("Options de démarrage") }}</h3>
-                    </legend>
-                    <div class="form-check form-switch my-3">
-                        <input class="form-check-input" type="checkbox" id="skip_initial_auto_import" name="skip_initial_auto_import" {% if config.get('skip_initial_auto_import', False) %}checked{% endif %}>
-                        <label class="form-check-label ml-2" for="skip_initial_auto_import">{{ _("Ignorer le premier import automatique au démarrage") }}</label>
-                    </div>
-                    <p class="text-sm text-gray-600 mt-2">{{ _("Si cette option est cochée, les mises à jour automatiques (Immich, Samba) ne se lanceront pas immédiatement après un redémarrage du cadre, mais attendront le prochain cycle programmé.") }}</p>
-                </fieldset>
-            </div>
-
-            <div id="tab-telegram" class="tabcontent">
-                <fieldset>
-                    <legend>
-                        <h3>{{ _("Réception de photos par Telegram") }}</h3>
-                    </legend>
-                    <p class="text-sm text-gray-600 mb-3">
-                        {{ _("Activez cette fonction pour permettre à des utilisateurs autorisés d'envoyer des photos
-                        directement sur le cadre via un bot Telegram. Les photos reçues seront ajoutées à la source
-                        \"Telegram\".") }}
-                        <br>
-                        {{ _("Pour créer un bot et obtenir un token, parlez à @BotFather sur Telegram. L'ID de
-                        l'administrateur est votre propre ID utilisateur Telegram (obtenu via @userinfobot par
-                        exemple).") }}
-                    </p>
-
-                    <div style="margin-top: 16px;">
-                        <label><input type="checkbox" name="telegram_bot_enabled" {% if config.get('telegram_bot_enabled', False) %}checked{% endif %}> <span class="ml-2">{{ _("Activer le bot de réception Telegram") }}</span>
-                        </label>
-                    </div>
-
-                    <div style="display: flex; align-items: center; margin-top: 8px;">
-                        <label for="telegram_bot_token" style="min-width: 200px;">{{ _("Token du Bot Telegram :")
-                            }}</label>
-                        <div class="relative flex-grow">
-                            <input type="password" id="telegram_bot_token" name="telegram_bot_token"
-                                value="{{ config.get('telegram_bot_token', '') }}" class="w-full pr-10">
-                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
-                                <button type="button"
-                                    class="toggle-password-btn text-gray-500 hover:bg-gray-200 rounded-md transition-colors w-auto p-2 flex items-center justify-center mt-0 bg-transparent border-none font-normal"
-                                    data-target="telegram_bot_token" title="{{ _('Afficher/Cacher le token') }}">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div style="display: flex; align-items: center; margin-top: 8px;">
-                        <label for="telegram_authorized_users" style="min-width: 200px;">{{ _("ID de l'administrateur
-                            :") }}</label>
-                        <input type="text" id="telegram_authorized_users" name="telegram_authorized_users"
-                            value="{{ config.get('telegram_authorized_users', '') }}" class="w-full"
-                            placeholder="{{ _('Votre ID numérique Telegram') }}">
-                    </div>
-
-                    <div class="mt-4 mb-4">
-                        <button type="button" id="testTelegramBtn"
-                            class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded text-sm inline-flex items-center"><i
-                                class="fas fa-plug mr-2"></i>{{ _("Tester le Token du Bot") }}</button>
-                        <span id="telegramTestResult" class="ml-4 font-medium"></span>
-                    </div>
-                    <div id="telegram-bot-status-container" class="mt-4 p-3 bg-gray-100 rounded-lg border">
-                        <p><strong>{{ _("État du bot :") }}</strong> <span id="telegram-bot-status-message"
-                                class="font-mono">...</span></p>
-                    </div>
-                </fieldset>
-
-                <fieldset class="mt-6">
-                    <legend>
-                        <h3>{{ _("Gestion des invitations pour les invités") }}</h3>
-                    </legend>
-                    <p class="text-sm text-gray-600 mb-3">
-                        {{ _("Créez des codes d'invitation uniques pour permettre à vos amis et votre famille d'envoyer
-                        des photos au cadre. Ils devront envoyer ce code à votre bot Telegram pour être autorisés.") }}
-                    </p>
-
-                    <!-- Formulaire de création d'invitation -->
-                    <div class="p-4 border rounded-lg bg-gray-50/50 mb-4">
-                        <h4 class="font-semibold text-gray-800 mb-2">{{ _("Créer une nouvelle invitation") }}</h4>
-                        <div class="flex items-center gap-4">
-                            <input type="text" id="new-invite-name"
-                                class="flex-grow rounded-md border-gray-300 shadow-sm"
-                                placeholder="{{ _('Nom de l\'invité (ex: Mamie)') }}">
-                            <select id="new-invite-duration" class="rounded-md border-gray-300 shadow-sm">
-                                <option value="7">{{ _("Valide 7 jours") }}</option>
-                                <option value="30">{{ _("Valide 30 jours") }}</option>
-                                <option value="90">{{ _("Valide 90 jours") }}</option>
-                            </select>
-                            <button type="button" id="create-invite-btn"
-                                class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded inline-flex items-center">
-                                <i class="fas fa-plus mr-2"></i>{{ _("Créer") }}
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Liste des invitations actives -->
-                    <div>
-                        <h4 class="font-semibold text-gray-800 mb-2">{{ _("Invitations actives") }}</h4>
-                        <div id="invitations-list" class="space-y-2">
-                            <!-- Les invitations seront chargées ici par JavaScript -->
-                            <p class="text-gray-500 italic">{{ _("Chargement des invitations...") }}</p>
-                        </div>
-                    </div>
-                </fieldset>
-
-                <fieldset class="mt-4">
-                    <legend>
-                        <h3>{{ _("Source Telegram") }}</h3>
-                    </legend>
-                    <p class="mb-3 text-gray-700">{{ _("N'oubliez pas d'activer la source \"Telegram\" dans l'onglet
-                        \"Sources\" pour que les photos reçues apparaissent dans le diaporama.") }}</p>
-                </fieldset>
-
-                <fieldset class="mt-6">
-                    <legend>
-                        <h3>{{ _("Fréquence des Cartes Postales") }}</h3>
-                    </legend>
-                    <p class="text-sm text-gray-600 mb-3">{{ _("Augmentez temporairement la fréquence d'affichage des
-                        nouvelles cartes postales reçues pour qu'elles apparaissent plus souvent.") }}</p>
-                    <div style="margin-top: 16px;">
-                        <label>
-                            <input type="checkbox" name="telegram_boost_enabled" {% if
-                                config.get('telegram_boost_enabled', True) %}checked{% endif %}>
-                            {{ _("Activer le boost pour les cartes postales récentes") }}
-                        </label>
-                    </div>
-                    <div style="display: flex; align-items: center; margin-top: 8px;">
-                        <label for="telegram_boost_duration_days" style="min-width: 200px;">{{ _("Durée du boost (jours)
-                            :") }}</label>
-                        <input type="number" id="telegram_boost_duration_days" name="telegram_boost_duration_days"
-                            value="{{ config.get('telegram_boost_duration_days', 7) }}" min="1">
-                    </div>
-                    <div style="display: flex; align-items: center; margin-top: 8px;">
-                        <label for="telegram_boost_factor" style="min-width: 200px;">{{ _("Facteur de boost :")
-                            }}</label>
-                        <input type="number" id="telegram_boost_factor" name="telegram_boost_factor"
-                            value="{{ config.get('telegram_boost_factor', 4) }}" min="0">
-                        <p class="text-sm text-gray-600 ml-2">{{ _("(Ex: 4 = 5x plus de chances d'apparaître)") }}</p>
-                    </div>
-                </fieldset>
-                <fieldset class="mt-6">
-                    <legend>
-                        <h3>{{ _("Options de l'overlay") }}</h3>
-                    </legend>
-                    <div style="margin-top: 16px;">
-                        <label>
-                            <input type="checkbox" name="display_telegram_notification_overlay" {% if
-                                config.get('display_telegram_notification_overlay', True) %}checked{% endif %}>
-                            {{ _("Activer l'icône de nouvelle carte postale dans l'overlay") }}
-                        </label>
-                    </div>
-                </fieldset>
-            </div>
-
-            <div id="tab-vocal" class="tabcontent">
-                <fieldset>
-                    <legend>
-                        <h3><i class="fas fa-microphone-alt mr-2"></i>{{ _("Contrôle Vocal") }}</h3>
-                    </legend>
-                    <p class="text-sm text-gray-600 mb-3">
-                        {{ _('Contrôlez votre diaporama à la voix avec le mot-clé "Cadre Magique".') }}
-                    </p>
-
-                    <div class="p-4 border-l-4 border-blue-400 bg-blue-50 text-blue-700 mb-4">
-                        <p><strong>{{ _("Étape Manuelle Requise :") }}</strong> {{ _('Pour utiliser le mot-clé
-                            personnalisé "Cadre Magique", vous devez créer un modèle sur le site de Picovoice, le
-                            télécharger, et le placer dans le dossier `voice_models` sous le nom
-                            `cadre-magique_raspberry-pi.ppn`.') }}</p>
-                    </div>
-
-                    <div class="mt-4">
-                        <label for="voice_control_engine" class="block text-sm font-medium text-gray-700">{{ _("Moteur
-                            de mot-clé") }}</label>
-                        <select id="voice_control_engine" name="voice_control_engine"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                            <option value="porcupine" {% if config.get('voice_control_engine', 'porcupine'
-                                )=='porcupine' %}selected{% endif %}>{{ _("Picovoice Porcupine (Recommandé, nécessite une clé API)") }}</option>
-                            <option value="vosk" {% if config.get('voice_control_engine', 'porcupine' )=='vosk'
-                                %}selected{% endif %}>{{ _("Vosk (Totalement local, sans clé API, plus gourmand)") }}</option>
-                        </select>
-                        <p class="text-xs text-gray-500 mt-1">{{ _("Choisissez 'Vosk' si vous ne souhaitez pas créer de
-                            compte Picovoice.") }}</p>
-                    </div>
-
-                    <div class="form-check form-switch my-3">
-                        <input class="form-check-input" type="checkbox" id="voice_control_enabled" name="voice_control_enabled" {% if config.get('voice_control_enabled') %}checked{% endif %}>
-                        <label class="form-check-label ml-2" for="voice_control_enabled">{{ _("Activer le contrôle vocal (action immédiate)") }}</label>
-                    </div>
-
-                    <div class="mt-4">
-                        <label for="voice_control_language" class="block text-sm font-medium text-gray-700">{{ _("Langue
-                            du contrôle vocal") }}</label>
-                        <select id="voice_control_language" name="voice_control_language"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                            <option value="fr" {% if config.get('voice_control_language', 'fr' )=='fr' %}selected{%
-                                endif %}>{{ _('Français') }}</option>
-                            <option value="en" {% if config.get('voice_control_language', 'fr' )=='en' %}selected{%
-                                endif %}>{{ _('Anglais') }}</option>
-                        </select>
-                        <p class="text-xs text-gray-500 mt-1">{{ _("Le changement de langue nécessite un redémarrage du
-                            service vocal (désactiver puis réactiver le contrôle vocal).") }}</p>
-                    </div>
-
-                    <div class="mt-4">
-                        <label for="porcupine_access_key" class="block text-sm font-medium text-gray-700">{{ _("Clé
-                            d'accès Picovoice Porcupine") }}</label>
-                        <div class="relative mt-1">
-                            <input type="password" id="porcupine_access_key" name="porcupine_access_key"
-                                value="{{ config.get('porcupine_access_key', '') }}"
-                                class="block w-full rounded-md border-gray-300 shadow-sm pr-10"
-                                placeholder="{{ _('Collez votre clé d\'accès ici') }}">
-                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
-                                <button type="button"
-                                    class="toggle-password-btn text-gray-500 hover:bg-gray-200 rounded-md transition-colors w-auto p-2 flex items-center justify-center mt-0 bg-transparent border-none font-normal"
-                                    data-target="porcupine_access_key" title="{{ _('Afficher/Cacher la clé d\'accès') }}">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <p class="text-xs text-gray-500 mt-1">{{ _("Obtenez votre clé via le compte gratuit (Free Tier)
-                            sur la") }} <a href="https://console.picovoice.ai/" target="_blank"
-                                class="text-blue-600 hover:underline">Picovoice Console</a>.</p>
-                    </div>
-
-                    <div class="mt-4">
-                        <label for="voice_control_device_index" class="block text-sm font-medium text-gray-700">{{
-                            _("Périphérique d'entrée audio (Microphone)") }}</label>
-                        <div class="flex items-center gap-2">
-                            <select id="voice_control_device_index" name="voice_control_device_index"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                                <option value="">{{ _("Périphérique par défaut") }}</option>
-                                <!-- Les options seront chargées par JavaScript -->
-                            </select>
-                            <button type="button" id="refresh-audio-devices-btn"
-                                class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded text-sm"
-                                title="{{ _('Actualiser la liste') }}"><i class="fas fa-sync-alt"></i></button>
-                        </div>
-                    </div>
-
-                    <div id="voice-control-status-container" class="mt-6 p-3 bg-gray-100 rounded-lg border">
-                        <p><strong>{{ _("État du service vocal :") }}</strong>
-                            <span id="voice-control-status-message" class="font-mono">...</span>
-                        </p>
-                    </div>
-
-                </fieldset>
-
-                <fieldset class="mt-6">
-                    <legend>
-                        <h3><i class="fas fa-volume-up mr-2"></i>{{ _("Volume des Notifications Sonores") }}</h3>
-                    </legend>
-                    <p class="text-sm text-gray-600 mb-3">
-                        {{ _("Règle le volume pour les sons de notification (confirmation du contrôle vocal, réception
-                        de carte postale, etc.).") }}
-                    </p>
-                    <div id="notification-volume-selector" style="display: flex; align-items: center; margin-top: 8px;">
-                        <label for="notification_sound_volume" style="min-width: 200px;">{{ _("Volume des notifications
-                            :") }}</label>
-                        <input type="range" id="notification_volume_slider" min="0" max="100"
-                            value="{{ config.get('notification_sound_volume', 80) }}" class="w-1/2">
-                        <input type="number" id="notification_sound_volume" name="notification_sound_volume" min="0"
-                            max="100" value="{{ config.get('notification_sound_volume', 80) }}"
-                            class="w-16 ml-2 text-center">
-                        <span class="ml-1">%</span>
-                    </div>
-                </fieldset>
-
-                <fieldset class="mt-6">
-                    <legend>
-                        <h3><i class="fas fa-stethoscope mr-2"></i>{{ _("Diagnostic Audio") }}</h3>
-                    </legend>
-                    <p class="text-sm text-gray-600 mb-3">
-                        {{ _("Si votre microphone n'apparaît pas dans la liste ci-dessus, utilisez cet outil pour
-                        vérifier si le système d'exploitation le détecte correctement.") }}
-                    </p>
-                    <button type="button" id="run-audio-diagnostics-btn"
-                        class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded inline-flex items-center">
-                        <i class="fas fa-play-circle mr-2"></i>{{ _("Lancer le diagnostic") }}
-                    </button>
-                    <div id="audio-diagnostics-results-container" class="hidden mt-4">
-                        <h4 class="font-semibold text-gray-800 mb-2">{{ _("Résultats du diagnostic :") }}</h4>
-                        <div class="bg-gray-800 rounded-lg overflow-auto" style="max-height: 300px;">
-                            <pre id="audio-diagnostics-results" class="text-white p-4 text-xs"
-                                style="white-space: pre-wrap; word-break: break-all;"></pre>
-                        </div>
                     </div>
                 </fieldset>
             </div>
@@ -1304,8 +905,7 @@
                     <legend>
                         <h3><i class="fas fa-info-circle mr-2"></i>{{ _("Affichage des métadonnées des photos") }}</h3>
                     </legend>
-                    <p class="text-sm text-gray-600 mb-4">{{ _("Configurez ici l'affichage des informations (date, lieu)
-                        extraites depuis Immich sur vos photos.") }}</p>
+                    <p class="text-sm text-gray-600 mb-4">{{ _("Configurez l'affichage des informations (date, lieu) de vos photos.") }}</p>
 
                     <!-- Date -->
                     <div class="form-check form-switch my-3">
@@ -1319,6 +919,7 @@
                             value="{{ config.get('photo_date_format', '%Y') }}"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
                         <p class="text-xs text-gray-500 mt-1">{{ _("Utilise les codes de formatage Python (ex: %%d/%%m/%%Y, %%B %%Y).") }}</p>
+                        {{ date_format_help() }}
                     </div>
 
                     <!-- Location -->
@@ -1487,7 +1088,7 @@
                 </fieldset>
             </div>
 
-            <!-- Le bouton de sauvegarde est placé ici, à l'intérieur du formulaire mais après les onglets de configuration -->
+            <!-- The save button is placed here inside the form, after the configuration tabs. -->
             <button type="submit" id="save-changes-btn" class="save-button">{{ _("Enregistrer les modifications")
                 }}</button>
 
@@ -1546,25 +1147,7 @@
                     </div>
                     <div id="usb-import-status" class="status-messages"></div>
 
-                    <button id="immich-import-btn"
-                        class="import-button bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                        <i class="fas fa-cloud-download-alt"></i> {{ _("Importer depuis Immich") }}
-                    </button>
-                    <div id="immich-progress-container" class="progress-container hidden">
-                        <div id="immich-progress-bar" class="progress-bar"></div>
-                    </div>
-                    <div id="immich-import-status" class="status-messages"></div>
-
-                    <button id="samba-import-btn"
-                        class="import-button bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                        <i class="fas fa-network-wired"></i> {{ _("Importer depuis Samba") }}
-                    </button>
-                    <div id="samba-progress-container" class="progress-container hidden">
-                        <div id="samba-progress-bar" class="progress-bar"></div>
-                    </div>
-                    <div id="samba-import-status" class="status-messages"></div>
-
-                    <!-- NOUVEAU: Conteneur pour l'aperçu de la préparation -->
+                    <!-- NEW: Container for the preparation preview -->
                     <div id="preparation-preview-container"
                         class="hidden mt-4 p-3 bg-gray-100 rounded-lg border text-center">
                         <p class="text-sm font-semibold text-gray-600 mb-2">{{ _("Préparation en cours...") }}</p>
@@ -1573,25 +1156,22 @@
                     </div>
 
                     <div class="mt-4 pt-4 border-t border-gray-200">
-                        <p class="text-sm text-gray-600">{{ _("L'import depuis Telegram se fait automatiquement à la
-                            réception des photos. Activez la source dans l'onglet \"Sources\" pour les voir.") }}</p>
                     </div>
 
-                    <!-- Smartphone Upload Form -->
-                    <form id="smartphone-upload-form" enctype="multipart/form-data"
+                    <div id="smartphone-upload-form"
                         class="mt-4 pt-4 border-t border-gray-200">
-                        <h5 class="text-lg font-semibold mb-2 flex items-center gap-2"><i class="fas fa-mobile-alt"></i>
-                            {{ _("Importer depuis un Smartphone") }}</h5>
-                        <p class="text-sm text-gray-600 mb-3">{{ _("Envoyez des photos directement depuis votre
-                            téléphone via le navigateur.") }}</p>
-                        <input type="file" name="photos"
-                            class="block w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 cursor-pointer focus:outline-none mb-3"
-                            multiple required>
-                        <button type="submit" id="import-smartphone-btn"
+                        <p class="text-sm text-gray-600 mb-3">{{ _("Select photos or a folder from this device. Duplicate photos are skipped.") }}</p>
+                        <input type="file" id="photo-files-input" accept=".jpg,.jpeg,.png,.heic,.heif" multiple class="hidden">
+                        <input type="file" id="photo-folder-input" webkitdirectory multiple class="hidden">
+                        <button type="button" id="import-smartphone-btn"
                             class="import-button bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-                            <i class="fas fa-upload"></i> {{ _("Envoyer les photos") }}
+                            <i class="fas fa-images"></i> {{ _("Import photos") }}
                         </button>
-                    </form>
+                        <button type="button" id="import-folder-btn"
+                            class="import-button bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                            <i class="fas fa-folder-open"></i> {{ _("Import folder") }}
+                        </button>
+                    </div>
                     <div id="smartphone-progress-container" class="progress-container hidden">
                         <div id="smartphone-progress-bar" class="progress-bar"></div>
                     </div>
@@ -1615,7 +1195,7 @@
                     <div id="music-files-management" class="mt-4">
                         <h6 class="text-md font-semibold text-gray-700 mb-2">{{ _("Musiques disponibles") }}</h6>
                         <div id="music-files-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-60 overflow-y-auto p-2 bg-gray-50 rounded border">
-                            <!-- La liste sera peuplée par JS -->
+                            <!-- The list will be populated by JavaScript. -->
                         </div>
                     </div>
                 </div>
@@ -1635,7 +1215,7 @@
                             class="fas fa-sync-alt mr-2"></i>{{ _("Actualiser") }}</button>
                 </div>
                 <div id="pending-photos-grid" class="photo-grid">
-                    <!-- Les photos en attente seront chargées ici par JavaScript -->
+                    <!-- Pending photos will be loaded here by JavaScript. -->
                 </div>
             </fieldset>
         </div>
@@ -1739,7 +1319,7 @@
                 </div>
             </fieldset>
 
-            <!-- Bloc de scan Wi-Fi -->
+            <!-- Wi-Fi scan section -->
             <div class="mt-6 p-4 border rounded-lg bg-gray-50/50">
                 <h4 class="text-xl font-semibold text-gray-800 mb-2">{{ _("Réseaux Wi-Fi à proximité") }}</h4>
                 <p class="text-gray-600 mb-4">{{ _("Cliquez sur le bouton pour rechercher les réseaux Wi-Fi disponibles.
@@ -1750,7 +1330,7 @@
                     <span id="scan-wifi-btn-text">{{ _("Lancer le scan") }}</span>
                 </button>
                 <div id="wifi-scan-results" class="mt-4">
-                    <!-- Les résultats du scan apparaîtront ici -->
+                    <!-- Scan results will appear here. -->
                 </div>
             </div>
         </div>
@@ -1834,25 +1414,13 @@
                 </div>
             </fieldset>
 
-            <fieldset class="mt-6">
-                <legend>
-                    <h3>{{ _("Mise à jour de l'application") }}</h3>
-                </legend>
-                <p class="text-sm text-gray-600 mb-3">{{ _("Cliquez sur le bouton pour rechercher et installer les
-                    dernières mises à jour de Pimmich depuis GitHub. L'application redémarrera automatiquement après la
-                    mise à jour.") }}</p>
-                <a href="/update" 
-                   class="system-button bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded inline-flex items-center"
-                   onclick="return confirm('{{ _('Lancer la mise à jour ? Vous allez être redirigé vers la page de suivi.') }}')">
-                    <i class="fas fa-cloud-download-alt mr-2"></i>{{ _("Lancer la mise à jour") }}
-                </a>
-            </fieldset>
+
 
             <fieldset class="mt-6">
                 <legend>
                     <h3>{{ _("Système de Fichiers de la Carte SD") }}</h3>
                 </legend>
-                <p class="text-sm text-gray-600 mb-3">{{ _("Si vous avez flashé Pimmich sur une carte SD plus grande que
+                <p class="text-sm text-gray-600 mb-3">{{ _("Si vous avez flashé PictureFrame sur une carte SD plus grande que
                     l'image, utilisez cette option pour étendre la partition et utiliser tout l'espace disponible. Un
                     redémarrage du système sera nécessaire pour finaliser l'opération.") }}</p>
                 <div class="p-4 border-l-4 border-blue-400 bg-blue-50 text-blue-700 mb-4">
@@ -1877,7 +1445,7 @@
                         <i class="fas fa-redo"></i> {{ _("Redémarrer l'application web") }}
                     </button>
                 </form>
-                <!-- Formulaire pour le redémarrage -->
+                <!-- Restart form -->
                 <form id="rebootForm" action="/system_reboot" method="POST"
                     class="flex items-center gap-3 mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg"
                     onsubmit="return confirm('Êtes-vous sûr de vouloir redémarrer le système ?');">
@@ -1955,7 +1523,7 @@
                 <div class="mb-3">
                     <label for="log-selector" class="form-label">{{ _("Sélectionner un log :") }}</label>
                     <select id="log-selector" class="form-select">
-                        <!-- Les options seront chargées dynamiquement par JavaScript -->
+                        <!-- Options will be loaded dynamically by JavaScript. -->
                     </select>
                     <button type="button" id="refresh-logs-btn"
                         class="btn btn-secondary bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded ml-2">{{
@@ -1970,20 +1538,6 @@
                 </div>
             </fieldset>
 
-            <fieldset class="mt-6">
-                <legend>
-                    <h3>{{ _("Crédits") }}</h3>
-                </legend>
-                <div class="credits">
-                    <img src="{{ url_for('static', filename='gotenash.jpg') }}" width="120" alt="Auteur Gotenash">
-                    <p>{{ _("Auteurs : Gotenash et Shenron") }}</p>
-                    <a href="https://www.gadgetaulab.fr">
-                        <img src="{{ url_for('static', filename='logo_gadgeto.png') }}" width="120"
-                            alt="Logo Gadgetaulab">
-                    </a>
-                    <p>{{ _("Projet réalisé dans le cadre du Gadgetaulab") }}</p>
-                </div>
-            </fieldset>
         </div>
 
         <div id="tab-apercu" class="tabcontent">
@@ -1999,16 +1553,17 @@
                 {% if photos %}
                 <fieldset class="mb-6 p-4 border rounded-lg bg-gray-50/50">
                     <div class="flex justify-between items-center border-b pb-2 mb-4">
-                        <h4 class="text-xl font-semibold text-gray-800">{{ source_name.capitalize() }}</h4>
+                        <h4 class="text-xl font-semibold text-gray-800">{{ source_labels.get(source_name, source_name.capitalize()) }}</h4>
                         <div class="flex items-center gap-x-4">
-                            <!-- Compteur de photos -->
+                            <!-- Photo count -->
                             <span class="text-sm text-gray-500 font-medium">{{ ngettext('%(num)d photo', '%(num)d
                                 photos', photos|length) }}</span>
-                            <!-- Bouton pour supprimer tous les médias de la source -->
+                            <!-- Button to delete all media from the source -->
                             <button type="button"
                                 class="delete-all-btn bg-red-600 hover:bg-red-700 text-white text-xs font-semibold py-1 px-3 rounded inline-flex items-center"
                                 data-source="{{ source_name }}"
-                                title="{{ _('Supprimer toutes les photos de la source \'%(source)s\'', source=source_name) }}">
+                                data-source-label="{{ source_labels.get(source_name, source_name.capitalize()) }}"
+                                title="{{ _('Supprimer toutes les photos de la source \'%(source)s\'', source=source_labels.get(source_name, source_name.capitalize())) }}">
                                 <i class="fas fa-trash-alt mr-2"></i>
                                 <span>{{ _("Tout supprimer") }}</span>
                             </button>
@@ -2047,10 +1602,10 @@
                             {% endif %}
 
                             <a href="{{ media_url }}" class="glightbox block relative" data-gallery="{{ source_name }}"
-                                title="{{ _('Aperçu de %(media)s', media=media.path) }}">
+                                title="{{ _('Aperçu de %(media)s', media=media.path.split('/')[-1]) }}">
                                 <img src="{{ thumb_url }}"
                                     class="w-32 h-32 object-cover rounded shadow cursor-pointer hover:scale-105 transition bg-gray-200"
-                                    alt="{{ _('Aperçu de %(media)s', media=media.path) }}">
+                                    alt="{{ _('Aperçu de %(media)s', media=media.path.split('/')[-1]) }}">
                                 {% if media.type == 'video' %}
                                 <div
                                     class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-25 rounded">
@@ -2058,7 +1613,13 @@
                                 </div>
                                 {% endif %}
                             </a>
-                            <!-- Actions alignées avec "justify-between" pour pousser la poubelle à droite -->
+                            <!-- Align actions with "justify-between" to push the trash icon to the right. -->
+                            {% if media.type == 'image' %}
+                            <p class="photo-metadata mt-1 w-32 truncate text-xs text-gray-600" dir="auto"
+                                title="{{ media.metadata_text }}">{{ media.metadata_text }}</p>
+                            <p class="photo-location mt-1 w-32 truncate text-xs text-gray-600" dir="auto"
+                                title="{{ media.location_text }}">{{ media.location_text }}</p>
+                            {% endif %}
                             <div class="photo-actions mt-1 flex flex-col w-full gap-y-1">
                                 {% if media.type == 'image' %}
                                 <select class="filter-select text-xs rounded border-gray-300 py-1 w-full"
@@ -2070,9 +1631,10 @@
                                     <option value="sepia" {% if active_filter=='sepia' %}selected{% endif %}>{{
                                         _("Sépia") }}</option>
                                     <option value="vignette" {% if active_filter=='vignette' %}selected{% endif %}>{{
-                                        _("Vignette") }}</option>
+                                        _("B&W Background") }}</option>
                                     <option value="vintage" {% if active_filter=='vintage' %}selected{% endif %}>{{
                                         _("Vintage") }}</option>
+                                    {{ extra_filter_options(active_filter) }}
                                     {% if has_polaroid %}
                                     <option value="polaroid" {% if active_filter=='polaroid' %}selected{% endif %}>{{
                                         _("Polaroid") }}</option>
@@ -2088,6 +1650,13 @@
                                 </select>
                                 {% endif %}
                                 <div class="flex justify-end items-center w-full gap-x-2">
+                                    {% if media.type == 'image' %}
+                                    <button type="button"
+                                        class="crop-photo-btn text-gray-400 hover:text-blue-500 text-xs rounded py-1 px-2 inline-flex items-center justify-center"
+                                        data-photo="{{ photo_path }}" title="{{ _('Crop photo') }}" aria-label="{{ _('Crop photo') }}">
+                                        <i class="fas fa-cut" aria-hidden="true"></i>
+                                    </button>
+                                    {% endif %}
                                     <button type="button"
                                         class="add-to-playlist-btn text-gray-400 hover:text-blue-500 text-xs rounded py-1 px-2 inline-flex items-center justify-center"
                                         data-photo="{{ photo_path }}" title="{{ _('Ajouter à une playlist') }}"><i
@@ -2096,7 +1665,7 @@
                                         class="favorite-btn text-gray-400 hover:text-yellow-400 text-xs rounded py-1 px-2 inline-flex items-center justify-center {% if media.is_favorite %}text-yellow-400{% endif %}"
                                         data-photo="{{ photo_path }}" title="{{ _('Mettre en favori') }}"><i
                                             class="fas fa-star"></i></button>
-                                    {% if source_name in ['telegram', 'invités'] %}
+                                    {% if source_name in ['invités'] %}
                                     <button type="button" 
                                        class="save-original-btn text-gray-400 hover:text-green-500 text-xs rounded py-1 px-2 inline-flex items-center justify-center"
                                        data-url="{{ url_for('static', filename='photos/' + media.path) }}"
@@ -2119,7 +1688,7 @@
                             </div>
                             <div class="add-to-playlist-menu hidden absolute bg-white border rounded shadow-lg p-2 z-20"
                                 style="bottom: 20px; right: 20px;">
-                                <!-- Le menu des playlists sera injecté ici -->
+                                <!-- The playlist menu will be injected here. -->
                             </div>
                             {% if media.type == 'image' %}
                             <div class="generic-text-input-container mt-2" data-photo="{{ photo_path }}">
@@ -2150,14 +1719,14 @@
                     photos de n'importe quelle source. Vous pouvez ensuite lancer un diaporama contenant uniquement les
                     photos d'une playlist.") }}</p>
 
-                <!-- Bloc de contrôle du diaporama pour les playlists -->
+                <!-- Slideshow controls for playlists -->
                 <div class="flex flex-col md:flex-row gap-6">
                     <div class="md:w-2/3">
                         <div class="p-4 border rounded-lg bg-gray-100 mb-6">
                             <h4 class="font-semibold text-gray-800 mb-4 text-center">{{ _("Contrôle du Diaporama
                                 Actuel") }}</h4>
                             <div class="flex items-center justify-center gap-4">
-                                <!-- Boutons de contrôle -->
+                                <!-- Control buttons -->
                                 <button type="button"
                                     class="slideshow-control-btn bg-gray-600 hover:bg-gray-700 text-white p-3 rounded-full w-14 h-14 flex items-center justify-center"
                                     data-command="previous" title="{{ _('Photo précédente') }}"><i
@@ -2171,7 +1740,7 @@
                                     data-command="next" title="{{ _('Photo suivante') }}"><i
                                         class="fas fa-forward"></i></button>
 
-                                <!-- Séparateur vertical -->
+                                <!-- Vertical separator -->
                                 <div class="border-l border-gray-300 h-12 mx-4"></div>
 
                                 <!-- Bouton Stop -->
@@ -2181,7 +1750,7 @@
                                     <i class="fas fa-stop-circle mr-2"></i>{{ _("Retour au diaporama standard") }}
                                 </button>
 
-                                <!-- Bouton Informatif (quand pas de playlist) -->
+                                <!-- Informational button (when there is no playlist) -->
                                 <button type="button" id="no-playlist-idle-btn"
                                     class="bg-gray-400 text-white font-bold py-2 px-4 rounded inline-flex items-center cursor-not-allowed"
                                     disabled>
@@ -2198,11 +1767,13 @@
                                 arrêté.") }}</p>
                             <img id="playlist-live-preview-image" src="" alt="{{ _('Photo en cours') }}"
                                 class="hidden mt-2 mx-auto max-w-xs max-h-48 rounded shadow">
+                            <p id="playlist-live-preview-metadata" class="hidden mt-2 w-full truncate text-sm text-gray-600" dir="auto"></p>
+                            <p id="playlist-live-preview-location" class="hidden mt-1 w-full truncate text-sm text-gray-600" dir="auto"></p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Formulaire de création -->
+                <!-- Creation form -->
                 <div class="p-4 border rounded-lg bg-gray-50/50 mb-6">
                     <h4 class="font-semibold text-gray-800 mb-2">{{ _("Créer une nouvelle playlist") }}</h4>
                     <div class="flex items-center gap-4">
@@ -2225,7 +1796,7 @@
                 <div>
                     <h4 class="font-semibold text-gray-800 mb-2">{{ _("Vos Playlists") }}</h4>
                     <div id="playlists-list-container" class="space-y-4">
-                        <!-- Les playlists seront chargées ici par JavaScript -->
+                        <!-- Playlists will be loaded here by JavaScript. -->
                     </div>
                 </div>
             </fieldset>
@@ -2273,10 +1844,10 @@
                         {% endif %}
 
                         <a href="{{ media_url }}" class="glightbox block relative" data-gallery="favorites"
-                            title="{{ _('Aperçu de %(media)s', media=media.path) }}">
+                            title="{{ _('Aperçu de %(media)s', media=media.path.split('/')[-1]) }}">
                             <img src="{{ thumb_url }}"
                                 class="w-32 h-32 object-cover rounded shadow cursor-pointer hover:scale-105 transition bg-gray-200"
-                                alt="{{ _('Aperçu de %(media)s', media=media.path) }}">
+                                alt="{{ _('Aperçu de %(media)s', media=media.path.split('/')[-1]) }}">
                             {% if media.type == 'video' %}
                             <div
                                 class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-25 rounded">
@@ -2284,6 +1855,12 @@
                             </div>
                             {% endif %}
                         </a>
+                        {% if media.type == 'image' %}
+                        <p class="photo-metadata mt-1 w-32 truncate text-xs text-gray-600" dir="auto"
+                            title="{{ media.metadata_text }}">{{ media.metadata_text }}</p>
+                        <p class="photo-location mt-1 w-32 truncate text-xs text-gray-600" dir="auto"
+                            title="{{ media.location_text }}">{{ media.location_text }}</p>
+                        {% endif %}
                         <div class="photo-actions mt-1 flex flex-col w-full gap-y-1">
                             {% if media.type == 'image' %}
                             <select class="filter-select text-xs rounded border-gray-300 py-1 w-full"
@@ -2295,9 +1872,10 @@
                                 <option value="sepia" {% if active_filter=='sepia' %}selected{% endif %}>{{ _("Sépia")
                                     }}</option>
                                 <option value="vignette" {% if active_filter=='vignette' %}selected{% endif %}>{{
-                                    _("Vignette") }}</option>
+                                    _("B&W Background") }}</option>
                                 <option value="vintage" {% if active_filter=='vintage' %}selected{% endif %}>{{
                                     _("Vintage") }}</option>
+                                {{ extra_filter_options(active_filter) }}
                                 {% if has_polaroid %}
                                 <option value="polaroid" {% if active_filter=='polaroid' %}selected{% endif %}>{{
                                     _("Polaroid") }}</option>
@@ -2313,6 +1891,13 @@
                             </select>
                             {% endif %}
                             <div class="flex justify-end items-center w-full gap-x-2">
+                                {% if media.type == 'image' %}
+                                <button type="button"
+                                    class="crop-photo-btn text-gray-400 hover:text-blue-500 text-xs rounded py-1 px-2 inline-flex items-center justify-center"
+                                    data-photo="{{ photo_path }}" title="{{ _('Crop photo') }}" aria-label="{{ _('Crop photo') }}">
+                                    <i class="fas fa-cut" aria-hidden="true"></i>
+                                </button>
+                                {% endif %}
                                 <button type="button"
                                     class="add-to-playlist-btn text-gray-400 hover:text-blue-500 text-xs rounded py-1 px-2 inline-flex items-center justify-center"
                                     data-photo="{{ photo_path }}" title="{{ _('Ajouter à une playlist') }}"><i
@@ -2321,7 +1906,7 @@
                                     class="favorite-btn text-gray-400 hover:text-yellow-400 text-xs rounded py-1 px-2 inline-flex items-center justify-center {% if media.is_favorite %}text-yellow-400{% endif %}"
                                     data-photo="{{ photo_path }}" title="{{ _('Mettre en favori') }}"><i
                                         class="fas fa-star"></i></button>
-                                {% if media.path.split('/')[0] in ['telegram', 'invités'] %}
+                                {% if media.path.split('/')[0] in ['invités'] %}
                                 <button type="button" 
                                    class="save-original-btn text-gray-400 hover:text-green-500 text-xs rounded py-1 px-2 inline-flex items-center justify-center"
                                    data-url="{{ url_for('static', filename='photos/' + media.path) }}"
@@ -2344,7 +1929,7 @@
                         </div>
                         <div class="add-to-playlist-menu hidden absolute bg-white border rounded shadow-lg p-2 z-20"
                             style="bottom: 20px; right: 20px;">
-                            <!-- Le menu des playlists sera injecté ici -->
+                            <!-- The playlist menu will be injected here. -->
                         </div>
                         {% if media.type == 'image' %}
                         <div class="generic-text-input-container mt-2" data-photo="{{ photo_path }}">
@@ -2364,12 +1949,194 @@
         </div>
 
 
+        <dialog id="photo-crop-dialog" class="rounded-lg shadow-xl p-5 max-w-3xl w-full">
+            <h3 class="font-bold mb-2">{{ _("Crop photo") }}</h3>
+            <p class="text-sm mb-3">{{ _("Drag the selection to position it. Adjust its size below. The selection always matches the slideshow screen ratio. Originals are preserved.") }}</p>
+            <div class="flex items-center justify-center" style="height:min(420px,60vh)">
+                <canvas id="photo-crop-canvas" class="block mx-auto max-w-full" style="max-height:100%;touch-action:none"></canvas>
+            </div>
+            <label class="block mt-3">{{ _("Selection size") }}
+                <input id="photo-crop-size" type="range" min="10" max="100" step="1" value="100" class="w-full">
+            </label>
+            <p class="text-sm">{{ _("Increase selection size to include the full photo. Extra space uses a blurred background.") }}</p>
+            <p id="photo-crop-status" role="status" class="text-sm my-2"></p>
+            <div class="flex justify-end gap-3">
+                <button id="photo-crop-cancel" type="button">{{ _("Cancel") }}</button>
+                <button id="photo-crop-reset" type="button" class="text-blue-600">{{ _("Reset crop") }}</button>
+                <button id="photo-crop-save" type="button" class="bg-blue-600 text-white rounded px-4 py-2">{{ _("Save crop") }}</button>
+            </div>
+        </dialog>
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const dialog = document.getElementById('photo-crop-dialog');
+                const canvas = document.getElementById('photo-crop-canvas');
+                const context = canvas.getContext('2d');
+                const slider = document.getElementById('photo-crop-size');
+                const status = document.getElementById('photo-crop-status');
+                const save = document.getElementById('photo-crop-save');
+                const reset = document.getElementById('photo-crop-reset');
+                const cancel = document.getElementById('photo-crop-cancel');
+                let photo, image, crop, maxWidth, maxHeight, drag, busy = false;
+                let loadVersion = 0;
+                let viewport = {x: 0, y: 0, width: 1, height: 1};
+                function positionValue(value, extent) {
+                    return extent > 1 ? (1 - extent) / 2 : Math.max(0, Math.min(1 - extent, value));
+                }
+                function draw() {
+                    viewport = {x: Math.min(0, crop.x), y: Math.min(0, crop.y),
+                                width: Math.max(1, crop.x + crop.width) - Math.min(0, crop.x),
+                                height: Math.max(1, crop.y + crop.height) - Math.min(0, crop.y)};
+                    const scale = Math.min(700 / (image.naturalWidth * viewport.width),
+                                           420 / (image.naturalHeight * viewport.height), 1);
+                    canvas.width = Math.max(1, Math.round(image.naturalWidth * viewport.width * scale));
+                    canvas.height = Math.max(1, Math.round(image.naturalHeight * viewport.height * scale));
+                    const ix = -viewport.x / viewport.width * canvas.width;
+                    const iy = -viewport.y / viewport.height * canvas.height;
+                    const iw = canvas.width / viewport.width, ih = canvas.height / viewport.height;
+                    context.clearRect(0, 0, canvas.width, canvas.height);
+                    context.fillStyle = '#555';
+                    context.fillRect(0, 0, canvas.width, canvas.height);
+                    context.drawImage(image, ix, iy, iw, ih);
+                    context.fillStyle = 'rgba(0,0,0,0.55)';
+                    context.fillRect(0, 0, canvas.width, canvas.height);
+                    const x = (crop.x - viewport.x) / viewport.width * canvas.width;
+                    const y = (crop.y - viewport.y) / viewport.height * canvas.height;
+                    const width = crop.width / viewport.width * canvas.width;
+                    const height = crop.height / viewport.height * canvas.height;
+                    context.save();
+                    context.beginPath();
+                    context.rect(x, y, width, height);
+                    context.clip();
+                    context.fillStyle = '#555';
+                    context.fillRect(x, y, width, height);
+                    context.save();
+                    context.filter = 'blur(12px)';
+                    context.drawImage(image, x - 12, y - 12, width + 24, height + 24);
+                    context.restore();
+                    context.drawImage(image, ix, iy, iw, ih);
+                    context.restore();
+                    context.strokeStyle = '#ffffff';
+                    context.lineWidth = 2;
+                    context.strokeRect(x, y, width, height);
+                }
+                function setBusy(value) {
+                    busy = value;
+                    save.disabled = reset.disabled = slider.disabled = value;
+                    cancel.disabled = value;
+                }
+                function resizeSelection() {
+                    const fraction = Math.min(Number(slider.value) / 100, Math.max(1 / maxWidth, 1 / maxHeight));
+                    const width = maxWidth * fraction, height = maxHeight * fraction;
+                    crop = {x: positionValue(crop.x + (crop.width - width) / 2, width),
+                            y: positionValue(crop.y + (crop.height - height) / 2, height),
+                            width, height};
+                    draw();
+                }
+                document.querySelectorAll('.crop-photo-btn').forEach(button => button.addEventListener('click', async () => {
+                    photo = button.dataset.photo;
+                    const version = ++loadVersion;
+                    image = crop = null;
+                    context.clearRect(0, 0, canvas.width, canvas.height);
+                    status.textContent = {{ _("Loading crop editor...") | tojson }};
+                    setBusy(true);
+                    dialog.showModal();
+                    try {
+                        const url = '/api/photo_crop?photo=' + encodeURIComponent(photo);
+                        const response = await fetch(url);
+                        const data = await response.json();
+                        if (!response.ok) throw new Error(data.message || `HTTP ${response.status}`);
+                        const loaded = new Image();
+                        await new Promise((resolve, reject) => {
+                            loaded.onload = resolve;
+                            loaded.onerror = () => reject(new Error({{ _("Could not load original photo.") | tojson }}));
+                            loaded.src = url + '&image=1';
+                        });
+                        if (version !== loadVersion || !dialog.open) return;
+                        image = loaded;
+                        const scale = Math.min(700 / data.width, 420 / data.height, 1);
+                        canvas.width = Math.max(1, Math.round(data.width * scale));
+                        canvas.height = Math.max(1, Math.round(data.height * scale));
+                        maxWidth = Math.min(1, data.aspect_ratio * data.height / data.width);
+                        maxHeight = maxWidth * data.width / (data.aspect_ratio * data.height);
+                        slider.max = Math.ceil(100 * Math.max(1 / maxWidth, 1 / maxHeight));
+                        crop = data.crop || {x: (1 - maxWidth) / 2, y: (1 - maxHeight) / 2,
+                                             width: maxWidth, height: maxHeight};
+                        // Refit saved selections if the configured screen ratio has changed.
+                        const fraction = Math.min(crop.width / maxWidth, crop.height / maxHeight);
+                        slider.value = Math.max(10, Math.floor(fraction * 100));
+                        resizeSelection();
+                        status.textContent = '';
+                        setBusy(false);
+                    } catch (error) {
+                        status.textContent = error.message;
+                        cancel.disabled = false;
+                    }
+                }));
+                slider.addEventListener('input', () => { if (!busy && crop) resizeSelection(); });
+                function point(event) {
+                    const bounds = canvas.getBoundingClientRect();
+                    return {x: viewport.x + (event.clientX - bounds.left) / bounds.width * viewport.width,
+                            y: viewport.y + (event.clientY - bounds.top) / bounds.height * viewport.height};
+                }
+                canvas.addEventListener('pointerdown', event => {
+                    if (busy || !crop) return;
+                    const position = point(event);
+                    if (position.x < crop.x || position.x > crop.x + crop.width ||
+                        position.y < crop.y || position.y > crop.y + crop.height) return;
+                    drag = {x: position.x - crop.x, y: position.y - crop.y};
+                    canvas.setPointerCapture(event.pointerId);
+                });
+                canvas.addEventListener('pointermove', event => {
+                    if (!drag || busy) return;
+                    const position = point(event);
+                    crop.x = positionValue(position.x - drag.x, crop.width);
+                    crop.y = positionValue(position.y - drag.y, crop.height);
+                    draw();
+                });
+                canvas.addEventListener('pointerup', () => { drag = null; });
+                canvas.addEventListener('pointercancel', () => { drag = null; });
+                dialog.addEventListener('cancel', event => { if (busy) event.preventDefault(); });
+                cancel.onclick = () => { ++loadVersion; drag = null; dialog.close(); };
+                async function persist(selection) {
+                    if (busy || !crop) return;
+                    setBusy(true);
+                    status.textContent = {{ _("Preparing cropped photo...") | tojson }};
+                    try {
+                        const response = await fetch('/api/photo_crop', {
+                            method: 'POST', headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({photo, crop: selection})
+                        });
+                        const data = await response.json();
+                        if (!response.ok || !data.success) throw new Error(data.message || `HTTP ${response.status}`);
+                        location.reload();
+                    } catch (error) {
+                        status.textContent = error.message;
+                        setBusy(false);
+                    }
+                }
+                save.onclick = () => persist(crop);
+                reset.onclick = () => persist(null);
+            });
+        </script>
         <script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
+        <script src="{{ url_for('static', filename='photo_editor.js') }}"></script>
+        <script src="{{ url_for('static', filename='photo_lightbox.js') }}"></script>
         <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
         <script>
             const lightbox = GLightbox({
                 selector: '.glightbox'
             });
+            attachPhotoLightboxActions(lightbox);
+            window.photoEditLabels = {
+                strength: {{ _('Filter strength') | tojson }},
+                before: {{ _('Hold to view Before') | tojson }},
+                location: {{ _('Edit location') | tojson }},
+                city: {{ _('City') | tojson }},
+                country: {{ _('Country') | tojson }},
+                save: {{ _('Save') | tojson }},
+                clear: {{ _('Use original location') | tojson }},
+                cancel: {{ _('Cancel') | tojson }}
+            };
 
             // Translations for JavaScript
             const i18n = {
@@ -2397,27 +2164,7 @@
                 selectNetworkTitle: "{{ _('Cliquer pour sélectionner ce réseau') }}"
             };
 
-
-            // Ajouter les traductions pour l'onglet Telegram
-            i18n.testing = "{{ _('Test en cours...') }}";
-            i18n.commErrorServer = "{{ _('Erreur de communication avec le serveur.') }}";
-            i18n.loading = "{{ _('Chargement...') }}";
-            i18n.noActiveInvites = "{{ _('Aucune invitation active.') }}";
-            i18n.usedBy = "{{ _('Utilisé par') }}";
-            i18n.notUsed = "{{ _('Non utilisé') }}";
-            i18n.expiresOn = "{{ _('Expire le') }}";
-            i18n.deleteInvite = "{{ _('Supprimer l\'invitation') }}";
-            i18n.errorLoadingInvites = "{{ _('Erreur lors du chargement des invitations.') }}";
-            i18n.enterGuestName = "{{ _('Veuillez entrer un nom pour l\'invité.') }}";
-            i18n.errorPrefix = "{{ _('Erreur :') }}";
-            i18n.confirmDeleteInvite = "{{ _('Êtes-vous sûr de vouloir supprimer cette invitation ?') }}";
-            i18n.connectionError = "{{ _('Erreur de connexion') }}";
-            i18n.revokeInvite = "{{ _('Révoquer l\'accès') }}";
-            i18n.confirmRevokeInvite = "{{ _('Êtes-vous sûr de vouloir révoquer l\'accès pour cet invité ? Il ne pourra plus envoyer de photos.') }}";
-            i18n.botUsernameError = "{{ _('Le nom d\'utilisateur du bot n\'a pas pu être récupéré.') }}";
-            i18n.copyLink = "{{ _('Copier le lien') }}";
-            i18n.copyFailed = "{{ _('La copie a échoué.') }}";
-            // Ajout pour les playlists
+            // Added for playlists.
             i18n.photo = "{{ _('photo') }}";
             i18n.photos = "{{ _('photos') }}";
             i18n.noPlaylists = "{{ _('Aucune playlist créée pour le moment.') }}";
@@ -2427,15 +2174,12 @@
             i18n.renamePlaylist = "{{ _('Renommer la playlist') }}";
             i18n.enterNewName = "{{ _('Entrez le nouveau nom pour la playlist :') }}";
 
-            // NOUVEAU: Traductions pour la sauvegarde automatique
+            // NEW: Labels for automatic saving.
             i18n.orderSaved = "{{ _('Ordre sauvegardé !') }}";
 
-            // NOUVEAU: Traductions pour le diagnostic audio
-            i18n.runDiagnostics = "{{ _('Lancer le diagnostic') }}";
-            i18n.diagnosticsInProgress = "{{ _('Diagnostic en cours...') }}";
-            i18n.pleaseWait = "{{ _('Veuillez patienter...') }}";
+            // NEW: Labels for audio diagnostics.
 
-            // --- GESTION DE L'AFFICHAGE DES MOTS DE PASSE ---
+            // --- PASSWORD VISIBILITY MANAGEMENT ---
             document.querySelectorAll('.toggle-password-btn').forEach(button => {
                 button.addEventListener('click', () => {
                     const targetInputId = button.dataset.target;
@@ -2457,11 +2201,11 @@
                 });
             });
 
-            // --- GESTION DE LA PRISE CONNECTÉE ---
+            // --- SMART PLUG MANAGEMENT ---
             const plugCheckbox = document.getElementById('smart_plug_enabled');
             const plugOptions = document.getElementById('smart-plug-options');
 
-            // Afficher/cacher les options de la prise
+            // Show or hide the plug options.
             if (plugCheckbox && plugOptions) {
                 plugCheckbox.addEventListener('change', () => {
                     plugOptions.classList.toggle('hidden', !plugCheckbox.checked);
@@ -2503,7 +2247,7 @@
                 });
             });
 
-            // --- NOUVEAU: GESTION DE L'INDICATEUR DE STATUT DE LA PRISE ---
+            // --- NEW: SMART PLUG STATUS INDICATOR MANAGEMENT ---
             const statusIndicator = document.getElementById('smart-plug-status-indicator');
             const statusLight = document.getElementById('smart-plug-status-light');
             const statusText = document.getElementById('smart-plug-status-text');
@@ -2529,9 +2273,9 @@
                         statusIndicator.classList.add('hidden'); // Cacher si non configuré
                     } else { // error, unknown, unavailable...
                         statusLight.className = 'w-4 h-4 rounded-full bg-yellow-500';
-                        // NOUVEAU: Afficher le message d'erreur détaillé de l'API
+                        // NEW: Display the detailed API error message.
                         let errorMessage = data.message || data.status;
-                        // Raccourcir les messages d'erreur longs pour l'affichage
+                        // Shorten long error messages for display.
                         if (errorMessage.length > 100) errorMessage = errorMessage.substring(0, 100) + '...';
                         statusText.textContent = `{{ _('État : Erreur') }} (${errorMessage})`;
                     }
@@ -2541,13 +2285,13 @@
                 }
             }
 
-            // Vérifier le statut au chargement et toutes les 10 secondes
+            // Check the status on load and every 10 seconds.
             checkPlugStatus();
             setInterval(checkPlugStatus, 10000);
 
 
-            // ----- GESTION DE LA VALIDATION (Fonctions globales) -----
-            // On définit ces fonctions ici pour qu'elles soient accessibles partout et éviter les erreurs de chargement.
+            // ----- APPROVAL MANAGEMENT (global functions) -----
+            // Define these functions here so they are globally accessible and avoid loading errors.
 
             async function refreshValidationTab() {
                 const grid = document.getElementById('pending-photos-grid');
@@ -2567,7 +2311,7 @@
 
                     const photoCount = data.photos.length;
 
-                    // Mise à jour du badge
+                    // Update the badge.
                     [badge, interactionsBadge].forEach(el => {
                         if (el) {
                             el.textContent = photoCount;
@@ -2579,7 +2323,7 @@
                         }
                     });
 
-                    // Mise à jour de la grille
+                    // Update the grid.
                     if (isTabActive && grid) {
                         if (photoCount === 0) {
                             grid.innerHTML = '<p class="text-center text-gray-500 italic">{{ _("Aucune photo en attente de validation.") }}</p>';
@@ -2685,134 +2429,6 @@
                 }
             }
 
-            async function loadInvitations() {
-                const invitationsListDiv = document.getElementById('invitations-list');
-                if (!invitationsListDiv) return;
-
-                invitationsListDiv.innerHTML = `<p class="text-gray-500 italic">${i18n.loading}</p>`;
-
-                // Fetch bot info and invitations in parallel
-                try {
-                    const cacheBuster = `?_=${new Date().getTime()}`;
-                    const [invitesResponse, botInfoResponse] = await Promise.all([
-                        fetch(`/api/telegram/invitations${cacheBuster}`),
-                        fetch(`/api/telegram/bot_info${cacheBuster}`)
-                    ]);
-
-                    const invitations = await invitesResponse.json();
-                    const botInfo = await botInfoResponse.json();
-
-                    const botUsername = botInfo.success ? botInfo.username : null;
-                    if (!botUsername) {
-                        console.warn("Could not fetch bot username:", botInfo.message);
-                    }
-
-                    invitationsListDiv.innerHTML = ''; // Vider la liste
-
-                    if (invitations.length === 0) {
-                        invitationsListDiv.innerHTML = `<p class="text-gray-500 italic">${i18n.noActiveInvites}</p>`;
-                        return;
-                    }
-
-                    invitations.forEach(invite => {
-                        const isExpired = new Date(invite.expires_at) < new Date();
-                        const expires = new Date(invite.expires_at).toLocaleString('fr-FR');
-                        const usedBy = invite.used_by_user_name ? `${i18n.usedBy} ${invite.used_by_user_name}` : i18n.notUsed;
-
-                        const inviteLink = botUsername ? `https://t.me/${botUsername}?start=${invite.code}` : null;
-
-                        const inviteEl = document.createElement('div');
-                        inviteEl.className = 'p-4 bg-white border rounded-lg shadow-sm space-y-3';
-
-                        // --- Statut de l'invitation ---
-                        let statusText, statusClass;
-                        if (isExpired) {
-                            statusText = 'Expirée';
-                            statusClass = 'bg-red-100 text-red-800';
-                        } else if (invite.used_by_user_id) {
-                            statusText = 'Utilisée';
-                            statusClass = 'bg-green-100 text-green-800';
-                        } else {
-                            statusText = 'En attente';
-                            statusClass = 'bg-yellow-100 text-yellow-800';
-                        }
-
-                        const statusHtml = `
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass}">
-                    ${statusText}
-                </span>
-                ${invite.used_by_user_name ? `<span class="text-sm text-gray-600 ml-2">par <strong>${invite.used_by_user_name}</strong></span>` : ''}
-            `;
-
-                        // --- Lien d'invitation ---
-                        let linkHtml = `<div class="text-xs text-gray-500 italic mt-1">${i18n.botUsernameError}</div>`;
-                        if (inviteLink) {
-                            linkHtml = `
-                    <div class="flex items-center gap-2">
-                        <input type="text" readonly value="${inviteLink}" class="flex-grow text-xs p-1 border rounded bg-gray-50 font-mono">
-                        <button type="button" class="copy-link-btn text-gray-500 hover:text-blue-600" data-link="${inviteLink}" title="${i18n.copyLink}">
-                            <i class="fas fa-copy"></i>
-                        </button>
-                    </div>
-                `;
-                        }
-
-                        // --- Boutons d'action ---
-                        const revokeBtnHtml = invite.used_by_user_id && !isExpired ? `
-                <button class="revoke-invite-btn text-orange-500 hover:text-orange-700" data-code="${invite.code}" title="${i18n.revokeInvite}">
-                    <i class="fas fa-user-slash"></i>
-                </button>
-            ` : '';
-                        const deleteBtnHtml = `
-                <button class="delete-invite-btn text-red-500 hover:text-red-700" data-code="${invite.code}" title="${i18n.deleteInvite}">
-                    <i class="fas fa-trash-alt"></i>
-                </button>`;
-
-                        inviteEl.innerHTML = `
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-lg font-semibold text-gray-900">${invite.guest_name}</p>
-                        <p class="text-sm text-gray-500 mt-1">${i18n.expiresOn} ${expires}</p>
-                    </div>
-                    <div class="flex items-center gap-x-3">
-                        ${revokeBtnHtml}
-                        ${deleteBtnHtml}
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4 items-center pt-3 border-t">
-                    <div class="text-sm">${statusHtml}</div>
-                    <div>${linkHtml}</div>
-                </div>
-            `;
-                        invitationsListDiv.appendChild(inviteEl);
-                    });
-                } catch (error) {
-                    invitationsListDiv.innerHTML = `<p class="text-red-500">${i18n.errorLoadingInvites}</p>`;
-                    console.error("Error loading invitations or bot info:", error);
-                }
-            }
-
-            async function fetchTelegramBotStatus() {
-                const statusSpan = document.getElementById('telegram-bot-status-message');
-                if (!statusSpan) return;
-
-                try {
-                    const response = await fetch('/telegram_bot_status');
-                    const data = await response.json();
-                    statusSpan.textContent = data.status_message;
-                    if (data.status === 'running') {
-                        statusSpan.className = 'font-mono text-green-600';
-                    } else if (data.status === 'error') {
-                        statusSpan.className = 'font-mono text-red-600';
-                    } else {
-                        statusSpan.className = 'font-mono text-gray-500';
-                    }
-                } catch (error) {
-                    statusSpan.textContent = i18n.connectionError;
-                    statusSpan.className = 'font-mono text-red-600';
-                }
-            }
-
             function showToast(message, duration = 3000) {
                 const toast = document.getElementById('global-toast');
                 const toastMessage = document.getElementById('global-toast-message');
@@ -2860,7 +2476,7 @@
 
             function initializeSortableForPlaylists() {
                 document.querySelectorAll('.photo-grid[data-playlist-id]').forEach(grid => {
-                    // Éviter la ré-initialisation si déjà fait
+                    // Avoid re-initializing if already done.
                     if (Sortable.get(grid)) {
                         return;
                     }
@@ -2869,7 +2485,7 @@
                         ghostClass: 'bg-blue-200', // Classe pour le fantôme de l'élément déplacé
                         dataIdAttr: 'data-id', // Spécifie quel attribut utiliser pour l'ordre
                         onEnd: function (evt) {
-                            // Quand l'utilisateur a fini de déplacer, on sauvegarde automatiquement
+                            // Automatically save when the user finishes moving an item.
                             const playlistId = evt.to.dataset.playlistId;
                             savePlaylistOrder(playlistId);
                         }
@@ -2899,7 +2515,7 @@
                         playlistEl.className = 'playlist-card p-4 bg-white border rounded-lg shadow-sm';
                         playlistEl.dataset.id = playlist.id;
 
-                        // Construire les options du sélecteur de musique
+                        // Build the music selector options.
                         let musicOptionsHtml = `<option value="">${i18n.noMusic}</option>`;
                         availableMusicFiles.forEach(file => {
                             const selected = (playlist.music_file === file) ? 'selected' : '';
@@ -2970,7 +2586,7 @@
                         playlistsContainer.appendChild(playlistEl);
                     });
 
-                    // Ajouter les écouteurs pour les sélecteurs de musique
+                    // Add event listeners for the music selectors.
                     document.querySelectorAll('.playlist-music-select').forEach(select => {
                         select.addEventListener('change', async (event) => {
                             const playlistId = event.target.dataset.playlistId;
@@ -2993,10 +2609,10 @@
                         });
                     });
 
-                    // Initialiser le glisser-déposer sur les grilles nouvellement créées
+                    // Initialize drag and drop on the newly created grids.
                     initializeSortableForPlaylists();
 
-                    // NOUVEAU: Ré-initialiser GLightbox pour les nouvelles galeries de playlists
+                    // NEW: Reinitialize GLightbox for the new playlist galleries.
                     GLightbox({
                         selector: '#playlists-list-container .glightbox'
                     });
@@ -3006,8 +2622,8 @@
             }
 
             function openTab(evt, tabId) {
-                // Si on clique sur l'onglet Favoris et qu'il n'est pas déjà actif, on recharge la page
-                // pour s'assurer que la liste des favoris est à jour.
+                // If the Favorites tab is clicked while inactive, reload the page
+                // to ensure the favorites list is up to date.
                 const clickedButton = evt ? evt.currentTarget : null;
                 if (tabId === 'tab-favoris' && clickedButton && !clickedButton.classList.contains('active')) {
                     localStorage.setItem('activeTab', 'tab-favoris'); // On s'assure de revenir sur le bon onglet
@@ -3030,14 +2646,14 @@
                     tabElement.style.display = "block";
                 }
 
-                // Gérer la classe active sur le bouton de l'onglet
+                // Manage the active class on the tab button.
                 const currentButton = evt ? evt.currentTarget : document.querySelector(`.tablink[onclick*="'${tabId}'"]`);
                 if (currentButton) {
                     currentButton.classList.add("active");
                 }
                 localStorage.setItem('activeTab', tabId);
 
-                // Gérer la visibilité du bouton "Enregistrer"
+                // Manage the visibility of the "Save" button.
                 const saveButton = document.getElementById('save-changes-btn');
                 const tabsWithoutSaveButton = ['tab-apercu', 'tab-actions', 'tab-validation', 'tab-favoris', 'tab-playlists', 'tab-network', 'tab-maintenance', 'tab-stats', 'tab-logs'];
                 if (tabId === 'tab-validation') {
@@ -3047,20 +2663,10 @@
                     saveButton.style.display = tabsWithoutSaveButton.includes(tabId) ? 'none' : 'block';
                 }
 
-                // Si on ouvre l'onglet Telegram, on charge les invitations
-                if (tabId === 'tab-telegram') {
-                    fetchTelegramBotStatus();
-                    loadInvitations();
-                }
-
                 if (tabId === 'tab-playlists') {
                     renderPlaylists();
                 }
 
-                if (tabId === 'tab-vocal') {
-                    loadAudioDevices();
-                    fetchVoiceControlStatus();
-                }
             }
 
             let availableMusicFiles = []; 
@@ -3072,7 +2678,7 @@
                     if (data.success) {
                         availableMusicFiles = data.files;
                         
-                        // 1. Remplir les sélecteurs de playlist
+                        // 1. Populate the playlist selectors.
                         const newPlaylistMusicSelect = document.getElementById('new-playlist-music');
                         if (newPlaylistMusicSelect) {
                             newPlaylistMusicSelect.innerHTML = `<option value="">${i18n.noMusic}</option>`;
@@ -3084,7 +2690,7 @@
                             });
                         }
 
-                        // 2. Remplir la liste de gestion (Actions)
+                        // 2. Populate the management list (Actions).
                         const listContainer = document.getElementById('music-files-list');
                         if (listContainer) {
                             if (availableMusicFiles.length === 0) {
@@ -3163,9 +2769,9 @@
                 }
             }
 
-            // Restaurer l'onglet actif au chargement de la page
+            // Restore the active tab when the page loads.
             document.addEventListener('DOMContentLoaded', async function () {
-                // --- Nouvelle gestion de la navigation par groupes ---
+                // --- New group navigation management ---
                 const mainNavLinks = document.querySelectorAll('.main-nav-link');
                 const subNavGroups = document.querySelectorAll('.sub-nav-group');
 
@@ -3184,7 +2790,7 @@
                         switchMainGroup(targetGroup);
                         localStorage.setItem('activeMainGroup', targetGroup);
 
-                        // Clique sur le premier onglet du nouveau groupe pour s'assurer qu'un onglet est toujours actif
+                        // Click the first tab in the new group to ensure a tab is always active.
                         const activeGroup = document.getElementById(targetGroup);
                         if (activeGroup) {
                             const firstTabButton = activeGroup.querySelector('.tablink');
@@ -3195,11 +2801,11 @@
                     });
                 });
 
-                // --- Logique de restauration de l'état au chargement de la page ---
+                // --- Restore state when the page loads ---
                 let activeTabId = localStorage.getItem('activeTab') || 'tab-affichage';
                 let activeMainGroup = localStorage.getItem('activeMainGroup');
 
-                // Trouver à quel groupe appartient l'onglet actif
+                // Find which group contains the active tab.
                 const activeTabElement = document.querySelector(`.tablink[onclick*="'${activeTabId}'"]`);
                 if (activeTabElement) {
                     const parentGroup = activeTabElement.closest('.sub-nav-group');
@@ -3208,16 +2814,16 @@
                     }
                 }
 
-                // Si aucun groupe valide n'est trouvé, revenir au groupe par défaut
+                // If no valid group is found, return to the default group.
                 if (!activeMainGroup || !document.getElementById(activeMainGroup)) {
                     activeMainGroup = 'group-diaporama';
                     activeTabId = 'tab-affichage'; // Réinitialiser aussi l'onglet
                 }
 
-                // On utilise l'événement 'load' (au lieu de DOMContentLoaded) pour s'assurer que tout est prêt.
+                // Use the 'load' event (instead of DOMContentLoaded) to ensure everything is ready.
 
 
-                // Initialiser le bouton de lecture pour la nouvelle playlist
+                // Initialize the play button for the new playlist.
                 const newPlaylistMusicSelect = document.getElementById('new-playlist-music');
                 const newPlaylistPlayButton = document.querySelector('.play-music-btn[data-target-select="new-playlist-music"]');
                 if (newPlaylistMusicSelect && newPlaylistPlayButton) {
@@ -3233,18 +2839,18 @@
 
                 await loadMusicFiles(); // Charger les fichiers musicaux AVANT d'activer les onglets
 
-                // Activer le bon groupe et le bon onglet
+                // Activate the correct group and tab.
                 switchMainGroup(activeMainGroup);
                 openTab(null, activeTabId);
 
-                // --- Reste de la logique de chargement de la page ---
+                // --- Remaining page loading logic ---
 
-                // Mettre à jour le badge au chargement (et la grille si l'onglet est déjà actif)
+                // Update the badge on load (and the grid if the tab is already active).
                 refreshValidationTab(); // Appel initial pour mettre à jour le badge
 
                 setInterval(refreshValidationTab, 15000); // Et le mettre à jour périodiquement
 
-                // Mettre à jour le badge des favoris
+                // Update the favorites badge.
                 const favoritesCount = {{ favorite_photos | length }};
             const favoritesBadge = document.getElementById('favorites-count-badge');
             if (favoritesBadge) {
@@ -3256,7 +2862,7 @@
                 }
             }
 
-            // Gérer l'affichage du sélecteur de sortie audio
+            // Manage the audio output selector display.
             const audioEnabledCheckbox = document.getElementById('video_audio_enabled');
             const audioOutputSelector = document.getElementById('audio-output-selector');
             const audioVolumeSelector = document.getElementById('audio-volume-selector');
@@ -3268,20 +2874,12 @@
                 });
             }
 
-            // Lier le slider et le champ numérique pour le volume
+            // Link the volume slider and numeric field.
             const volumeSlider = document.getElementById('video_audio_volume_slider');
             const volumeNumber = document.getElementById('video_audio_volume');
             if (volumeSlider && volumeNumber) {
                 volumeSlider.addEventListener('input', () => { volumeNumber.value = volumeSlider.value; });
                 volumeNumber.addEventListener('input', () => { volumeSlider.value = volumeNumber.value; });
-            }
-
-            // Lier le slider et le champ numérique pour le volume des notifications
-            const notificationVolumeSlider = document.getElementById('notification_volume_slider');
-            const notificationVolumeNumber = document.getElementById('notification_sound_volume');
-            if (notificationVolumeSlider && notificationVolumeNumber) {
-                notificationVolumeSlider.addEventListener('input', () => { notificationVolumeNumber.value = notificationVolumeSlider.value; });
-                notificationVolumeNumber.addEventListener('input', () => { notificationVolumeSlider.value = notificationVolumeSlider.value; });
             }
 
             // --- Password validation ---
@@ -3301,7 +2899,7 @@
             }
 });
 
-            // Script de suppression amélioré
+            // Enhanced deletion script.
             document.querySelectorAll('.delete-button').forEach(button => {
                 button.addEventListener('click', async (event) => {
                     const photo = button.dataset.photo;
@@ -3309,14 +2907,12 @@
                     if (!confirmDelete) return;
 
                     try {
-                        const response = await fetch(`/delete_photo/${photo}`, { method: 'DELETE' });
+                        await photoEditor.remove(photo);
 
-                        if (response.ok) {
-                            // Suppression réussie - recharger la page
-                            // L'onglet actif sera automatiquement restauré grâce au localStorage
+                        {
+                            // Deletion succeeded - reload the page.
+                            // The active tab will be restored automatically from localStorage.
                             location.reload();
-                        } else {
-                            alert("Erreur lors de la suppression.");
                         }
                     } catch (error) {
                         console.error('Erreur:', error);
@@ -3325,18 +2921,18 @@
                 });
             });
 
-            // Script pour supprimer toutes les photos d'une source
+            // Script to delete all photos from a source.
             document.querySelectorAll('.delete-all-btn').forEach(button => {
                 button.addEventListener('click', async (event) => {
                     const source = button.dataset.source;
-                    const confirmDelete = confirm(`Êtes-vous sûr de vouloir supprimer TOUTES les photos de la source "${source}" ? Cette action est irréversible.`);
+                    const confirmDelete = confirm(`Êtes-vous sûr de vouloir supprimer TOUTES les photos de la source "${button.dataset.sourceLabel}" ? Cette action est irréversible.`);
                     if (!confirmDelete) return;
 
                     try {
                         const response = await fetch(`/delete_source_photos/${source}`, { method: 'DELETE' });
 
                         if (response.ok) {
-                            // Recharger la page pour voir les changements
+                            // Reload the page to see the changes.
                             location.reload();
                         } else {
                             const result = await response.json();
@@ -3349,79 +2945,17 @@
                 });
             });
 
-            // Script pour appliquer les filtres
+            // Script to apply filters.
             document.querySelectorAll('.filter-select').forEach(select => {
                 select.addEventListener('change', async (event) => {
-                    const filter = event.target.value;
-                    const photo = select.dataset.photo;
-
-                    const tileElement = select.closest('.photo-tile');
-                    if (!tileElement) return;
-
-                    const spinnerOverlay = tileElement.querySelector('.spinner-overlay');
-                    const imgElement = tileElement.querySelector('img');
-                    const glightboxLink = tileElement.querySelector('a.glightbox');
-
-                    // --- 1. Sauvegarder la préférence de filtre ---
                     try {
-                        await fetch('/api/set_photo_filter', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ photo: photo, filter: filter })
-                        });
-                    } catch (e) {
-                        alert('Erreur lors de la sauvegarde de la préférence.');
-                        return;
-                    }
-
-                    // --- 2. Mettre à jour l'aperçu ---
-                    if (filter === 'none') {
-                        // Ne rien faire à l'aperçu si l'utilisateur sélectionne "Filtre..."
-                        // Pour réinitialiser, l'utilisateur doit choisir "Original".
-                        return;
-                    }
-
-                    if (filter === 'polaroid') {
-                        // Afficher instantanément la version pré-générée
-                        const polaroidPath = photo.replace('.jpg', '_polaroid.jpg');
-                        const newSrc = `/static/prepared/${polaroidPath}?v=${new Date().getTime()}`;
-                        imgElement.src = newSrc;
-                        if (glightboxLink) glightboxLink.href = newSrc;
-                    } else if (filter === 'postcard') {
-                        const postcardPath = photo.replace('.jpg', '_postcard.jpg');
-                        const newSrc = `/static/prepared/${postcardPath}?v=${new Date().getTime()}`;
-                        imgElement.src = newSrc;
-                        if (glightboxLink) glightboxLink.href = newSrc;
-                    } else {
-                        // Pour les autres filtres (y compris 'original'), les appliquer en direct
-                        if (spinnerOverlay) spinnerOverlay.classList.remove('hidden');
-
-                        try {
-                            const response = await fetch('/api/apply_filter', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ photo: photo, filter: filter })
-                            });
-                            const result = await response.json();
-
-                            if (result.success) {
-                                imgElement.onload = () => { if (spinnerOverlay) spinnerOverlay.classList.add('hidden'); imgElement.onload = null; };
-                                imgElement.onerror = () => { if (spinnerOverlay) spinnerOverlay.classList.add('hidden'); alert("Erreur chargement image."); imgElement.onerror = null; };
-                                const newSrc = `${result.new_path}?v=${new Date().getTime()}`;
-                                imgElement.src = newSrc;
-                                if (glightboxLink) glightboxLink.href = newSrc;
-                            } else {
-                                alert(`Erreur : ${result.message}`);
-                                if (spinnerOverlay) spinnerOverlay.classList.add('hidden');
-                            }
-                        } catch (error) {
-                            alert("Erreur de communication avec le serveur.");
-                            if (spinnerOverlay) spinnerOverlay.classList.add('hidden');
-                        }
+                        await photoEditor.applyFilter(select.dataset.photo, event.target.value);
+                    } catch (error) {
+                        alert(error.message);
                     }
                 });
             });
-            // Scripts d'import améliorés avec feedback détaillé
+            // Improved import scripts with detailed feedback.
             document.addEventListener("DOMContentLoaded", () => {
 
                 function createStyledMessage(message, type = 'info') {
@@ -3432,7 +2966,7 @@
                 }
 
                 function displayMessage(container, message, type = 'info') {
-                    // Classes CSS + icônes par type
+                    // CSS classes and icons by type.
                     const types = {
                         success: { class: 'bg-green-100 text-green-800 border-green-300', icon: 'fa-check-circle' },
                         error: { class: 'bg-red-100 text-red-800 border-red-300', icon: 'fa-exclamation-circle' },
@@ -3443,7 +2977,7 @@
 
                     const config = types[type] || types.info;
 
-                    // Message avec icône
+                    // Message with icon.
                     const messageElement = document.createElement('div');
                     messageElement.className = `p-2 mb-1 rounded border shadow-sm flex items-center ${config.class}`;
                     messageElement.innerHTML = `
@@ -3453,7 +2987,7 @@
 
                     container.appendChild(messageElement);
 
-                    // Limite à 10 lignes (inchangé)
+                    // Limit to 10 lines (unchanged).
                     const maxLines = 10;
                     while (container.children.length > maxLines) {
                         container.removeChild(container.firstChild);
@@ -3462,7 +2996,7 @@
                     container.scrollTop = container.scrollHeight;
                 }
 
-                // --- Gestion des favoris (placé ici pour être sûr que le DOM est chargé) ---
+                // --- Favorites management (placed here to ensure the DOM has loaded) ---
                 document.querySelectorAll('.favorite-btn').forEach(button => {
                     button.addEventListener('click', async (event) => {
                         const btn = event.currentTarget;
@@ -3471,20 +3005,15 @@
                         btn.disabled = true; // Empêcher les clics multiples
 
                         try {
-                            const response = await fetch('/api/toggle_favorite', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ photo: photo })
-                            });
-                            const result = await response.json();
+                            const result = await photoEditor.favorite(photo);
                             if (result.success) {
-                                // Mettre à jour tous les boutons correspondants (un dans l'aperçu, un dans les favoris)
+                                // Update all corresponding buttons (one in the preview, one in favorites).
                                 document.querySelectorAll(`.favorite-btn[data-photo="${photo}"]`).forEach(b => {
                                     b.classList.toggle('text-yellow-400', result.is_favorite);
                                     b.classList.toggle('text-gray-400', !result.is_favorite);
                                 });
 
-                                // --- Logique de mise à jour dynamique ---
+                                // --- Dynamic update logic ---
                                 const favoritesBadge = document.getElementById('favorites-count-badge');
                                 let count = parseInt(favoritesBadge.textContent, 10) || 0;
 
@@ -3507,7 +3036,7 @@
                     });
                 });
 
-                // --- Gestion du texte sur les Polaroids ---
+                // --- Polaroid text management ---
                 const debounce = (func, delay) => {
                     let timeoutId;
                     return (...args) => {
@@ -3525,43 +3054,17 @@
                     const photoPath = container.dataset.photo;
                     const statusSpan = container.querySelector('.generic-text-status');
                     const tile = input.closest('.photo-tile');
-                    const imgElement = tile.querySelector('img');
-                    const glightboxLink = tile.querySelector('a.glightbox');
-
                     if (statusSpan) statusSpan.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
-                    // Trouver le filtre actif pour savoir quelle API appeler
-                    const filterSelect = document.querySelector(`.filter-select[data-photo="${photoPath}"]`);
+                    // Find the active filter to determine which API to call.
+                    const filterSelect = tile.querySelector('.filter-select');
                     const activeFilter = filterSelect ? filterSelect.value : 'none';
 
-                    let apiUrl, bodyData;
-                    if (activeFilter === 'polaroid') {
-                        apiUrl = '/api/set_polaroid_text';
-                        bodyData = { photo: photoPath, text: text };
-                    } else {
-                        apiUrl = '/api/set_image_text';
-                        bodyData = { photo: photoPath, text: text };
-                    }
-
                     try {
-                        const response = await fetch(apiUrl, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(bodyData)
-                        });
-                        const result = await response.json();
+                        const result = await photoEditor.caption(photoPath, text, activeFilter);
                         if (result.success) {
                             if (statusSpan) { statusSpan.innerHTML = '<i class="fas fa-check text-green-500"></i>'; setTimeout(() => { statusSpan.innerHTML = ''; }, 2000); }
 
-                            let newSrc;
-                            if (activeFilter === 'polaroid') {
-                                const polaroidFilename = photoPath.replace(/\.[^/.]+$/, "") + '_polaroid.jpg';
-                                newSrc = `/static/prepared/${polaroidFilename}?v=${new Date().getTime()}`;
-                            } else {
-                                newSrc = `/static/prepared/${photoPath}?v=${new Date().getTime()}`;
-                            }
-                            imgElement.src = newSrc;
-                            if (glightboxLink) glightboxLink.href = newSrc;
                         } else { if (statusSpan) statusSpan.innerHTML = `<i class="fas fa-times text-red-500" title="${result.message}"></i>`; }
                     } catch (error) { if (statusSpan) statusSpan.innerHTML = `<i class="fas fa-exclamation-triangle text-red-500" title="${error}"></i>`; }
                 };
@@ -3570,7 +3073,7 @@
                     input.addEventListener('input', debounce(handleGenericTextInput, 1000));
                 });
 
-                // --- GESTION DES PLAYLISTS ---
+                // --- Playlist management ---
                 const playlistsContainer = document.getElementById('playlists-list-container');
                 const createPlaylistBtn = document.getElementById('create-playlist-btn');
                 const newPlaylistNameInput = document.getElementById('new-playlist-name');
@@ -3684,7 +3187,7 @@
                             } catch (e) {
                                 alert("{{ _('Erreur de communication.') }}");
                             } finally {
-                                // Réactiver le bouton après un court délai
+                                // Re-enable the button after a short delay.
                                 setTimeout(() => {
                                     startBtn.disabled = false;
                                     startBtn.innerHTML = '<i class="fas fa-play mr-2"></i>{{ _("Lancer") }}';
@@ -3694,7 +3197,7 @@
                     });
                 }
 
-                // --- Gérer les clics sur les boutons de lecture des playlists existantes via délégation ---
+                // --- Handle clicks on existing playlist play buttons via delegation ---
                 const playlistsListContainer = document.getElementById('playlists-list-container');
                 if (playlistsListContainer) {
                     playlistsListContainer.addEventListener('click', (event) => {
@@ -3709,7 +3212,7 @@
                     });
                 }
 
-                // --- Logique pour ajouter une photo à une playlist ---
+                // --- Logic for adding a photo to a playlist ---
                 document.body.addEventListener('click', async (event) => {
                     const addToPlaylistBtn = event.target.closest('.add-to-playlist-btn');
                     if (addToPlaylistBtn) {
@@ -3719,7 +3222,7 @@
                         // Fermer les autres menus ouverts
                         document.querySelectorAll('.add-to-playlist-menu').forEach(m => { if (m !== menu) m.classList.add('hidden'); });
 
-                        // Remplir et afficher le menu
+                        // Populate and display the menu.
                         const response = await fetch('/api/playlists');
                         const playlists = await response.json();
                         menu.innerHTML = '';
@@ -3746,12 +3249,12 @@
                         }
                         menu.classList.toggle('hidden');
                     } else if (!event.target.closest('.add-to-playlist-menu')) {
-                        // Fermer tous les menus si on clique en dehors
+                        // Close all menus when clicking outside.
                         document.querySelectorAll('.add-to-playlist-menu').forEach(m => m.classList.add('hidden'));
                     }
                 });
 
-                // --- Gestion du téléchargement des photos originales ---
+                // --- Original photo download management ---
                 document.body.addEventListener('click', (event) => {
                     const btn = event.target.closest('.save-original-btn');
                     if (btn && btn.tagName === 'BUTTON') {
@@ -3766,7 +3269,7 @@
                     }
                 });
 
-                // ----- NOUVELLE GESTION DES IMPORTS (USB, IMMICH, SAMBA) -----
+                // ----- USB IMPORT MANAGEMENT -----
                 function handleImportProcess(source) {
                     const btn = document.getElementById(`${source}-import-btn`);
                     const progressBar = document.getElementById(`${source}-progress-bar`);
@@ -3799,7 +3302,7 @@
                     }
 
                     function startPreparation() {
-                        //displayMessage(statusDiv, "Étape 1/2: Importation terminée. Démarrage de la préparation...", 'info');
+                        //displayMessage(statusDiv, "Step 1/2: Import complete. Starting preparation...", 'info');
                         progressBar.style.width = "25%";
                         progressBar.textContent = "25%";
 
@@ -3813,7 +3316,7 @@
                                 progressBar.textContent = `${data.percent || 0}%`;
                                 displayMessage(statusDiv, `{{ _("Préparation :") }} ${data.message}`, data.type);
 
-                                // Mettre à jour l'image d'aperçu si elle est fournie
+                                // Update the preview image if provided.
                                 if (data.current_photo_url && previewImage) {
                                     previewImage.src = data.current_photo_url;
                                 }
@@ -3822,7 +3325,7 @@
                                     prepareEventSource.close();
                                     displayMessage(statusDiv, "{{ _('Préparation terminée ! Redémarrage du diaporama...') }}", 'success');
 
-                                    // Envoyer la requête pour redémarrer le diaporama
+                                    // Send the request to restart the slideshow.
                                     fetch('/api/slideshow/restart_for_update', { method: 'POST' })
                                         .then(response => response.json())
                                         .then(result => {
@@ -3880,216 +3383,8 @@
                 }
 
                 document.getElementById("usb-import-btn").addEventListener("click", () => handleImportProcess('usb'));
-                document.getElementById("immich-import-btn").addEventListener("click", () => handleImportProcess('immich'));
-                document.getElementById("samba-import-btn").addEventListener("click", () => handleImportProcess('samba'));
 
-                // ----- TEST SAMBA CONNECTION -----
-                document.getElementById("samba-test-btn").addEventListener("click", async () => {
-                    const btn = document.getElementById("samba-test-btn");
-                    const statusSpan = document.getElementById("samba-test-status");
-
-                    // Get values from the form
-                    const host = document.getElementById("smb_host").value;
-                    const share = document.getElementById("smb_share").value;
-                    const path = document.getElementById("smb_path").value;
-                    const user = document.getElementById("smb_user").value;
-                    const password = document.getElementById("smb_password").value;
-
-                    // Provide immediate feedback
-                    statusSpan.textContent = "{{ _('Test en cours...') }}";
-                    statusSpan.className = "ml-4 font-medium text-blue-600";
-                    btn.disabled = true;
-
-                    try {
-                        const response = await fetch('/test-samba', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                smb_host: host,
-                                smb_share: share,
-                                smb_path: path,
-                                smb_user: user,
-                                smb_password: password
-                            }),
-                        });
-
-                        const result = await response.json();
-
-                        statusSpan.textContent = result.message;
-                        statusSpan.className = result.success ? "ml-4 font-medium text-green-600" : "ml-4 font-medium text-red-600";
-
-                    } catch (error) {
-                        statusSpan.textContent = "{{ _('Erreur de communication avec le serveur.') }}";
-                        statusSpan.className = "ml-4 font-medium text-red-600";
-                    } finally {
-                        btn.disabled = false;
-                    }
-                });
-
-                // ----- TEST WEATHER API -----
-                const testWeatherBtn = document.getElementById("testWeatherApiKeyBtn");
-                if (testWeatherBtn) {
-                    testWeatherBtn.addEventListener("click", async () => {
-                        const btn = testWeatherBtn;
-                        const statusSpan = document.getElementById("weatherApiTestResult");
-
-                        const apiKey = document.getElementById("weather_api_key").value;
-                        const city = document.getElementById("weather_city").value;
-
-                        statusSpan.textContent = "{{ _('Test en cours...') }}";
-                        statusSpan.className = "ml-4 font-medium text-blue-600";
-                        btn.disabled = true;
-
-                        try {
-                            const response = await fetch('/test-weather-api', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ api_key: apiKey, city: city }),
-                            });
-
-                            const result = await response.json();
-
-                            statusSpan.textContent = result.message;
-                            statusSpan.className = result.success ? "ml-4 font-medium text-green-600" : "ml-4 font-medium text-red-600";
-
-                        } catch (error) {
-                            statusSpan.textContent = "{{ _('Erreur de communication avec le serveur.') }}";
-                            statusSpan.className = "ml-4 font-medium text-red-600";
-                        } finally {
-                            btn.disabled = false;
-                        }
-                    });
-                }
-
-                // ----- TEST TELEGRAM API -----
-                const testTelegramBtn = document.getElementById("testTelegramBtn");
-                if (testTelegramBtn) {
-                    testTelegramBtn.addEventListener("click", async () => {
-                        const btn = testTelegramBtn;
-                        const statusSpan = document.getElementById("telegramTestResult");
-
-                        const token = document.getElementById("telegram_bot_token").value;
-
-                        statusSpan.textContent = i18n.testing;
-                        statusSpan.className = "ml-4 font-medium text-blue-600";
-                        btn.disabled = true;
-
-                        try {
-                            const response = await fetch('/test-telegram', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ token: token }),
-                            });
-
-                            const result = await response.json();
-
-                            statusSpan.textContent = result.message;
-                            statusSpan.className = result.success ? "ml-4 font-medium text-green-600" : "ml-4 font-medium text-red-600";
-
-                        } catch (error) {
-                            statusSpan.textContent = i18n.commErrorServer;
-                            statusSpan.className = "ml-4 font-medium text-red-600";
-                        } finally {
-                            btn.disabled = false;
-                        }
-                    });
-                }
-
-                // --- Gestion des invitations Telegram ---
-                const createInviteBtn = document.getElementById('create-invite-btn');
-                const invitationsListDiv = document.getElementById('invitations-list');
-
-                if (createInviteBtn) {
-                    createInviteBtn.addEventListener('click', async () => {
-                        const name = document.getElementById('new-invite-name').value;
-                        const duration = document.getElementById('new-invite-duration').value;
-
-                        if (!name.trim()) {
-                            alert(i18n.enterGuestName);
-                            return;
-                        }
-
-                        try {
-                            const response = await fetch('/api/telegram/invitations', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ name, duration })
-                            });
-                            const result = await response.json();
-                            if (result.success) {
-                                document.getElementById('new-invite-name').value = '';
-                                loadInvitations(); // Recharger la liste
-                            } else {
-                                alert(`${i18n.errorPrefix} ${result.message}`);
-                            }
-                        } catch (error) {
-                            alert(i18n.commErrorServer);
-                        }
-                    });
-                }
-
-                if (invitationsListDiv) {
-                    invitationsListDiv.addEventListener('click', async (event) => {
-                        const deleteBtn = event.target.closest('.delete-invite-btn');
-                        const revokeBtn = event.target.closest('.revoke-invite-btn');
-                        const copyBtn = event.target.closest('.copy-link-btn');
-
-                        if (copyBtn) {
-                            const linkToCopy = copyBtn.dataset.link;
-                            const icon = copyBtn.querySelector('i');
-                            copyToClipboard(linkToCopy,
-                                () => { // On Success
-                                    icon.className = 'fas fa-check text-green-500';
-                                    setTimeout(() => {
-                                        icon.className = 'fas fa-copy';
-                                    }, 2000);
-                                },
-                                (err) => { // On Error
-                                    console.error('Failed to copy: ', err);
-                                    alert(i18n.copyFailed);
-                                }
-                            );
-                        }
-
-                        if (deleteBtn) {
-                            const code = deleteBtn.dataset.code;
-                            if (confirm(i18n.confirmDeleteInvite)) {
-                                try {
-                                    const response = await fetch(`/api/telegram/invitations/${code}`, { method: 'DELETE' });
-                                    const result = await response.json();
-                                    if (result.success) {
-                                        loadInvitations();
-                                    } else {
-                                        alert(`${i18n.errorPrefix} ${result.message}`);
-                                    }
-                                } catch (error) {
-                                    alert(i18n.commErrorServer);
-                                }
-                            }
-                        }
-
-                        if (revokeBtn) {
-                            const code = revokeBtn.dataset.code;
-                            if (confirm(i18n.confirmRevokeInvite)) {
-                                try {
-                                    const response = await fetch(`/api/telegram/invitations/${code}/revoke`, { method: 'POST' });
-                                    const result = await response.json();
-                                    if (result.success) {
-                                        loadInvitations(); // Recharger la liste pour voir le changement de statut
-                                    } else {
-                                        alert(`${i18n.errorPrefix} ${result.message}`);
-                                    }
-                                } catch (error) {
-                                    alert(i18n.commErrorServer);
-                                }
-                            }
-                        }
-                    });
-                }
-
-                // --- État des marées ---
+                // --- Tide status ---
                 async function fetchTideInfo() {
                     const tideListDiv = document.getElementById('tide-list');
                     const tideLastUpdate = document.getElementById('tide-last-update');
@@ -4196,22 +3491,27 @@
                     });
                 }
 
-                // Mise à jour périodique
+                // Periodic update.
                 fetchTideInfo(); // Appel initial
                 setInterval(fetchTideInfo, 30000); // Mise à jour toutes les 30 secondes
 
                 // ----- IMPORT SMARTPHONE -----
-                document.getElementById('smartphone-upload-form').addEventListener('submit', function (event) {
-                    event.preventDefault(); // Prevent default form submission
-
-                    const form = event.target;
-                    const formData = new FormData(form);
-                    const btn = document.getElementById('import-smartphone-btn');
+                const photoFilesInput = document.getElementById('photo-files-input');
+                const photoFolderInput = document.getElementById('photo-folder-input');
+                document.getElementById('import-smartphone-btn').addEventListener('click', () => photoFilesInput.click());
+                document.getElementById('import-folder-btn').addEventListener('click', () => photoFolderInput.click());
+                [photoFilesInput, photoFolderInput].forEach(input => input.addEventListener('change', async function () {
+                    const formData = new FormData();
+                    const files = Array.from(this.files).filter(file => /\.(jpe?g|png|heic|heif)$/i.test(file.name));
+                    files.forEach(file => formData.append('photos', file, file.name));
+                    const btn = document.getElementById(input === photoFolderInput ? 'import-folder-btn' : 'import-smartphone-btn');
+                    const originalButtonHTML = btn.innerHTML;
                     const progressBar = document.getElementById('smartphone-progress-bar');
                     const progressContainer = document.getElementById('smartphone-progress-container');
                     const statusDiv = document.getElementById('smartphone-import-status');
                     const allImportButtons = document.querySelectorAll('.import-button, #import-smartphone-btn');
                     let hasErrorOccurred = false; // Flag to track errors
+                    let completed = false;
 
                     // Check if files were selected
                     if (!formData.has('photos') || !formData.get('photos').name) {
@@ -4232,39 +3532,26 @@
                     progressContainer.classList.remove('hidden');
                     statusDiv.innerHTML = '';
 
-                    fetch('/import-smartphone', {
+                    try {
+                        const response = await fetch('/import-smartphone', {
                         method: 'POST',
                         body: formData
-                    })
-                        .then(response => {
+                        });
                             if (!response.ok) {
+                                if (response.status === 413) {
+                                    throw new Error({{ _("Selection exceeds the 32 MB upload limit. Import fewer photos at a time.") | tojson }});
+                                }
                                 throw new Error(`Erreur HTTP: ${response.status}`);
                             }
                             const reader = response.body.getReader();
                             const decoder = new TextDecoder();
 
-                            function processStream() {
-                                reader.read().then(({ done, value }) => {
-                                    if (done) { // Stream finished
-                                        if (!hasErrorOccurred) {
-                                            displayMessage(statusDiv, "{{ _('Importation réussie ! Rechargement de la page...') }}", 'success');
-                                            setTimeout(() => { location.reload(); }, 2000);
-                                        } else {
-                                            // Re-enable buttons after a delay if there was an error
-                                            setTimeout(() => {
-                                                allImportButtons.forEach(b => {
-                                                    b.disabled = false;
-                                                    b.classList.remove("opacity-50", "cursor-not-allowed");
-                                                });
-                                                btn.innerHTML = '<i class="fas fa-upload"></i> {{ _("Envoyer les photos") }}';
-                                            }, 5000);
-                                        }
-                                        return; // End the stream processing
-                                    }
-
-                                    // Process the stream chunk
-                                    const chunk = decoder.decode(value, { stream: true });
-                                    const lines = chunk.split('\n\n');
+                            let buffer = '';
+                            while (true) {
+                                    const { done, value } = await reader.read();
+                                    buffer += done ? decoder.decode() : decoder.decode(value, { stream: true });
+                                    const lines = buffer.split('\n\n');
+                                    buffer = lines.pop();
                                     lines.forEach(line => {
                                         if (line.startsWith('data: ')) {
                                             try {
@@ -4275,25 +3562,32 @@
                                                 if (data.type === 'error') {
                                                     hasErrorOccurred = true;
                                                 }
+                                                if (data.type === 'done') completed = true;
                                             } catch (e) {
                                                 displayMessage(statusDiv, "{{ _('Données invalides reçues du serveur.') }}", 'error');
                                                 hasErrorOccurred = true;
                                             }
                                         }
                                     });
-                                    processStream();
-                                });
+                                    if (done) break;
                             }
-                            processStream();
-                        })
-                        .catch(error => {
+                            if (!completed && !hasErrorOccurred) {
+                                throw new Error({{ _("Import ended before completion. Please try again.") | tojson }});
+                            }
+                            if (completed && !hasErrorOccurred) {
+                                const sourceCheckbox = document.getElementById('display_source_smartphone');
+                                if (sourceCheckbox) sourceCheckbox.checked = true;
+                            }
+                    } catch (error) {
                             displayMessage(statusDiv, `{{ _('Erreur de communication :') }} ${error.message}`, 'error');
+                    } finally {
                             allImportButtons.forEach(b => { b.disabled = false; b.classList.remove("opacity-50", "cursor-not-allowed"); });
-                            btn.innerHTML = '<i class="fas fa-upload"></i> {{ _("Envoyer les photos") }}';
-                        });
-                });
+                            btn.innerHTML = originalButtonHTML;
+                            input.value = '';
+                    }
+                }));
 
-                // --- GESTION DE L'UPLOAD DE MUSIQUE ---
+                // --- MUSIC UPLOAD MANAGEMENT ---
                 const musicUploadInput = document.getElementById('music-upload-input');
                 const musicUploadFilename = document.getElementById('music-upload-filename');
                 const musicUploadBtn = document.getElementById('music-upload-btn');
@@ -4338,7 +3632,7 @@
                     });
                 }
 
-                // --- GESTION DE LA SUPPRESSION DE MUSIQUE ---
+                // --- MUSIC DELETION MANAGEMENT ---
                 const musicFilesList = document.getElementById('music-files-list');
                 if (musicFilesList) {
                     musicFilesList.addEventListener('click', async (event) => {
@@ -4366,8 +3660,8 @@
                     });
                 }
 
-                // ----- GESTION DE LA VALIDATION (Écouteurs d'événements) -----
-                // Ces écouteurs utilisent les fonctions globales définies plus haut.
+                // ----- APPROVAL MANAGEMENT (event listeners) -----
+                // These listeners use the global functions defined above.
                 const grid = document.getElementById('pending-photos-grid');
                 if (grid) {
                     grid.addEventListener('click', function (event) {
@@ -4392,38 +3686,7 @@
 
         <script>
             document.addEventListener("DOMContentLoaded", () => {
-                // Fonction pour formater les dates ISO en format lisible
-                function formatDateTime(isoString) {
-                    if (!isoString) return "N/A";
-                    const date = new Date(isoString);
-                    // Options pour un format français lisible
-                    const options = {
-                        year: 'numeric', month: 'short', day: 'numeric',
-                        hour: '2-digit', minute: '2-digit', second: '2-digit',
-                        hour12: false // Format 24h
-                    };
-                    return date.toLocaleString('fr-FR', options);
-                }
-
-                // Fonction générique pour récupérer et afficher le statut d'un worker
-                async function fetchWorkerStatus(workerName, statusManagerId, lastRunId, nextRunId) {
-                    try {
-                        const response = await fetch(`/${workerName}_update_status`);
-                        const data = await response.json();
-
-                        document.getElementById(statusManagerId).textContent = data.status_message;
-                        document.getElementById(lastRunId).textContent = formatDateTime(data.last_run);
-                        document.getElementById(nextRunId).textContent = formatDateTime(data.next_run);
-
-                    } catch (error) {
-                        console.error(`Erreur lors de la récupération du statut ${workerName}:`, error);
-                        document.getElementById(statusManagerId).textContent = "{{ _('Erreur de connexion') }}";
-                        document.getElementById(lastRunId).textContent = "N/A";
-                        document.getElementById(nextRunId).textContent = "N/A";
-                    }
-                }
-
-                // --- Gestion de la résolution ---
+                // --- Resolution management ---
                 const resolutionSelector = document.getElementById('resolution-selector');
                 const applyResolutionBtn = document.getElementById('apply-resolution-btn');
                 const resolutionStatus = document.getElementById('resolution-status');
@@ -4477,7 +3740,7 @@
                             const result = await response.json();
                             resolutionStatus.textContent = result.message;
                             resolutionStatus.className = result.success ? 'text-sm mt-2 text-green-600' : 'text-sm mt-2 text-red-600';
-                            // Mettre à jour les champs de texte manuels
+                            // Update the manual text fields.
                             document.getElementById('display_width').value = width;
                             document.getElementById('display_height').value = height;
                         } catch (error) {
@@ -4489,7 +3752,7 @@
                     });
                 }
 
-                // --- Contrôles du diaporama ---
+                // --- Slideshow controls ---
                 async function sendSlideshowCommand(command) {
                     try {
                         const response = await fetch(`/api/slideshow/${command}`, { method: 'POST' });
@@ -4497,14 +3760,14 @@
                         if (!result.success) {
                             alert(`Erreur: ${result.message}`);
                         }
-                        // Après avoir envoyé une commande, on met à jour l'état des contrôles
+                        // Update the control state after sending a command.
                         updateSlideshowControlsState();
                     } catch (error) {
                         alert("{{ _('Erreur de communication avec le serveur.') }}");
                     }
                 }
 
-                // NOUVEAU: Gestion des contrôles du diaporama (basée sur les classes)
+                // NEW: Slideshow control management (class-based).
                 document.querySelectorAll('.slideshow-control-btn').forEach(btn => {
                     btn.addEventListener('click', () => {
                         const command = btn.dataset.command;
@@ -4514,7 +3777,7 @@
                     });
                 });
 
-                // Gestion du basculement des notifications
+                // Notification toggle management.
                 document.querySelectorAll('.notification-toggle-btn').forEach(btn => {
                     btn.addEventListener('click', async () => {
                         try {
@@ -4523,9 +3786,6 @@
                             if (result.success) {
                                 showToast(result.enabled ? "{{ _('Notifications activées') }}" : "{{ _('Notifications désactivées') }}");
                                 updateSlideshowControlsState();
-                                // Synchroniser la checkbox dans l'onglet Telegram si elle existe
-                                const cb = document.querySelector('input[name="display_telegram_notification_overlay"]');
-                                if (cb) cb.checked = result.enabled;
                             }
                         } catch (error) {
                             console.error("Erreur toggle notifications:", error);
@@ -4533,7 +3793,7 @@
                     });
                 });
 
-                // NOUVEAU: Bouton pour arrêter la playlist et revenir au standard
+                // NEW: Button to stop the playlist and return to the standard slideshow.
                 const stopPlaylistBtn = document.getElementById('stop-playlist-btn');
                 if (stopPlaylistBtn) {
                     stopPlaylistBtn.addEventListener('click', async () => {
@@ -4545,7 +3805,7 @@
                             const result = await response.json();
                             if (result.success) {
                                 showToast("{{ _('Diaporama standard relancé.') }}");
-                                // Recharger la page pour s'assurer que tous les états sont corrects
+                                // Reload the page to ensure all states are correct.
                                 setTimeout(() => location.reload(), 1500);
                             } else {
                                 alert("{{ _('Erreur :') }} " + result.message);
@@ -4570,12 +3830,12 @@
                         const isRunning = data.running;
                         const isPaused = data.paused;
 
-                        // Activer/désactiver les boutons si le diaporama tourne
+                        // Enable or disable buttons depending on whether the slideshow is running.
                         controlBtns.forEach(btn => {
                             btn.disabled = !isRunning;
                         });
 
-                        // Mettre à jour l'icône de pause/lecture
+                        // Update the pause/play icon.
                         document.querySelectorAll('.slideshow-pause-icon').forEach(icon => {
                             const btn = icon.closest('button');
                             if (isRunning && isPaused) {
@@ -4589,7 +3849,7 @@
                             }
                         });
 
-                        // Mettre à jour l'état du bouton de notification
+                        // Update the notification button state.
                         const notifEnabled = data.notifications_enabled;
                         document.querySelectorAll('.notification-toggle-btn').forEach(btn => {
                             const icon = btn.querySelector('i');
@@ -4598,11 +3858,11 @@
                             icon.className = notifEnabled ? 'fas fa-bell fa-xs' : 'fas fa-bell-slash fa-xs';
                         });
 
-                        // Gérer la visibilité du bouton d'arrêt de playlist
+                        // Manage the visibility of the playlist stop button.
                         const stopPlaylistBtn = document.getElementById('stop-playlist-btn');
                         const noPlaylistIdleBtn = document.getElementById('no-playlist-idle-btn');
                         if (stopPlaylistBtn && noPlaylistIdleBtn) {
-                            // On affiche le bouton d'arrêt seulement si le diaporama tourne ET qu'une playlist est active
+                            // Show the stop button only when the slideshow is running AND a playlist is active.
                             if (isRunning && data.is_custom) {
                                 stopPlaylistBtn.classList.remove('hidden');
                                 noPlaylistIdleBtn.classList.add('hidden');
@@ -4617,23 +3877,14 @@
                     }
                 }
 
-                // Mise à jour initiale au chargement de la page
-                fetchWorkerStatus("immich", "immich-worker-status-message", "immich-last-update-time", "immich-next-update-time");
-                fetchWorkerStatus("samba", "samba-worker-status-message", "samba-last-update-time", "samba-next-update-time");
-
-                // Mise à jour périodique toutes les 5 secondes
-                setInterval(() => {
-                    fetchWorkerStatus("immich", "immich-worker-status-message", "immich-last-update-time", "immich-next-update-time");
-                    fetchWorkerStatus("samba", "samba-worker-status-message", "samba-last-update-time", "samba-next-update-time");
-                }, 5000); // 5000 ms = 5 secondes
                 fetchAndPopulateResolutions(); // Charger les résolutions au démarrage
                 setInterval(updateSlideshowControlsState, 5000); // Mettre à jour l'état des boutons
                 updateSlideshowControlsState(); // Appel initial
 
-                // --- Détection de la résolution ---
+                // --- Resolution detection ---
                 const detectResBtn = document.getElementById("detect-resolution-btn");
 
-                // Only run this logic if the button exists (i.e., we are on the 'tab-affichage' tab or it's loaded)
+                // Only run this logic if the button exists (i.e., the 'tab-affichage' tab is loaded).
                 if (detectResBtn) {
                     async function fetchAndSetResolution() {
                         const originalTooltip = detectResBtn.title;
@@ -4670,12 +3921,12 @@
                     detectResBtn.addEventListener("click", fetchAndSetResolution);
                 }
 
-                // --- Aperçu en direct ---
+                // --- Live preview ---
                 const livePreviewImage = document.getElementById('live-preview-image');
                 const livePreviewStatus = document.getElementById('live-preview-status');
                 let diskUsageChart; // NOUVEAU: pour le graphique d'utilisation Disque
 
-                // Fonction pour créer ou mettre à jour le graphique d'utilisation Disque
+                // Function to create or update the disk usage chart.
                 function updateDiskUsageChart(historyData) {
                     const ctx = document.getElementById('diskUsageChart').getContext('2d');
                     if (!ctx) return;
@@ -4684,12 +3935,12 @@
                     const usages = historyData.map(d => d.usage);
 
                     if (diskUsageChart) {
-                        // Mettre à jour un graphique existant
+                        // Update an existing chart.
                         diskUsageChart.data.labels = labels;
                         diskUsageChart.data.datasets[0].data = usages;
                         diskUsageChart.update();
                     } else {
-                        // Créer un nouveau graphique
+                        // Create a new chart.
                         diskUsageChart = new Chart(ctx, {
                             type: 'line',
                             data: {
@@ -4727,7 +3978,7 @@
                 }
                 let ramUsageChart; // NOUVEAU: pour le graphique d'utilisation RAM
 
-                // Fonction pour créer ou mettre à jour le graphique d'utilisation RAM
+                // Function to create or update the RAM usage chart.
                 function updateRamUsageChart(historyData) {
                     const ctx = document.getElementById('ramUsageChart').getContext('2d');
                     if (!ctx) return;
@@ -4736,12 +3987,12 @@
                     const usages = historyData.map(d => d.usage);
 
                     if (ramUsageChart) {
-                        // Mettre à jour un graphique existant
+                        // Update an existing chart.
                         ramUsageChart.data.labels = labels;
                         ramUsageChart.data.datasets[0].data = usages;
                         ramUsageChart.update();
                     } else {
-                        // Créer un nouveau graphique
+                        // Create a new chart.
                         ramUsageChart = new Chart(ctx, {
                             type: 'line',
                             data: {
@@ -4779,7 +4030,7 @@
                 }
                 let cpuUsageChart; // NOUVEAU: pour le graphique d'utilisation
 
-                // Fonction pour créer ou mettre à jour le graphique d'utilisation CPU
+                // Function to create or update the CPU usage chart.
                 function updateCpuUsageChart(historyData) {
                     const ctx = document.getElementById('cpuUsageChart').getContext('2d');
                     if (!ctx) return;
@@ -4788,12 +4039,12 @@
                     const usages = historyData.map(d => d.usage); // Utiliser 'usage'
 
                     if (cpuUsageChart) {
-                        // Mettre à jour un graphique existant
+                        // Update an existing chart.
                         cpuUsageChart.data.labels = labels;
                         cpuUsageChart.data.datasets[0].data = usages;
                         cpuUsageChart.update();
                     } else {
-                        // Créer un nouveau graphique
+                        // Create a new chart.
                         cpuUsageChart = new Chart(ctx, {
                             type: 'line',
                             data: {
@@ -4831,7 +4082,7 @@
                 }
                 let cpuChart; // Variable globale pour l'instance du graphique
 
-                // Fonction pour créer ou mettre à jour le graphique de température
+                // Function to create or update the temperature chart.
                 function updateCpuTempChart(historyData) {
                     const ctx = document.getElementById('cpuTempChart').getContext('2d');
                     if (!ctx) return;
@@ -4840,12 +4091,12 @@
                     const temps = historyData.map(d => d.temp);
 
                     if (cpuChart) {
-                        // Mettre à jour un graphique existant
+                        // Update an existing chart.
                         cpuChart.data.labels = labels;
                         cpuChart.data.datasets[0].data = temps;
                         cpuChart.update();
                     } else {
-                        // Créer un nouveau graphique
+                        // Create a new chart.
                         cpuChart = new Chart(ctx, {
                             type: 'line',
                             data: {
@@ -4898,8 +4149,26 @@
                             throw new Error(`HTTP error! status: ${response.status}`);
                         }
                         const data = await response.json();
+                        ['live-preview-metadata', 'playlist-live-preview-metadata'].forEach(id => {
+                            const caption = document.getElementById(id);
+                            if (!caption) return;
+                            const visible = data.status !== 'stopped' && Boolean(data.current_photo);
+                            const text = visible ? (data.metadata_text || {{ _('No Metadata') | tojson }}) : '';
+                            caption.textContent = text;
+                            caption.title = text;
+                            caption.classList.toggle('hidden', !visible);
+                        });
 
                         // Function to update a specific set of live preview elements
+                        ['live-preview-location', 'playlist-live-preview-location'].forEach(id => {
+                            const caption = document.getElementById(id);
+                            if (!caption) return;
+                            const visible = data.status !== 'stopped' && Boolean(data.current_photo);
+                            const text = visible ? (data.location_text || {{ _('No location metadata') | tojson }}) : '';
+                            caption.textContent = text;
+                            caption.title = text;
+                            caption.classList.toggle('hidden', !visible);
+                        });
                         function updateElements(statusElement, imageElement, controlsElement, boxElement) {
                             if (!statusElement || !imageElement) return; // Skip if elements don't exist
 
@@ -4911,7 +4180,7 @@
                                 if (boxElement) boxElement.classList.add('hidden');
                             } else {
                                 if (data.current_photo) {
-                                    // Mettre à jour la source de l'image uniquement si elle a changé
+                                    // Update the image source only if it has changed.
                                     if (imageElement.src !== data.current_photo) {
                                         imageElement.src = data.current_photo;
                                     }
@@ -4933,6 +4202,15 @@
                         updateElements(playlistLivePreviewStatus, playlistLivePreviewImage);
                     } catch (error) {
                         console.error('Erreur de mise à jour de l\'aperçu en direct:', error);
+                        ['live-preview-metadata', 'playlist-live-preview-metadata',
+                         'live-preview-location', 'playlist-live-preview-location'].forEach(id => {
+                            const caption = document.getElementById(id);
+                            if (caption) {
+                                caption.textContent = '';
+                                caption.title = '';
+                                caption.classList.add('hidden');
+                            }
+                        });
                         // Handle error for both sets of elements
                         if (actionsLivePreviewStatus && actionsLivePreviewImage) {
                             actionsLivePreviewStatus.textContent = "{{ _('Erreur de connexion.') }}";
@@ -4947,15 +4225,13 @@
                     }
                 }
 
-                // Mettre à jour toutes les 5 secondes et une fois au chargement
+                // Update every 5 seconds and once on page load.
                 setInterval(updateLivePreview, 5000);
                 updateLivePreview();
 
-                setInterval(fetchTelegramBotStatus, 10000);
+                // --- System information and logs ---
 
-                // --- Informations Système et Logs ---
-
-                // Fonction pour récupérer et afficher l'état du Wi-Fi
+                // Function to retrieve and display Wi-Fi status.
                 async function fetchWifiStatus() {
                     const stateSpan = document.getElementById('wifi-connection-state');
                     const ssidSpan = document.getElementById('wifi-current-ssid');
@@ -4988,7 +4264,7 @@
                     }
                 }
 
-                // --- Gestion des Interfaces Réseau ---
+                // --- Network interface management ---
                 async function fetchInterfaceStatus(interfaceName) {
                     const stateSpan = document.getElementById(`${interfaceName}-state`);
                     const ipSpan = document.getElementById(`${interfaceName}-ip`);
@@ -5058,7 +4334,7 @@
                     });
                 }
 
-                // Fonction pour récupérer et afficher les informations système
+                // Function to retrieve and display system information.
                 async function fetchSystemInfo() {
                     try {
                         const response = await fetch('/api/system_info');
@@ -5071,15 +4347,15 @@
                             if (data.cpu_temp_history) {
                                 updateCpuTempChart(data.cpu_temp_history);
                             }
-                            // NOUVEAU: Mettre à jour le graphique d'utilisation CPU
+                            // NEW: Update the CPU usage chart.
                             if (data.cpu_usage_history) {
                                 updateCpuUsageChart(data.cpu_usage_history);
                             }
-                            // NOUVEAU: Mettre à jour le graphique d'utilisation RAM
+                            // NEW: Update the RAM usage chart.
                             if (data.ram_usage_history) {
                                 updateRamUsageChart(data.ram_usage_history);
                             }
-                            // NOUVEAU: Mettre à jour le graphique d'utilisation Disque
+                            // NEW: Update the disk usage chart.
                             if (data.disk_usage_history) {
                                 updateDiskUsageChart(data.disk_usage_history);
                             }
@@ -5099,11 +4375,11 @@
                     }
                 }
 
-                // Fonction pour récupérer et afficher les logs
+                // Function to retrieve and display logs.
                 async function fetchLogs() {
                     const logSelector = document.getElementById('log-selector');
                     const logContentElement = document.getElementById('log-content');
-                    // Gérer le cas où il n'y a pas de logs à afficher
+                    // Handle the case where there are no logs to display.
                     if (logSelector.options.length === 0 || !logSelector.value) {
                         logContentElement.textContent = "{{ _('Aucun fichier de log disponible ou sélectionné.') }}";
                         return;
@@ -5129,7 +4405,7 @@
                     }
                 }
 
-                // NOUVEAU: Fonction pour charger dynamiquement la liste des fichiers de log
+                // NEW: Dynamically load the list of log files.
                 async function loadLogFiles() {
                     const logSelector = document.getElementById('log-selector');
                     logSelector.innerHTML = `<option>{{ _('Chargement...') }}</option>`;
@@ -5154,7 +4430,7 @@
                     }
                 }
 
-                // Mettre à jour les infos système (intervalles plus longs pour réduire la charge)
+                // Update system information (use longer intervals to reduce load).
                 setInterval(fetchSystemInfo, 10000); // 10 secondes
                 setTimeout(() => {
                     fetchWifiStatus();  // Premier ping après 15s
@@ -5163,10 +4439,10 @@
 
 
                 setInterval(() => fetchInterfaceStatus('eth0'), 30000); // 30 secondes
-                // Mettre à jour les logs toutes les 15 secondes (ou sur demande)
+                // Update logs every 15 seconds (or on request).
                 setInterval(fetchLogs, 15000); // 15 secondes
 
-                // Écouteurs d'événements pour les logs
+                // Event listeners for logs.
                 document.getElementById('log-selector').addEventListener('change', fetchLogs);
                 document.getElementById('refresh-logs-btn').addEventListener('click', fetchLogs);
                 document.getElementById('clear-logs-btn').addEventListener('click', async () => {
@@ -5196,7 +4472,7 @@
                     }
                 });
 
-                // Appel initial au chargement de la page pour les infos système et les logs
+                // Initial call on page load for system information and logs.
                 fetchSystemInfo();
                 loadLogFiles(); // Remplacer l'appel direct à fetchLogs par celui-ci
                 fetchInterfaceStatus('eth0');
@@ -5209,7 +4485,7 @@
                 const ssidInput = document.getElementById('wifi_ssid');
 
                 if (scanBtn) {
-                    // Fonction pour obtenir une icône Wi-Fi colorée en fonction de la force du signal
+                    // Function to get a colored Wi-Fi icon based on signal strength.
                     function getSignalIconHtml(signal) {
                         let colorClass = 'text-gray-400'; // Faible ou par défaut
                         if (signal > 75) {
@@ -5260,7 +4536,7 @@
                                         table += '</tbody></table></div>';
                                         resultsDiv.innerHTML = table;
 
-                                        // Ajouter les écouteurs d'événements pour chaque ligne du tableau
+                                        // Add event listeners for each table row.
                                         document.querySelectorAll('.wifi-row').forEach(row => {
                                             row.addEventListener('click', function () {
                                                 const selectedSsid = this.dataset.ssid;
@@ -5298,7 +4574,7 @@
 
                     const btn = document.getElementById("expand-fs-btn");
                     const statusDiv = document.getElementById("expand-fs-status");
-                    const allActionButtons = document.querySelectorAll('.import-button, .system-button, #update-app-btn, #samba-test-btn, #testWeatherApiKeyBtn, #testTelegramBtn, #create-invite-btn, #scan-wifi-btn, #toggle-eth0-btn, #clear-logs-btn, #expand-fs-btn');
+                    const allActionButtons = document.querySelectorAll('.import-button, .system-button, #scan-wifi-btn, #toggle-eth0-btn, #clear-logs-btn, #expand-fs-btn');
 
                     statusDiv.innerHTML = ""; // Clear previous messages
 
@@ -5347,131 +4623,6 @@
                 });
             });
 
-            // --- Contrôle Vocal ---
-            async function loadAudioDevices() {
-                console.log("Chargement des périphériques audio...");
-                const select = document.getElementById('voice_control_device_index');
-                if (!select) return;
-
-                const currentValue = "{{ config.get('voice_control_device_index', '') }}";
-                select.innerHTML = `<option value="">{{ _("Chargement des périphériques...") }}</option>`;
-
-                try {
-                    const response = await fetch('/api/audio_devices');
-                    const data = await response.json();
-                    console.log("Périphériques reçus:", data);
-
-                    select.innerHTML = `<option value="">{{ _("Périphérique par défaut") }}</option>`;
-                    if (data.success) {
-                        if (data.devices.length === 0) {
-                            select.innerHTML = `<option value="">{{ _("Aucun microphone trouvé.") }}</option>`;
-                        } else {
-                            data.devices.forEach(device => {
-                                const option = document.createElement('option');
-                                option.value = device.index;
-                                option.textContent = `[${device.index}] ${device.name} (${device.hostapi})`;
-                                if (String(device.index) === currentValue) {
-                                    option.selected = true;
-                                }
-                                select.appendChild(option);
-                            });
-                        }
-                    } else {
-                        // Afficher le message d'erreur spécifique renvoyé par le serveur
-                        const errorMessage = data.message || "{{ _('Erreur chargement') }}";
-                        select.innerHTML = `<option value="">${errorMessage}</option>`;
-                        console.error("Erreur API Audio:", errorMessage);
-                    }
-                } catch (error) {
-                    // Ce bloc est pour les erreurs réseau (ex: serveur non joignable)
-                    select.innerHTML = `<option value="">{{ _("Erreur de communication avec le serveur") }}</option>`;
-                }
-            }
-
-            async function fetchVoiceControlStatus() {
-                const statusSpan = document.getElementById('voice-control-status-message');
-                if (!statusSpan) return;
-
-                try {
-                    const response = await fetch('/api/voice_control/status');
-                    const data = await response.json();
-                    statusSpan.textContent = data.message || "{{ _('Statut inconnu') }}";
-                    if (data.status === 'running' || data.status === 'listening') {
-                        statusSpan.className = 'font-mono text-green-600';
-                    } else if (data.status === 'error') {
-                        statusSpan.className = 'font-mono text-red-600';
-                    } else {
-                        statusSpan.className = 'font-mono text-gray-500';
-                    }
-                } catch (error) {
-                    statusSpan.textContent = i18n.connectionError;
-                    statusSpan.className = 'font-mono text-red-600';
-                }
-            }
-
-            document.getElementById('refresh-audio-devices-btn')?.addEventListener('click', loadAudioDevices);
-            setInterval(fetchVoiceControlStatus, 5000);
-
-            // --- NOUVEAU: Gestion du toggle pour le contrôle vocal ---
-            const voiceControlToggle = document.getElementById('voice_control_enabled');
-            if (voiceControlToggle) {
-                voiceControlToggle.addEventListener('change', async (event) => {
-                    const isEnabled = event.target.checked;
-
-                    // Afficher un retour visuel immédiat
-                    const statusSpan = document.getElementById('voice-control-status-message');
-                    statusSpan.textContent = isEnabled ? "{{ _('Activation en cours...') }}" : "{{ _('Désactivation en cours...') }}";
-                    statusSpan.className = 'font-mono text-blue-600';
-
-                    try {
-                        const response = await fetch('/api/voice_control/toggle', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ enabled: isEnabled })
-                        });
-                        const result = await response.json();
-                        showToast(result.message); // Affiche la notification globale
-                        fetchVoiceControlStatus(); // Met à jour le statut immédiatement
-                    } catch (error) {
-                        showToast(i18n.commErrorServer, 5000);
-                        fetchVoiceControlStatus(); // Met à jour le statut pour refléter l'échec
-                    }
-                });
-            }
-
-            // --- Diagnostic Audio ---
-            const runDiagnosticsBtn = document.getElementById('run-audio-diagnostics-btn');
-            const diagnosticsContainer = document.getElementById('audio-diagnostics-results-container');
-            const diagnosticsPre = document.getElementById('audio-diagnostics-results');
-
-            if (runDiagnosticsBtn) {
-                runDiagnosticsBtn.addEventListener('click', async () => {
-                    runDiagnosticsBtn.disabled = true; // Correction: le bouton doit être désactivé
-                    runDiagnosticsBtn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i>${i18n.diagnosticsInProgress}`;
-                    diagnosticsContainer.classList.remove('hidden');
-                    diagnosticsPre.textContent = i18n.pleaseWait;
-
-                    try {
-                        const response = await fetch('/api/audio_diagnostics');
-                        const data = await response.json();
-
-                        if (data.success) {
-                            let output = "--- lsusb (Périphériques USB) ---\n";
-                            output += data.diagnostics.lsusb || 'N/A';
-                            output += "\n\n--- arecord -l (Périphériques de capture audio) ---\n";
-                            output += data.diagnostics.arecord || 'N/A';
-                            diagnosticsPre.textContent = output;
-                        } else {
-                            diagnosticsPre.textContent = "{{ _('Erreur lors de la récupération des diagnostics.') }}";
-                        }
-                    } catch (error) {
-                        diagnosticsPre.textContent = i18n.commErrorServer;
-                    } finally {
-                        runDiagnosticsBtn.disabled = false; // Correction: le bouton doit être réactivé
-                        runDiagnosticsBtn.innerHTML = `<i class="fas fa-play-circle mr-2"></i>${i18n.runDiagnostics}`;
-                    }
-                });
-            }
         </script>
 </body>
 </html>

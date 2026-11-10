@@ -1,16 +1,18 @@
+# requirements.txt — Cross-platform core dependencies (Windows + Linux/Pi)
+# Install with: pip install -r requirements.txt  (global Python, no venv)
+#
+# These packages install cleanly on both Windows and Linux.
+# Pi-specific packages (GPIO, HEIC) are in requirements-pi.txt.
+
 Flask==2.3.2
 requests==2.31.0
+truststore>=0.10; sys_platform == "win32"
 Pillow==10.4.0
 pygame
 psutil
-smbprotocol
 werkzeug
 Flask-Babel
 piexif
 qrcode[pil]
-numpy
-thefuzz
-python-Levenshtein
 deep-translator
 polib
-python-telegram-bot

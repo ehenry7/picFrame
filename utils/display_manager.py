@@ -10,13 +10,13 @@ from pathlib import Path
 from .config_manager import load_config
 
 # ============================================================
-# Configuration du logging avec émojis
+# Configure logging with emojis.
 # ============================================================
 LOGSDIR = Path(__file__).resolve().parent.parent / "logs"
 LOGSDIR.mkdir(exist_ok=True)
 
 class EmojiFormatter(logging.Formatter):
-    """Formatter personnalisé avec émojis selon le niveau."""
+    """Custom formatter that adds an emoji for each log level."""
     EMOJI_MAP = {
         "DEBUG": "🔍",
         "INFO": "ℹ️",
@@ -31,22 +31,22 @@ class EmojiFormatter(logging.Formatter):
         return super().format(record)
 
 
-# Charger la configuration
+# Load configuration.
 config = load_config()
 
-# Créer un logger spécifique pour ce module
-logger = logging.getLogger("pimmich.display_manager")
+# Create a logger for this module.
+logger = logging.getLogger("pictureframe.display_manager")
 
-# Récupérer le niveau de log depuis la configuration
+# Get the log level from the configuration.
 level_name = config.get("level_log", "INFO")
 level = getattr(logging, level_name.upper(), logging.INFO)
 logger.setLevel(level)
 logger.propagate = False
 
-# Handler fichier avec rotation (10 Mo max, 3 backups)
+# Rotating file handler (10 MB max, 3 backups).
 from logging.handlers import RotatingFileHandler
 file_handler = RotatingFileHandler(
-    LOGSDIR / "pimmich.log",
+    LOGSDIR / "pictureframe.log",
     maxBytes=10 * 1024 * 1024,
     backupCount=3,
     encoding="utf-8"
@@ -58,13 +58,13 @@ file_formatter = EmojiFormatter(
 )
 file_handler.setFormatter(file_formatter)
 
-# Ajouter le handler (éviter doublons si module réimporté)
+# Add the handler, avoiding duplicates if the module is re-imported.
 if not logger.handlers:
     logger.addHandler(file_handler)
 
-# Messages de démarrage
-logger.debug("--------------------Lancement de Display_Manager----------------------")
-logger.info(f"Le mode de log actif est : {level_name}")
+# Startup messages.
+logger.debug("--------------------Starting Display_Manager----------------------")
+logger.info(f"Active log level: {level_name}")
 logger.debug("🔍=Debug")
 logger.info("ℹ️=Info")
 logger.warning("😒=Warning")
@@ -75,15 +75,15 @@ logger.info("🟦=Local_Slideshow")
 logger.info("🟩=Display_Manager")
 
 # ============================================================
-# Fonctions du module
+# Module functions.
 # ============================================================
 
 def get_display_output_name():
-    """Trouve le nom de la sortie HDMI active (Wayfire/Sway)."""
-    #logger.info("get_display_output_name() LANCÉ")
+    """Find the name of the active HDMI output (Wayfire/Sway)."""
+    #logger.info("get_display_output_name() started")
     
     try:
-        # Test wlr-randr (Wayfire/Pi OS)
+        # Try wlr-randr (Wayfire/Pi OS).
         logger.debug("🖥 Test wlr-randr...")
         result = subprocess.run(
             ["wlr-randr"],
@@ -98,11 +98,11 @@ def get_display_output_name():
             for line in result.stdout.splitlines():
                 if line and not line[0].isspace():
                     output = line.split()[0]
-                    logger.info(f"✅ Output détecté: {output}")
-                    #print(f"SORTIE: {output}")  # Info user
+                    logger.info(f"✅ Output detected: {output}")
+                    #print(f"OUTPUT: {output}")  # User information.
                     return output
         
-        # Fallback Sway
+        # Fall back to Sway.
         logger.debug("🖥 Fallback sway...")
         env = os.environ.copy()
         if "SWAYSOCK" not in env:
@@ -133,66 +133,66 @@ def get_display_output_name():
                     logger.info(f"✅ SWAY HDMI: {name}")
                     return name
         
-        logger.warning("😒 0x0 - AUCUNE SORTIE")
+        logger.warning("😒 0x0 - NO OUTPUT")
         return None
         
     except Exception as e:
-        logger.error(f"❌ ERREUR: {e}")
+        logger.error(f"❌ ERROR: {e}")
         return None
 
 
 def send_smart_plug_command(url):
-    """Envoi commande HTTP à la prise connectée."""
+    """Send an HTTP command to the smart plug."""
     if not url:
         return False, "Pas d'URL"
     
     try:
-        logger.info(f"Envoi commande prise: {url}")
+        logger.info(f"Sending smart plug command: {url}")
         r = requests.post(url, timeout=5)
-        logger.debug(f"Prise réponse: {r.status_code}")
+        logger.debug(f"Smart plug response: {r.status_code}")
         
         if 200 <= r.status_code < 300:
-            print(f"Commande prise envoyée: {url}")
-            logger.info("✅ Commande prise OK")
+            print(f"Smart plug command sent: {url}")
+            logger.info("✅ Smart plug command succeeded")
             return True, "OK"
         
-        logger.warning(f"😒 Erreur HTTP: {r.status_code}")
-        return False, f"Erreur {r.status_code}"
+        logger.warning(f"😒 HTTP error: {r.status_code}")
+        return False, f"Error {r.status_code}"
         
     except Exception as e:
-        logger.error(f"❌ Exception requête: {e}")
+        logger.error(f"❌ Request exception: {e}")
         return False, str(e)
 
 
 def set_display_power(on=True):
-    """Allume/éteint l'écran (prise ou logiciel)."""
+    """Turn the display on or off (smart plug or software)."""
     logger.info(f"⏻ set_display_power({on})")
     config = load_config()
     
     if config.get("smart_plug_enabled"):
         if on:
-            # Allumage prise
+            # Turn on the smart plug.
             on_url = config.get("smart_plug_on_url")
             success, msg = send_smart_plug_command(on_url)
             
             if not success:
-                logger.error(f"❌ Échec prise: {msg}")
-                return False, f"Échec prise: {msg}"
+                logger.error(f"❌ Smart plug failed: {msg}")
+                return False, f"Smart plug failed: {msg}"
             
             delay = int(config.get("smart_plug_on_delay", 5))
-            logger.info(f"⏳ Attente {delay}s pour init écran...")
+            logger.info(f"⏳ Waiting {delay}s for display initialization...")
             time.sleep(delay)
             
-            # Reboot pour HDMI stable
-            flag_path = LOGSDIR / "pimmich_reboot_flag.tmp"
+            # Reboot to stabilize HDMI.
+            flag_path = LOGSDIR / "pictureframe_reboot_flag.tmp"
             flag_path.parent.mkdir(exist_ok=True)
             flag_path.touch()
-            logger.info("✅ ⏻ Reboot pour résolution HDMI...")
+            logger.info("✅ ⏻ Rebooting to apply HDMI resolution...")
             subprocess.run(["sudo", "-n", "reboot"], check=False)
-            return True, "Reboot initié"
+            return True, "Reboot initiated"
         else:
-            # Extinction DPMS puis prise
-            logger.info("⏻ Extinction DPMS puis prise")
+            # Turn off DPMS, then the smart plug.
+            logger.info("⏻ Turning off DPMS, then the smart plug")
             set_software_display_power(False)
             time.sleep(1)
             
@@ -200,18 +200,18 @@ def set_display_power(on=True):
             success, msg = send_smart_plug_command(off_url)
             
             if success:
-                logger.info("✅ Prise éteinte OK")
+                logger.info("✅ Smart plug turned off")
             else:
-                logger.warning(f"😒 Échec extinction prise: {msg}")
+                logger.warning(f"😒 Failed to turn off smart plug: {msg}")
             
             return success, msg
     else:
-        logger.info("⏻ Pas de prise, DPMS uniquement.")
+        logger.info("⏻ No smart plug configured; using DPMS only.")
         return set_software_display_power(on)
 
 
 def set_software_display_power(on=True):
-    """Active/désactive DPMS via wlr-randr/swaymsg."""
+    """Enable or disable DPMS via wlr-randr/swaymsg."""
     #logger.info(f"set_software_display_power({on})")
     output = get_display_output_name()
     
@@ -222,7 +222,7 @@ def set_software_display_power(on=True):
     state = "on" if on else "off"
     
     try:
-        # Test wlr-randr
+        # Try wlr-randr.
         cmd = ["wlr-randr", "--output", output, f"--{state}"]
         logger.info(f"🖥️ Commande: {' '.join(cmd)}")
         
@@ -236,10 +236,10 @@ def set_software_display_power(on=True):
         logger.debug(f"🖥️ wlr DPMS: RC={result.returncode} STDOUT={result.stdout.strip()} ERR={result.stderr.strip()}")
         
         if result.returncode == 0:
-            logger.info(f"🖥️✅ Écran {output} -> {state} via wlr-randr.")
+            logger.info(f"🖥️✅ Display {output} -> {state} via wlr-randr.")
             return True, "OK"
         
-        # Fallback swaymsg
+        # Fall back to swaymsg.
         logger.info("🖥️Fallback swaymsg DPMS...")
         result = subprocess.run(
             ["swaymsg", "output", output, "dpms", state],
@@ -250,13 +250,13 @@ def set_software_display_power(on=True):
         logger.debug(f"🖥️sway DPMS: RC={result.returncode}")
         
         if result.returncode == 0:
-            logger.info(f"🖥️✅ Écran {output} -> {state} via swaymsg.")
+            logger.info(f"🖥️✅ Display {output} -> {state} via swaymsg.")
             return True, "OK"
         else:
-            logger.warning(f"🖥️😒 Échec swaymsg DPMS: RC={result.returncode}")
-            return False, "Échec DPMS"
+            logger.warning(f"🖥️😒 swaymsg DPMS failed: RC={result.returncode}")
+            return False, "DPMS failed"
             
     except Exception as e:
-        err_msg = f"🖥️Erreur DPMS: {e}"
+        err_msg = f"🖥️DPMS error: {e}"
         logger.error(f"❌ {err_msg}")
         return False, err_msg

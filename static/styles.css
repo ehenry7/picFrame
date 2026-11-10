@@ -1,6 +1,6 @@
-/* styles.css - Version nettoyée */
+/* styles.css - Cleaned version */
 
-/* --- Styles Généraux --- */
+/* --- General styles --- */
 body {
   font-family: Arial, sans-serif;
   margin: 0;
@@ -18,7 +18,7 @@ body {
   -webkit-backdrop-filter: blur(10px);
   border-radius: 16px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  position: relative; /* Pour le positionnement du lien de déconnexion */
+  position: relative; /* Position the logout link. */
 }
 
 .logo {
@@ -33,7 +33,7 @@ h2 {
   color: #333;
 }
 
-/* --- Formulaires --- */
+/* --- Forms --- */
 form {
   display: flex;
   flex-direction: column;
@@ -54,29 +54,29 @@ legend {
   color: #333;
 }
 
-/* Effet BOIS réaliste pour cadres */
+/* Realistic WOOD effect for frames */
 .cadre-bois {
-    /* Texture bois premium */
+    /* Premium wood texture */
     background: 
-        /* Dégradé bois chêne */
+        /* Oak wood gradient */
         radial-gradient(ellipse 80% 50% at 30% 20%, #d4b68c 0%, #c19a6b 30%, #b89452 70%, #a87c3a 100%),
-        /* Veines fines */
+        /* Fine grain lines */
         radial-gradient(circle at 15% 25%, rgba(160,120,80,0.4) 1px, transparent 2px),
         radial-gradient(circle at 70% 60%, rgba(139,100,60,0.3) 1px, transparent 2px),
         radial-gradient(circle at 40% 80%, rgba(120,90,50,0.2) 0.5px, transparent 1.5px),
-        /* Grain sable */
+        /* Sand grain */
         linear-gradient(90deg, transparent 49%, rgba(0,0,0,0.02) 50%, transparent 51%);
 
-    /* Ombres multicouche */
+    /* Multi-layer shadows */
     box-shadow: 
-        /* Ombre portée profonde */
+        /* Deep drop shadow */
         0 30px 60px -15px rgba(0,0,0,0.35),
         0 15px 30px -10px rgba(0,0,0,0.25),
-        /* Reflet interne supérieur */
+        /* Upper inner highlight */
         inset 0 4px 20px rgba(255,255,255,0.45),
-        /* Ombre interne inférieure */
+        /* Lower inner shadow */
         inset 0 -3px 15px rgba(0,0,0,0.15),
-        /* Biseautage brillant */
+        /* Glossy bevel */
         0 0 0 2px rgba(255,255,255,0.85),
         0 0 0 5px rgba(212,175,55,0.3),
         0 0 0 8px rgba(0,0,0,0.12);
@@ -138,19 +138,19 @@ button:hover {
   background-color: #1c1f5e;
 }
 
-/* Styles spécifiques pour les boutons qui doivent prendre toute la largeur */
+/* Styles for buttons that should take the full width */
 .save-button,
 .import-button,
 .system-button {
   width: 100%;
-  display: block; /* S'assure qu'ils se comportent comme des éléments de bloc */
+  display: block; /* Ensure they behave as block elements. */
 }
 
-/* Règle pour les boutons "Tout supprimer" pour qu'ils s'adaptent au contenu */
+/* Rule for "Delete all" buttons so they adapt to their content */
 .delete-all-btn {
-  width: auto; /* Revertir à la largeur naturelle du contenu */
-  display: inline-flex; /* Maintenir l'alignement de l'icône et du texte */
-  margin-top: 0; /* Supprimer la marge supérieure si elle est dans une ligne flex */
+  width: auto; /* Revert to the content's natural width. */
+  display: inline-flex; /* Keep the icon and text aligned. */
+  margin-top: 0; /* Remove the top margin when in a flex row. */
 }
 .save-button {
   background-color: #c73680;
@@ -177,7 +177,7 @@ button:hover {
   color: #333;
 }
 
-/* --- Système d'onglets --- */
+/* --- Tab system --- */
 .tabs {
   display: flex;
   gap: 8px;
@@ -197,7 +197,7 @@ button:hover {
   border-radius: 10px 10px 0 0;
   outline: 0;
   transition: background-color 0.3s, box-shadow 0.3s;
-  margin-top: 0; /* Annuler la marge héritée du sélecteur 'button' générique */
+  margin-top: 0; /* Cancel the margin inherited from the generic 'button' selector. */
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
@@ -221,7 +221,7 @@ button:hover {
   background-color: #fff;
 }
 
-/* --- Aperçu des photos --- */
+/* --- Photo preview --- */
 .photo-preview-section {
   border: 1px solid #e5e7eb;
   border-radius: 0.5rem;
@@ -260,7 +260,7 @@ button:hover {
   transform: scale(1.05);
 }
 
-/* --- Messages de statut (pour les imports) --- */
+/* --- Status messages (for imports) --- */
 .status-message {
   padding: 0.5rem;
   margin: 0.25rem 0;
@@ -309,10 +309,10 @@ button:hover {
   .container {
     width: 100%;
     max-width: 100%;
-    padding: 1rem; /* Conserver un peu de padding intérieur */
+    padding: 1rem; /* Keep some inner padding. */
     margin-left: 0;
     margin-right: 0;
-    border-radius: 0; /* Pas de coins arrondis en plein écran */
+    border-radius: 0; /* No rounded corners in full screen. */
   }
   
   fieldset {
@@ -325,11 +325,11 @@ button:hover {
   }
   
   .tabs {
-    flex-wrap: nowrap; /* Forcer une seule ligne pour permettre le défilement */
+    flex-wrap: nowrap; /* Force a single row to allow scrolling. */
   }
   
   .tablink {
-    flex-shrink: 0; /* Empêcher les boutons de rétrécir pour le défilement */
+    flex-shrink: 0; /* Prevent buttons from shrinking while scrolling. */
     font-size: 0.875rem;
     padding: 0.5rem 1rem; /* Ajuster le padding pour un meilleur espacement */
   }
@@ -345,3 +345,80 @@ button:hover {
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   }
 }
+.photo-lightbox-actions {
+    position: fixed;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 999999;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    padding: 10px;
+    width: max-content;
+    max-width: calc(100vw - 24px);
+    overflow-x: auto;
+    box-sizing: border-box;
+    border-radius: 8px;
+    background: #fff;
+    color: #222;
+    box-shadow: 0 2px 12px #0006;
+}
+
+.photo-lightbox-actions select {
+    width: auto;
+    max-width: 100%;
+    flex-shrink: 0;
+}
+
+.photo-lightbox-actions input {
+    width: 220px;
+    max-width: 100%;
+    flex-shrink: 0;
+}
+
+.photo-lightbox-actions button {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 0;
+    min-height: 0;
+    margin: 0;
+    padding: 4px;
+    background: transparent;
+    font-size: 14px;
+    line-height: 1;
+}
+
+.photo-lightbox-actions button:hover {
+    background: #f3f4f6;
+}
+
+.photo-lightbox-actions > label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    white-space: nowrap;
+    font-size: 12px;
+}
+
+/* --- RTL (Right-to-Left) overrides for Hebrew --- */
+[dir="rtl"] .logout-link {
+  right: auto;
+  left: 30px;
+}
+
+[dir="rtl"] .status-success,
+[dir="rtl"] .status-error,
+[dir="rtl"] .status-warning,
+[dir="rtl"] .status-info {
+  border-left: none;
+  border-right: 4px solid;
+}
+
+[dir="rtl"] .status-success { border-right-color: #22c55e; }
+[dir="rtl"] .status-error { border-right-color: #ef4444; }
+[dir="rtl"] .status-warning { border-right-color: #f59e0b; }
+[dir="rtl"] .status-info { border-right-color: #3b82f6; }

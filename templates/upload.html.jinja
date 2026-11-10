@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="{{ get_locale() }}">
+<html lang="{{ get_locale() }}" dir="{{ 'rtl' if get_locale() == 'he' else 'ltr' }}">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ _('Envoyer des photos') }} - Pimmich</title>
+  <title>{{ _('Envoyer des photos') }} - PictureFrame</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
@@ -12,7 +12,7 @@
 
 <body class="relative min-h-screen">
 
-  <!-- Messages flash -->
+  <!-- Flash messages -->
   {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
   <div id="flash-container" class="absolute top-0 mt-4 max-w-xs w-full z-20">
@@ -33,7 +33,7 @@
     {% endfor %}
   </div>
   <script>
-    // Disparition automatique après 4 secondes
+    // Automatically hide after 4 seconds.
     setTimeout(() => {
       const messages = document.querySelectorAll('.flash-message');
       messages.forEach(msg => {
@@ -47,7 +47,7 @@
 
   <div class="flex items-center justify-center min-h-screen">
     <div class="w-11/12 max-w-lg p-6 md:p-8 bg-white bg-opacity-90 backdrop-blur-md rounded-2xl shadow-xl">
-      <img src="{{ url_for('static', filename='pimmich_logo.png') }}" alt="Logo Pimmich" class="w-40 mx-auto mb-8">
+      <img src="{{ url_for('static', filename='pictureframe_logo.svg') }}" alt="Logo PictureFrame" class="w-40 mx-auto mb-8">
       <h2 class="text-center text-2xl font-semibold mb-4">{{ _('Envoyer des photos pour le cadre') }}</h2>
       <p class="text-center text-gray-600 mb-6">{{ _('Les photos seront soumises à validation avant d\'être affichées.')
         }}</p>
@@ -78,14 +78,8 @@
         <a href="?lang=en"
           class="{% if current_lang == 'en' %}font-bold text-indigo-600{% else %}text-blue-600 hover:underline{% endif %}">EN</a>
         |
-        <a href="?lang=es"
-          class="{% if current_lang == 'es' %}font-bold text-indigo-600{% else %}text-blue-600 hover:underline{% endif %}">ES</a>
-        |
-        <a href="?lang=de"
-          class="{% if current_lang == 'de' %}font-bold text-indigo-600{% else %}text-blue-600 hover:underline{% endif %}">DE</a>
-        |
-        <a href="?lang=ja"
-          class="{% if current_lang == 'ja' %}font-bold text-indigo-600{% else %}text-blue-600 hover:underline{% endif %}">JA</a>
+        <a href="?lang=he"
+          class="{% if current_lang == 'he' %}font-bold text-indigo-600{% else %}text-blue-600 hover:underline{% endif %}">HE</a>
       </div>
     </div>
   </div>

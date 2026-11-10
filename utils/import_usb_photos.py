@@ -5,8 +5,9 @@ import subprocess
 from pathlib import Path
 import tempfile
 import time
+from platform_utils import get_cancel_flag_path
 
-CANCEL_FLAG = Path('/tmp/pimmich_cancel_import.flag')
+CANCEL_FLAG = get_cancel_flag_path()
 TARGET_DIR = Path("static/photos/usb")
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif"}
 
@@ -15,12 +16,12 @@ def is_image_file(filename):
 
 def find_and_mount_usb():
     """
-    Recherche un périphérique USB. S'il est déjà monté, retourne le point de montage.
-    Sinon, le monte dans un répertoire temporaire et retourne ce chemin.
-    Retourne un tuple: (chemin_montage, chemin_périphérique, a_été_monté_par_script)
+    Find a USB device. If it is already mounted, return its mount point.
+    Otherwise, mount it in a temporary directory and return that path.
+    Return a tuple: (mount_path, device_path, was_mounted_by_script).
     """
     try:
-        # Utiliser lsblk pour une détection fiable, en demandant le chemin du périphérique (PATH)
+        # Use lsblk for reliable detection and request the device path (PATH).
         result = subprocess.run(
             ['/usr/bin/lsblk', '-J', '-o', 'NAME,MOUNTPOINT,TRAN,PATH'],
             capture_output=True, text=True, check=True, timeout=10
@@ -29,7 +30,7 @@ def find_and_mount_usb():
         
         for device in data.get('blockdevices', []):
             if device.get('tran') == 'usb':
-                # Parcourir les partitions du périphérique
+                # Iterate over the device partitions.
                 for partition in device.get('children', []):
                     mountpoint = partition.get('mountpoint')
                     device_path = partition.get('path')
@@ -37,32 +38,32 @@ def find_and_mount_usb():
                     if not device_path:
                         continue
 
-                    # Cas 1: Déjà monté par le système
+                    # Case 1: already mounted by the system.
                     if mountpoint:
-                        print(f"Périphérique USB trouvé et déjà monté sur : {mountpoint}")
+                        print(f"USB device found and already mounted at: {mountpoint}")
                         return Path(mountpoint), device_path, False
 
-                    # Cas 2: Non monté, on le monte nous-mêmes
-                    print(f"Périphérique USB non monté détecté : {device_path}. Tentative de montage...")
+                    # Case 2: not mounted; mount it here.
+                    print(f"Unmounted USB device detected: {device_path}. Attempting to mount...")
                     
-                    # Créer un répertoire de montage temporaire
-                    temp_mount_dir = tempfile.mkdtemp(prefix="pimmich_usb_")
+                    # Create a temporary mount directory.
+                    temp_mount_dir = tempfile.mkdtemp(prefix="pictureframe_usb_")
                     
-                    # Monter le périphérique avec les droits sudo
+                    # Mount the device with sudo privileges.
                     mount_cmd = ['sudo', '-n', '/usr/bin/mount', device_path, temp_mount_dir]
                     subprocess.run(mount_cmd, check=True, capture_output=True, text=True, timeout=15)
                     
-                    print(f"Périphérique {device_path} monté avec succès sur {temp_mount_dir}")
+                    print(f"Device {device_path} successfully mounted at {temp_mount_dir}")
                     return Path(temp_mount_dir), device_path, True
 
     except (FileNotFoundError, subprocess.CalledProcessError, json.JSONDecodeError, subprocess.TimeoutExpired) as e:
-        print(f"Erreur lors de la détection USB via lsblk : {e}. Assurez-vous que 'lsblk' est installé.")
+        print(f"Error detecting USB devices via lsblk: {e}. Make sure 'lsblk' is installed.")
     
-    return None, None, False # Retourne None si rien n'est trouvé ou en cas d'erreur
+    return None, None, False # Return None if no device is found or an error occurs.
 
 def import_usb_photos():
-    """Importe les photos depuis une clé USB, en la montant si nécessaire."""
-    yield {"type": "progress", "stage": "SEARCHING", "percent": 5, "message": "Recherche de clés USB connectées..."}
+    """Import photos from a USB drive, mounting it if necessary."""
+    yield {"type": "progress", "stage": "SEARCHING", "percent": 5, "message": "Searching for connected USB drives..."}
     time.sleep(1)
     
     mount_path = None
@@ -73,12 +74,12 @@ def import_usb_photos():
         mount_path, device_path, mounted_by_script = find_and_mount_usb()
         
         if not mount_path:
-            yield {"type": "error", "message": "Aucune clé USB détectée. Vérifiez la connexion et le format de la clé (ex: FAT32, exFAT)."}
+            yield {"type": "error", "message": "No USB drive detected. Check the connection and drive format (e.g. FAT32, exFAT)."}
             return
 
-        yield {"type": "progress", "stage": "DETECTED", "percent": 10, "message": f"Clé USB détectée : {mount_path}"}
+        yield {"type": "progress", "stage": "DETECTED", "percent": 10, "message": f"USB drive detected: {mount_path}"}
 
-        # Vider les dossiers de destination (source et préparé) avant l'import pour éviter les mélanges.
+        # Clear the destination folders (source and prepared) before importing to avoid mixing files.
         prepared_usb_dir = Path("static/prepared/usb")
         if TARGET_DIR.exists():
             shutil.rmtree(TARGET_DIR)
@@ -87,7 +88,7 @@ def import_usb_photos():
             shutil.rmtree(prepared_usb_dir)
         prepared_usb_dir.mkdir(parents=True, exist_ok=True)
 
-        yield {"type": "progress", "stage": "SCANNING", "percent": 15, "message": "Analyse des images sur la clé USB..."}
+        yield {"type": "progress", "stage": "SCANNING", "percent": 15, "message": "Scanning images on the USB drive..."}
         
         image_files = []
         for root, dirs, files in os.walk(mount_path):
@@ -97,15 +98,15 @@ def import_usb_photos():
 
         total = len(image_files)
         if total == 0:
-            yield {"type": "error", "message": "Aucune image compatible trouvée sur la clé USB (formats supportés : JPG, JPEG, PNG, GIF)."}
+            yield {"type": "error", "message": "No supported images found on the USB drive (supported formats: JPG, JPEG, PNG, GIF)."}
             return
 
-        yield {"type": "stats", "stage": "STATS", "percent": 20, "message": f"{total} images trouvées, début de l'import...", "total": total}
+        yield {"type": "stats", "stage": "STATS", "percent": 20, "message": f"{total} images found; starting import...", "total": total}
 
         for i, file_path in enumerate(image_files):
-            # Vérifier si l'annulation a été demandée
+            # Check whether cancellation was requested.
             if CANCEL_FLAG.exists():
-                yield {"type": "warning", "message": "Importation annulée par l'utilisateur."}
+                yield {"type": "warning", "message": "Import cancelled by the user."}
                 return
 
             try:
@@ -127,21 +128,21 @@ def import_usb_photos():
                     "current": i + 1, "total": total
                 }
             except Exception as e:
-                yield {"type": "warning", "message": f"Impossible de copier {file_path.name} : {str(e)}"}
+                yield {"type": "warning", "message": f"Unable to copy {file_path.name}: {str(e)}"}
 
-        yield {"type": "done", "stage": "IMPORT_COMPLETE", "percent": 80, "message": f"{total} photos importées.", "total_imported": total}
+        yield {"type": "done", "stage": "IMPORT_COMPLETE", "percent": 80, "message": f"{total} photos imported.", "total_imported": total}
 
     finally:
-        # Cette section s'exécute toujours, même en cas d'erreur, pour nettoyer.
+        # Always run this section, even after an error, to clean up.
         if mounted_by_script and mount_path:
-            yield {"type": "progress", "stage": "UNMOUNTING", "percent": 99, "message": "Démontage de la clé USB..."}
+            yield {"type": "progress", "stage": "UNMOUNTING", "percent": 99, "message": "Unmounting USB drive..."}
             time.sleep(1)
             try:
                 umount_cmd = ['sudo', '-n', '/usr/bin/umount', str(mount_path)]
                 subprocess.run(umount_cmd, check=True, capture_output=True, text=True, timeout=15)
-                print(f"Démontage de {device_path} réussi.")
-                # Supprimer le répertoire de montage temporaire
+                print(f"Successfully unmounted {device_path}.")
+                # Remove the temporary mount directory.
                 shutil.rmtree(mount_path)
-                print(f"Dossier de montage temporaire {mount_path} supprimé.")
+                print(f"Temporary mount directory {mount_path} removed.")
             except Exception as e:
-                yield {"type": "warning", "message": f"Avertissement : Impossible de démonter proprement la clé USB : {e}"}
+                yield {"type": "warning", "message": f"Warning: Unable to safely unmount the USB drive: {e}"}

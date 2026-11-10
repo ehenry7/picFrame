@@ -5,18 +5,18 @@ import os
 
 def get_wifi_status():
     """
-    Récupère l'état actuel de la connexion Wi-Fi (SSID et adresse IP).
-    Retourne un dictionnaire avec les informations.
+    Get the current Wi-Fi connection status (SSID and IP address).
+    Return the information in a dictionary.
     """
-    status = {"ssid": "Non connecté", "ip_address": "N/A", "is_connected": False}
+    status = {"ssid": "Not connected", "ip_address": "N/A", "is_connected": False}
     
-    # Éviter l'appel à nmcli si wlan0 n'existe pas
+    # Avoid calling nmcli if wlan0 does not exist.
     if not os.path.exists("/sys/class/net/wlan0"):
         status["ssid"] = "N/A (Pas de Wi-Fi)"
         return status
 
     try:
-        # Utiliser nmcli pour obtenir un statut fiable
+        # Use nmcli to get a reliable status.
         cmd = ['/usr/bin/nmcli', '-t', '-f', 'GENERAL.STATE,GENERAL.CONNECTION,IP4.ADDRESS', 'dev', 'show', 'wlan0']
         output = subprocess.check_output(cmd, text=True, stderr=subprocess.DEVNULL).strip()
         
@@ -27,58 +27,58 @@ def get_wifi_status():
 
         if '100 (connecté)' in state_line or 'connected' in state_line:
             status["is_connected"] = True
-            # Extraire le SSID
+            # Extract the SSID.
             ssid_match = re.search(r'GENERAL.CONNECTION:(.*)', conn_line)
             if ssid_match:
                 status["ssid"] = ssid_match.group(1)
             
-            # Extraire l'IP
+            # Extract the IP address.
             ip_match = re.search(r'IP4.ADDRESS\[1\]:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})', ip_line)
             if ip_match:
                 status["ip_address"] = ip_match.group(1)
 
     except (subprocess.CalledProcessError, FileNotFoundError):
-        pass # Les commandes échouent si non connecté, le statut par défaut est correct.
+        pass # Commands fail when disconnected; the default status is correct.
     return status
 
 def set_wifi_config(ssid: str, password: str, country_code: str = "FR"):
     """
-    Configure le pays du Wi-Fi, met à jour les identifiants dans wpa_supplicant.conf,
-    et se connecte en utilisant nmcli (NetworkManager).
+    Configure the Wi-Fi country, updates credentials in wpa_supplicant.conf,
+    and connects using nmcli (NetworkManager).
     """
     if not country_code:
-        raise ValueError("Le code pays est obligatoire.")
+        raise ValueError("The country code is required.")
 
-    # 1. Définir le pays du Wi-Fi via raspi-config
+    # 1. Set the Wi-Fi country using raspi-config.
     try:
-        print(f"Définition du pays Wi-Fi sur : {country_code}")
+        print(f"Setting Wi-Fi country to: {country_code}")
         subprocess.run(
             ['sudo', '-n', '/usr/bin/raspi-config', 'nonint', 'do_wifi_country', country_code],
             check=True, capture_output=True, text=True, timeout=15
         )
     except subprocess.CalledProcessError as e:
-        raise Exception(f"Impossible de définir le pays Wi-Fi : {e.stderr}")
+        raise Exception(f"Unable to set Wi-Fi country: {e.stderr}")
     except subprocess.TimeoutExpired:
-        raise Exception("La commande raspi-config a expiré.")
+        raise Exception("The raspi-config command timed out.")
     except FileNotFoundError:
-        raise Exception("La commande 'raspi-config' est introuvable. Ce script est-il exécuté sur un Raspberry Pi OS?")
+        raise Exception("The 'raspi-config' command was not found. Is this running on Raspberry Pi OS?")
 
-    # 2. Se connecter en utilisant nmcli
+    # 2. Connect using nmcli.
     try:
-        print(f"Tentative de connexion au Wi-Fi '{ssid}' via nmcli...")
+        print(f"Attempting to connect to Wi-Fi '{ssid}' via nmcli...")
         
-        # Supprimer l'ancienne connexion si elle existe pour forcer une nouvelle configuration
+        # Delete the old connection, if present, to force a new configuration.
         subprocess.run(['sudo', '-n', 'nmcli', 'connection', 'delete', ssid], capture_output=True, check=False)
         
-        # Créer la nouvelle connexion
+        # Create the new connection.
         cmd = ['sudo', '-n', '/usr/bin/nmcli', 'device', 'wifi', 'connect', ssid]
         if password:
             cmd.extend(['password', password])
         
         result = subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=30)
-        print(f"Connexion Wi-Fi réussie : {result.stdout}")
+        print(f"Wi-Fi connection succeeded: {result.stdout}")
         
     except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired) as e:
         stderr = getattr(e, 'stderr', str(e))
-        print(f"Erreur lors de la connexion via nmcli : {stderr}")
-        raise Exception(f"La connexion Wi-Fi a échoué. Détails: {stderr}")
+        print(f"Error connecting via nmcli: {stderr}")
+        raise Exception(f"Wi-Fi connection failed. Details: {stderr}")

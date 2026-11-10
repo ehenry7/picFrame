@@ -1,35 +1,51 @@
-# Icônes Météo pour Pimmich
+# PictureFrame Weather Icons
 
-Ce dossier est destiné à contenir les icônes météo utilisées par le diaporama.
+This directory contains the weather icons used by the slideshow. Weather data
+comes from Open-Meteo; its WMO weather codes are mapped to the OpenWeatherMap-style
+icon filenames used by the slideshow.
 
-## Comment obtenir les icônes ?
+## Windows HTTPS certificates
 
-Pimmich utilise les codes d'icônes de l'API OpenWeatherMap. Vous devez télécharger les images correspondantes et les placer dans ce dossier.
+Install the current core dependencies with `python -m pip install -r requirements.txt`
+and restart the slideshow. On Windows, the slideshow uses `truststore` to validate
+HTTPS certificates against the Windows certificate store, including locally
+trusted organizational certificates. Certificate verification remains enabled.
+If the chain is still untrusted, have your administrator install the appropriate
+trusted certificate; do not disable HTTPS verification.
 
-1.  **Rendez-vous sur la page des conditions météorologiques d'OpenWeatherMap :**
-    [https://openweathermap.org/weather-conditions](https://openweathermap.org/weather-conditions)
+## Getting the icons
 
-2.  **Téléchargez les icônes.** Pour chaque code d'icône (par exemple, `01d`, `10n`), vous pouvez télécharger l'image correspondante. Le format de l'URL est :
-    `https://openweathermap.org/img/wn/CODE@2x.png`
+PictureFrame uses OpenWeatherMap API icon codes. Download the corresponding
+images and place them in this directory.
 
-    Remplacez `CODE` par le code de l'icône. Par exemple, pour `10d` (pluie de jour), l'URL est :
-    https://openweathermap.org/img/wn/10d@2x.png
+1. **Open the OpenWeatherMap weather conditions page:**
+   [https://openweathermap.org/weather-conditions](https://openweathermap.org/weather-conditions)
 
-3.  **Enregistrez les images dans ce dossier** (`static/weather_icons/`) en les nommant d'après leur code, suivi de `.png`.
-    -   `10d@2x.png` doit être renommé en `10d.png`.
-    -   `01n@2x.png` doit être renommé en `01n.png`.
-    -   etc.
+2. **Download the icons.** For each icon code (for example, `01d` or `10n`),
+   download the corresponding image. The URL format is:
+   `https://openweathermap.org/img/wn/CODE@2x.png`
 
-### Liste des icônes courantes à télécharger :
+   Replace `CODE` with the icon code. For example, the URL for `10d` (daytime
+   rain) is:
+   https://openweathermap.org/img/wn/10d@2x.png
 
-*   `01d.png` (ciel dégagé, jour) & `01n.png` (nuit)
-*   `02d.png` (quelques nuages, jour) & `02n.png` (nuit)
-*   `03d.png` & `03n.png` (nuages épars)
-*   `04d.png` & `04n.png` (nuages fragmentés)
-*   `09d.png` & `09n.png` (averse de pluie)
-*   `10d.png` (pluie, jour) & `10n.png` (nuit)
-*   `11d.png` & `11n.png` (orage)
-*   `13d.png` & `13n.png` (neige)
-*   `50d.png` & `50n.png` (brouillard)
+3. **Save the images in this directory** (`static/weather_icons/`), naming each
+   file after its code followed by `.png`.
+   - Rename `10d@2x.png` to `10d.png`.
+   - Rename `01n@2x.png` to `01n.png`.
+   - And so on.
 
-Téléchargez au minimum celles que vous rencontrez le plus souvent dans votre région. Si une icône est manquante, seul le texte s'affichera.
+### Common icons to download
+
+* `01d.png` (clear sky, day) and `01n.png` (night)
+* `02d.png` (few clouds, day) and `02n.png` (night)
+* `03d.png` and `03n.png` (scattered clouds)
+* `04d.png` and `04n.png` (broken clouds)
+* `09d.png` and `09n.png` (rain showers)
+* `10d.png` (rain, day) and `10n.png` (night)
+* `11d.png` and `11n.png` (thunderstorm)
+* `13d.png` and `13n.png` (snow)
+* `50d.png` and `50n.png` (fog)
+
+Download at least the icons most common in your region. If an icon is missing,
+only the text will be displayed.

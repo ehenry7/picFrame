@@ -1,126 +1,82 @@
-# ❓ Foire Aux Questions (FAQ) - Pimmich
+# ❓ Frequently Asked Questions (FAQ) - PictureFrame
 
-Voici une liste de questions fréquemment posées pour vous aider à utiliser et dépanner Pimmich.
-
----
-
-### Questions Générales
-
-**Q : Qu'est-ce que Pimmich ?**
-
-**R :** Pimmich est un logiciel qui transforme un Raspberry Pi en un cadre photo numérique intelligent. Il peut afficher des photos depuis un serveur [Immich](https://immich.app/), une clé USB, un partage réseau (Samba/Windows), un smartphone ou même via l'application de messagerie Telegram.
-
-**Q : De quoi ai-je besoin pour utiliser Pimmich ?**
-
-**R :** Il vous faut :
-- Un Raspberry Pi (modèle 3, 4 ou 5 recommandé) avec son alimentation.
-- Une carte SD avec Raspberry Pi OS (64-bit) installé.
-- Un écran.
-- Une connexion Internet (Wi-Fi ou Ethernet).
+Here is a list of frequently asked questions to help you use and troubleshoot PictureFrame.
 
 ---
 
-### Installation et Configuration
+### General Questions
 
-**Q : Comment installer Pimmich ?**
+**Q: What is PictureFrame?**
 
-**R :** L'installation est conçue pour être simple :
-1. Clonez le dépôt GitHub : `git clone https://github.com/gotenash/pimmich.git`
-2. Allez dans le dossier : `cd pimmich`
-3. Rendez le script d'installation exécutable : `chmod +x setup.sh`
-4. Lancez le script avec les droits d'administrateur : `sudo ./setup.sh`
-Le script s'occupe d'installer toutes les dépendances et de configurer le système pour un démarrage automatique.
+**A:** PictureFrame is software that turns a Raspberry Pi into a smart digital photo frame. It displays photos imported from a USB stick or a smartphone/computer browser.
 
-**Q : Comment accéder à l'interface de configuration ?**
+**Q: What do I need to use PictureFrame?**
 
-**R :** Une fois le Raspberry Pi démarré, ouvrez un navigateur web sur un autre appareil (ordinateur, smartphone) connecté au même réseau et tapez simplement l'adresse IP de votre Raspberry Pi. Par exemple : `http://192.168.1.25`. Si vous ne connaissez pas l'IP, elle est souvent affichée sur l'écran du cadre au premier démarrage ou si aucune photo n'est trouvée.
-
-**Q : J'ai oublié mon mot de passe pour l'interface web. Comment le réinitialiser ?**
-
-**R :** La méthode la plus simple pour regénérer un mot de passe est de relancer une partie du script d'installation.
-1. Connectez-vous en SSH à votre Raspberry Pi.
-2. Supprimez l'ancien fichier d'identifiants avec la commande : `sudo rm /boot/firmware/credentials.json`
-3. Allez dans le dossier du projet : `cd pimmich`
-4. Relancez le script d'installation : `sudo ./setup.sh`
-
-Le script est conçu pour être relancé sans risque. Il détectera l'absence du fichier d'identifiants et en créera un nouveau. Le nouveau mot de passe sera affiché directement dans le terminal à la fin du processus. Pensez à le noter !
-
-**Q : Comment obtenir un Token API Immich ?**
-
-**R :**
-1. Connectez-vous à votre interface web Immich.
-2. Allez dans "Paramètres du compte" (via votre icône de profil).
-3. Dans la section "Clés API", cliquez sur "Générer une nouvelle clé API".
-4. Donnez-lui un nom (ex: "Pimmich") et copiez la clé générée.
-
-*Conseil :* Pour plus de sécurité, créez un utilisateur Immich dédié pour le cadre avec un accès limité à un seul album partagé.
+**A:** You will need:
+- A Raspberry Pi (model 3, 4, or 5 recommended) with its power supply.
+- An SD card with Raspberry Pi OS (64-bit) installed.
+- A screen.
+- An internet connection (Wi-Fi or Ethernet).
 
 ---
 
-### Fonctionnalités
+### Installation and Configuration
 
-**Q : Comment fonctionne la fonction Telegram ?**
+**Q: How do I install PictureFrame?**
 
-**R :** Elle vous permet, ainsi qu'à des invités, d'envoyer des photos directement sur le cadre.
-1.  **Créez un bot** sur Telegram en parlant à `@BotFather`. Il vous donnera un **Token**.
-2.  **Obtenez votre ID utilisateur** Telegram en parlant à un bot comme `@userinfobot`.
-3.  Entrez ces deux informations dans l'onglet "Telegram" de Pimmich.
-4.  Vous pouvez ensuite créer des liens d'invitation sécurisés et temporaires pour vos proches.
+**A:** The installation is designed to be simple:
+1. Clone the GitHub repository: `git clone https://github.com/ehenry7/picFrame.git`
+2. Go into the directory: `cd picFrame`
+3. Make the installation script executable: `chmod +x setup.sh`
+4. Run the script with administrator rights: `sudo ./setup.sh`
+The script takes care of installing all dependencies and configuring the system for automatic startup.
 
-**Q : À quoi sert l'onglet "Favoris" ?**
+**Q: How do I access the configuration interface?**
 
-**R :** En marquant une photo comme favorite (via l'icône étoile <i class="fas fa-star"></i> dans l'onglet "Aperçu"), vous augmentez sa fréquence d'apparition dans le diaporama. Vous pouvez régler le "facteur de boost" dans l'onglet "Affichage" pour qu'elles apparaissent plus ou moins souvent.
+**A:** Once the Raspberry Pi has started, open a web browser on another device (computer, smartphone) connected to the same network and simply type in your Raspberry Pi's IP address. For example: `http://192.168.1.25`. If you don't know the IP, it is often displayed on the frame's screen on the first boot or if no photos are found.
 
-**Q : Qu'est-ce que l'effet "Carte Postale" ?**
+**Q: I forgot my password for the web interface. How can I reset it?**
 
-**R :** C'est un filtre qui ajoute un cadre blanc et un espace pour une légende (si vous en ajoutez une via l'interface) à vos photos, leur donnant un aspect de carte postale. Les photos envoyées via Telegram utilisent cet effet par défaut pour un rendu plus personnel et chaleureux.
+**A:** The initial password is stored in the `/boot/firmware/credentials.json` file. You can connect to your Raspberry Pi via SSH to read this file. If you changed it through the interface and forgot it, you will need to delete this file and reboot the Pi for it to generate a new one (warning: this will reset the user).
 
-**Q : Quelles sont les commandes vocales disponibles ?**
+**Q: What happens to previously imported photos?**
 
-**R :** Une fois le contrôle vocal activé, commencez toutes vos commandes par le mot-clé **"Cadre Magique"**. Voici les commandes principales :
-
-*   **Contrôle du Diaporama :**
-    *   *"photo suivante"* / *"photo précédente"*
-    *   *"pause"* / *"lecture"* (pour mettre en pause ou reprendre)
-*   **Gestion de l'Affichage :**
-    *   *"règle la durée à 15 secondes"*
-    *   *"affiche pendant 30 secondes"*
-*   **Gestion des Playlists & Sources :**
-    *   *"lance la playlist Vacances"*
-    *   *"afficher les cartes postales"* (lance un diaporama des photos Telegram)
-    *   *"activer la source Samba"* / *"désactiver la source USB"*
-*   **Contrôle du Système :**
-    *   *"passer en mode veille"* (éteint l'écran)
-    *   *"réveiller le cadre"* (rallume l'écran)
-    *   *"éteindre le cadre"* (éteint complètement le Raspberry Pi)
-    *   *"revenir au diaporama principal"* (quitte une playlist en cours et relance le diaporama normal)
+**A:** They remain in the library under **Imported photos**. Existing metadata, captions, favorites, and playlists are preserved. Remote album downloads are no longer supported.
 
 ---
 
-### Dépannage (Troubleshooting)
+### Features
 
-**Q : J'ai un problème, où puis-je trouver de l'aide ?**
+**Q: What is the "Favorites" tab for?**
 
-**R :** L'onglet **Système** est le meilleur endroit pour commencer. Il contient une section **Logs**.
-- `app.py` contient les logs du serveur web (interface de configuration).
-- `local_slideshow_stdout` et `local_slideshow_stderr` contiennent les logs du diaporama lui-même. Les erreurs s'afficheront le plus souvent dans `stderr`.
+**A:** By marking a photo as a favorite (using the star icon <i class="fas fa-star"></i> in the "Preview" tab), you increase its display frequency in the slideshow. You can adjust the "boost factor" in the "Display" tab to make them appear more or less often.
 
-**Q : Mon écran ne s'éteint pas complètement, il reste rétro-éclairé. Que faire ?**
+**Q: What is the "Postcard" effect?**
 
-**R :** Certains écrans ne répondent pas correctement à la commande de mise en veille logicielle (DPMS). La solution la plus fiable est d'utiliser une prise connectée Wi-Fi pour couper physiquement l'alimentation de l'écran. Pimmich intègre une fonctionnalité pour piloter ces prises. Allez dans l'onglet `Affichage`, activez l'option "Prise Connectée" et renseignez les URLs pour allumer et éteindre votre prise. De nombreuses prises (Tasmota, Shelly, Kasa, etc.) peuvent être contrôlées par de simples requêtes HTTP.
+**A:** It's a filter that adds a white border and a space for a caption (if you add one via the interface) to your photos, giving them a postcard look for a more personal and warm touch.
 
-**Q : Les vidéos ne sont pas fluides ou ne s'affichent pas. Que faire ?**
+---
 
-**R :** Dans l'onglet **Affichage**, essayez d'activer l'option "**Activer le décodage vidéo matériel**". C'est beaucoup plus performant, surtout sur Raspberry Pi. Si cela cause des problèmes (écran noir/bleu après une vidéo), désactivez-la.
+### Troubleshooting
 
-**Q : Le Wi-Fi ne se connecte pas, mais l'Ethernet (câble) fonctionne. Pourquoi ?**
+**Q: I have a problem, where can I find help?**
 
-**R :** Parfois, si un câble Ethernet est branché, le système lui donne la priorité. Dans l'onglet **Système**, vous pouvez essayer de désactiver temporairement l'interface "**Interface Filaire (eth0)**" pour forcer le système à utiliser exclusivement le Wi-Fi.
+**A:** The **System** tab is the best place to start. It contains a **Logs** section.
+- `app.py` contains the logs for the web server (configuration interface).
+- `local_slideshow_stdout` and `local_slideshow_stderr` contain the logs for the slideshow itself. Errors will most often appear in `stderr`.
 
-**Q : Comment mettre à jour Pimmich ?**
+**Q: Videos are not smooth or don't display. What should I do?**
 
-**R :** Allez dans l'onglet **Système** et cliquez sur le bouton "**Vérifier les mises à jour**". Pimmich se chargera de télécharger la dernière version depuis GitHub et de redémarrer automatiquement.
+**A:** In the **Display** tab, try enabling the "**Enable hardware video decoding**" option. It is much more performant, especially on a Raspberry Pi. If it causes issues (black/blue screen after a video), disable it.
 
-**Q : J'ai modifié une configuration mais rien ne change sur le diaporama.**
+**Q: The Wi-Fi won't connect, but Ethernet (cable) works. Why?**
 
-**R :** Certaines modifications, notamment celles liées à l'affichage (police, météo, etc.), nécessitent un redémarrage du diaporama pour être prises en compte. Vous pouvez le faire depuis l'onglet **Actions** en cliquant sur "Arrêter" puis "Démarrer le diaporama". Pour les changements plus profonds, un redémarrage de l'application web ou du système (depuis l'onglet **Système**) peut être nécessaire.
+**A:** Sometimes, if an Ethernet cable is plugged in, the system gives it priority. In the **System** tab, you can try to temporarily disable the "**Wired Interface (eth0)**" to force the system to use Wi-Fi exclusively.
+
+**Q: How do I update PictureFrame?**
+
+**A:** Remote updates from the web interface are not supported. Stop the app, back up configuration, and update the code manually using Git. Review changes and dependencies before restarting; local changes must be preserved.
+
+**Q: I changed a setting, but nothing changes on the slideshow.**
+
+**A:** Some changes, especially those related to display (font, weather, etc.), require the slideshow to be restarted to take effect. You can do this from the **Actions** tab by clicking "Stop" and then "Start Slideshow". For more significant changes, a restart of the web application or the system (from the **System** tab) may be necessary.

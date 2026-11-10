@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# Ce script est conçu pour être exécuté par l'application web Pimmich.
-# Il utilise l'outil raspi-config pour étendre la partition racine afin
-# qu'elle utilise tout l'espace disponible sur la carte SD.
+# This script is designed to be run by the PictureFrame web application.
+# It uses raspi-config to expand the root partition so the system
+# can use all available space on the SD card.
 
-set -e # Arrête le script si une commande échoue
+set -e # Exit if any command fails.
 
-echo "STEP:START:--- Lancement de l'extension du système de fichiers ---"
-echo "STEP:INFO:Utilisation de raspi-config pour étendre la partition racine..."
+echo "STEP:START:--- Starting filesystem expansion ---"
+echo "STEP:INFO:Using raspi-config to expand the root partition..."
 sudo raspi-config --expand-rootfs
-echo "STEP:DONE:La modification a été programmée. L'extension sera finalisée au prochain redémarrage du système. Veuillez redémarrer le Raspberry Pi depuis l'interface pour appliquer les changements."
+echo "STEP:DONE:The change has been scheduled. Expansion will complete at the next system restart. Restart the Raspberry Pi from the interface to apply the changes."

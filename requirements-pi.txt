@@ -1,0 +1,14 @@
+# requirements-pi.txt — Linux / Raspberry Pi only dependencies
+# Install ONLY on the Raspberry Pi (NOT on Windows):
+#   pip install -r requirements-pi.txt
+# (or: pip install --break-system-packages -r requirements-pi.txt on Debian 12+ / Pi OS with PEP 668)
+#
+# These packages either won't compile on Windows or are meaningless without Pi hardware.
+
+# --- HEIC/HEIF photo support (iPhone photos) ---
+pillow-heif
+
+# --- GPIO hardware control (fan, physical button) ---
+# RPi.GPIO is typically installed via apt: sudo apt install python3-rpi.gpio
+# If not available via pip on your Pi model, install the system package instead.
+RPi.GPIO; platform_system == "Linux"

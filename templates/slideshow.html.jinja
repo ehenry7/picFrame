@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="{{ get_locale() }}">
+<html lang="{{ get_locale() }}" dir="{{ 'rtl' if get_locale() == 'he' else 'ltr' }}">
 
 <head>
-    <title>Diaporama - Pimmich</title>
+    <title>Diaporama - PictureFrame</title>
     <style>
         html,
         body {
@@ -43,7 +43,7 @@
             img.src = "/static/photos/" + photos[0];
             setInterval(showNext, 5000); // 5 secondes entre les photos
         } else {
-            document.body.innerHTML = "<p style='color:white;text-align:center;margin-top:20%'>Aucune photo à afficher.</p>";
+            document.body.innerHTML = "<p style='color:white;text-align:center;margin-top:20%'>No photos to display.</p>";
         }
     </script>
 </body>

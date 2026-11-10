@@ -10,15 +10,16 @@ from logging.handlers import RotatingFileHandler
 
 from .display_manager import set_display_power
 from .config_manager import load_config
+from platform_utils import IS_LINUX, get_status_file
 
 # ============================================================
-# Configuration du logging avec émojis
+# Configure logging with emojis.
 # ============================================================
 LOGSDIR = Path(__file__).resolve().parent.parent / "logs"
 LOGSDIR.mkdir(exist_ok=True)
 
 class EmojiFormatter(logging.Formatter):
-    """Formatter personnalisé avec émojis selon le niveau."""
+    """Custom formatter that adds an emoji for each log level."""
     EMOJI_MAP = {
         "DEBUG": "🔍",
         "INFO": "ℹ️",
@@ -32,51 +33,51 @@ class EmojiFormatter(logging.Formatter):
         record.emoji = emoji
         return super().format(record)
 
-# Charger la configuration
+# Load configuration.
 config = load_config()
 
-# Créer un logger spécifique pour ce module
-logger = logging.getLogger("pimmich.slideshow_manager")
+# Create a logger for this module.
+logger = logging.getLogger("pictureframe.slideshow_manager")
 
-# Récupérer le niveau de log depuis la configuration
+# Get the log level from the configuration.
 level_name = config.get("level_log", "INFO")
 level = getattr(logging, level_name.upper(), logging.INFO)
 logger.setLevel(level)
 logger.propagate = False
 
-# Handler fichier avec rotation (10 Mo max, 3 backups)
+# Rotating file handler (10 MB max, 3 backups).
 file_handler = RotatingFileHandler(
-    LOGSDIR / "pimmich.log",
+    LOGSDIR / "pictureframe.log",
     maxBytes=10 * 1024 * 1024,
     backupCount=3,
     encoding="utf-8"
 )
 file_handler.setLevel(level)
 
-# Format modernisé avec emoji en début de ligne
+# Use the updated format with an emoji at the beginning of each line.
 file_formatter = EmojiFormatter(
     '%(emoji)s🟪%(asctime)s %(message)s',
     datefmt='%d-%m %H:%M:%S'
 )
 file_handler.setFormatter(file_formatter)
 
-# Ajouter les handlers (éviter doublons si module réimporté)
+# Add the handlers, avoiding duplicates if the module is re-imported.
 if not logger.handlers:
     logger.addHandler(file_handler)
 
-# Messages de démarrage
-logger.debug("----------------Initialisation Slideshow Manager----------------")
+# Startup messages.
+logger.debug("----------------Initializing Slideshow Manager----------------")
 
 # ============================================================
 # Constantes
 # ============================================================
-PID_FILE = "/tmp/pimmich_slideshow.pid"
+PID_FILE = get_status_file("pictureframe_slideshow.pid")
 
 # ============================================================
 # Fonctions
 # ============================================================
 def is_slideshow_running():
-    """Vérifie si un processus de diaporama est actuellement en cours d'exécution."""
+    """Check whether a slideshow process is currently running."""
     if not os.path.exists(PID_FILE):
         return False
 
@@ -93,28 +94,28 @@ def is_slideshow_running():
         logger.debug(f"Slideshow tourne ? {is_running} (PID: {pid})")
         return is_running
     except (psutil.NoSuchProcess, FileNotFoundError, ValueError) as e:
-        logger.error(f"Erreur vérification slideshow: {e}")
+        logger.error(f"Error checking slideshow: {e}")
         return False
 
 def start_slideshow():
-    """Démarre le processus du diaporama de manière robuste."""
+    """Start the slideshow process robustly."""
     logger.debug("📟 ✅ Start Slideshow")
 
-    # ✅ ÉTAPE 1 : Nettoyer les processus zombies AVANT de vérifier le PID
-    logger.debug("📟 Nettoyage préventif des zombies local_slideshow.py")
+    # ✅ Step 1: Clean up zombie processes before checking the PID.
+    logger.debug("📟 Proactively cleaning up local_slideshow.py zombie processes")
     for proc in psutil.process_iter(attrs=["pid", "cmdline", "status"]):
         try:
             cmdline = proc.info.get("cmdline")
             status = proc.info.get("status")
             if cmdline and any("local_slideshow.py" in part for part in cmdline):
                 if status == psutil.STATUS_ZOMBIE:
-                    logger.warning(f"📟 Zombie trouvé : PID {proc.pid}, nettoyage...")
+                    logger.warning(f"📟 Zombie found: PID {proc.pid}; cleaning up...")
                     proc.kill()
                     proc.wait(timeout=1)
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.TimeoutExpired):
             continue
 
-    # ✅ ÉTAPE 2 : Nettoyage si un ancien fichier PID existe sans process actif
+    # ✅ Step 2: Clean up a stale PID file if no process is active.
     if os.path.exists(PID_FILE):
         try:
             with open(PID_FILE, "r") as f:
@@ -122,66 +123,66 @@ def start_slideshow():
 
             if not psutil.pid_exists(pid):
                 os.remove(PID_FILE)
-                logger.info(f"📟 Ancien PID file {pid} nettoyé")
+                logger.info(f"📟 Removed stale PID file {pid}")
             else:
-                # Vérifier si ce PID exécute bien local_slideshow.py
+                # Check that this PID is running local_slideshow.py.
                 try:
                     proc = psutil.Process(pid)
                     if proc.is_running() and any("local_slideshow.py" in s for s in proc.cmdline()):
-                        logger.info(f"📟 Slideshow déjà en cours (PID {pid}), pas de démarrage")
+                        logger.info(f"📟 Slideshow already running (PID {pid}); not starting another")
                         return
                 except psutil.NoSuchProcess:
                     pass
         except Exception as e:
-            logger.debug(f"📟 Erreur nettoyage PID: {e}")
+            logger.debug(f"📟 Error cleaning up PID: {e}")
             try:
                 os.remove(PID_FILE)
             except:
                 pass
 
-    # Vérifie si un slideshow est déjà en cours (double sécurité)
+    # Check again whether a slideshow is already running.
     if is_slideshow_running():
-        logger.info("📟 Slideshow déjà en cours, pas de démarrage")
+        logger.info("📟 Slideshow already running; not starting another")
         return
 
-    # ✅ ÉTAPE 3 : Préparer l'environnement
+    # ✅ Step 3: Prepare the environment.
     python_executable = sys.executable
 
-    # ✅ ÉTAPE 4 : Lance le diaporama (méthode simple et fiable)
+    # ✅ Step 4: Start the slideshow (simple and reliable method).
     try:
         proc = subprocess.Popen(
             [python_executable, "-u", "local_slideshow.py"],
             env=os.environ.copy()
         )
 
-        # Sauvegarde le PID du nouveau processus
+        # Save the new process PID.
         with open(PID_FILE, "w") as f:
             f.write(str(proc.pid))
 
-        logger.debug(f"📟 ✅ Diaporama démarré avec PID {proc.pid}")
+        logger.debug(f"📟 ✅ Slideshow started with PID {proc.pid}")
     except Exception as e:
-        logger.error(f"📟 ❌ Échec démarrage diaporama: {e}")
+        logger.error(f"📟 ❌ Failed to start slideshow: {e}")
 
 def _stop_process_by_pid(pid):
-    """Arrête un processus de diaporama par son PID."""
+    """Stop a slideshow process by its PID."""
     if psutil.pid_exists(pid):
-        logger.info(f"📟 Arrêt du processus de diaporama {pid}...")
+        logger.info(f"📟 Stopping slideshow process {pid}...")
         p = psutil.Process(pid)
         p.terminate()
         try:
             p.wait(timeout=3)
-            logger.info(f"📟 Processus {pid} arrêté proprement")
+            logger.info(f"📟 Process {pid} stopped gracefully")
         except psutil.TimeoutExpired:
-            logger.warning(f"📟 Le processus {pid} n'a pas répondu, forçage de l'arrêt")
+            logger.warning(f"📟 Process {pid} did not respond; forcing termination")
             p.kill()
-            logger.info(f"📟 Processus {pid} tué de force")
+            logger.info(f"📟 Process {pid} forcefully terminated")
 
 def stop_slideshow():
-    """Arrête le processus du diaporama de manière robuste, en attendant sa terminaison."""
+    """Stop the slideshow process robustly and wait for it to exit."""
     config = load_config()
     is_smart_plug_enabled = config.get("smart_plug_enabled", False)
 
-    logger.info("📟 Arrêt du diaporama demandé")
+    logger.info("📟 Slideshow stop requested")
 
     if os.path.exists(PID_FILE):
         try:
@@ -189,34 +190,34 @@ def stop_slideshow():
                 pid = int(f.read().strip())
             _stop_process_by_pid(pid)
         except (IOError, ValueError, psutil.NoSuchProcess) as e:
-            logger.error(f"📟 Avertissement lors de l'arrêt du diaporama : {e}")
+            logger.error(f"📟 Warning while stopping slideshow: {e}")
         finally:
-            # S'assurer que le fichier PID est supprimé
+            # Ensure the PID file is removed.
             if os.path.exists(PID_FILE):
                 os.remove(PID_FILE)
-                logger.debug("📟 Fichier PID supprimé")
+                logger.debug("📟 PID file deleted")
 
-    # Double sécurité : tuer tous les processus restants qui pourraient être des zombies
+    # Extra safety: terminate any remaining processes that might be zombies.
     for proc in psutil.process_iter(attrs=["pid", "cmdline"]):
         try:
             if proc.info["cmdline"] and any("local_slideshow.py" in part for part in proc.info["cmdline"]):
-                logger.warning(f"📟 Nettoyage d'un processus de diaporama zombie trouvé (PID: {proc.pid})")
+                logger.warning(f"📟 Cleaning up zombie slideshow process (PID: {proc.pid})")
                 proc.kill()
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             continue
 
-    # Éteindre l'écran proprement (via prise ou DPMS)
-    logger.info("📟 Extinction de l'écran")
+    # Turn off the display cleanly (via smart plug or DPMS).
+    logger.info("📟 Turning off the display")
     set_display_power(on=False)
 
 def restart_slideshow_for_update():
     """
-    Redémarre le diaporama après une mise à jour de contenu, sans éteindre l'écran.
-    C'est la fonction à utiliser par les workers de mise à jour automatique.
+    Restart the slideshow after a content update without turning off the display.
+    Used after imports and photo edits.
     """
-    logger.info("📟 Redémarrage du diaporama pour mise à jour de contenu")
+    logger.info("📟 Restarting slideshow to apply content updates")
 
-    # 1. Arrêter le processus existant (sans appeler set_display_power)
+    # 1. Stop the existing process (without calling set_display_power).
     if os.path.exists(PID_FILE):
         try:
             with open(PID_FILE, "r") as f:
@@ -225,53 +226,53 @@ def restart_slideshow_for_update():
             if os.path.exists(PID_FILE):
                 os.remove(PID_FILE)
         except Exception as e:
-            logger.error(f"📟 Avertissement lors de l'arrêt pour mise à jour : {e}")
+            logger.error(f"📟 Warning while stopping for update: {e}")
 
-    # 2. Démarrer un nouveau processus
+    # 2. Start a new process.
     start_slideshow()
-    logger.info("📟 Diaporama redémarré pour mise à jour")
+    logger.info("📟 Slideshow restarted to apply content updates")
 
 def restart_slideshow_process():
     """
-    Redémarre uniquement le processus du diaporama, sans affecter l'alimentation de l'écran.
-    Idéal pour appliquer les changements de configuration sans cycle de redémarrage complet.
+    Restart only the slideshow process without affecting display power.
+    Ideal for applying configuration changes without a full restart cycle.
     """
-    logger.info("📟 Redémarrage du processus de diaporama demandé")
+    logger.info("📟 Slideshow process restart requested")
 
-    # 1. Arrêter le processus existant (sans appeler set_display_power)
+    # 1. Stop the existing process (without calling set_display_power).
     if os.path.exists(PID_FILE):
         try:
             with open(PID_FILE, "r") as f:
                 pid = int(f.read().strip())
             _stop_process_by_pid(pid)
         except Exception as e:
-            logger.error(f"📟 Erreur lors de l'arrêt: {e}")
+            logger.error(f"📟 Error stopping process: {e}")
 
         if os.path.exists(PID_FILE):
             try:
                 os.remove(PID_FILE)
             except OSError as e:
-                logger.warning(f"📟 Impossible de supprimer le fichier PID : {e}")
+                logger.warning(f"📟 Unable to delete PID file: {e}")
 
-    # Afficher un message de redémarrage sur l'écran
+    # Display a restart message on screen.
     try:
         python_executable = sys.executable
         message = "Redémarrage du diaporama..."
 
-        # Utiliser Popen pour ne pas bloquer, et s'assurer que l'environnement est correct
+        # Use Popen to avoid blocking and ensure the environment is correct.
         env = os.environ.copy()
-        if "SWAYSOCK" not in env:
+        if IS_LINUX and "SWAYSOCK" not in env:
             user_id = os.getuid()
             socks = glob.glob(f"/run/user/{user_id}/sway-ipc.*")
             if socks:
                 env["SWAYSOCK"] = socks[0]
 
         subprocess.Popen([python_executable, "utils/display_message.py", message], env=env)
-        time.sleep(1)  # Laisser le temps au message de s'afficher
-        logger.info("📟 Message de redémarrage affiché")
+        time.sleep(1)  # Allow the message to appear.
+        logger.info("📟 Restart message displayed")
     except Exception as e:
-        logger.warning(f"📟 Impossible d'afficher le message de redémarrage : {e}")
+        logger.warning(f"📟 Unable to display restart message: {e}")
 
-    # 2. Démarrer un nouveau processus
+    # 2. Start a new process.
     start_slideshow()
-    logger.info("📟 ✅ Processus de diaporama redémarré")
+    logger.info("📟 ✅ Slideshow process restarted")

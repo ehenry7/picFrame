@@ -1,369 +1,311 @@
-# 🖼️ Pimmich – Cadre photo connecté intelligent
+# 🖼️ PictureFrame – Smart Connected Photo Frame
 
-Pimmich est une application Python conçue pour transformer un Raspberry Pi en un cadre photo numérique intelligent et personnalisable. Il peut afficher des photos depuis de multiples sources, être contrôlé à la voix, et bien plus encore.
+PictureFrame is a Python application designed to turn a Raspberry Pi into a smart and customizable digital photo frame. It can display photos from multiple sources and be controlled through its web interface.
 
-<img src="static/pimmich_logo.png" alt="Pimmich Logo" width="300" style="display: block; margin: auto;">
+The startup script is `start_pictureframe.sh`; logs use `logs/pictureframe.log`.
+After upgrading an existing installation, rerun `sudo ./setup.sh` and reboot.
+Setup migrates the old Sway launcher, NGINX site and sudoers filenames.
+Stop the old application before upgrading; old and new processes must not run
+together because runtime PID/status filenames have changed.
+The legacy EXIF metadata prefix is retained so existing prepared photos still work.
 
-<p align="center">
-  <a href="https://ko-fi.com/pimmich">
-    <img src="https://img.shields.io/badge/Support%20on%20Ko--fi-F16061?logo=kofi&logoColor=white" alt="Support Pimmich on Ko-fi">
-  </a>
-</p>
+<img src="static/pictureframe_logo.svg" alt="PictureFrame Logo" width="300">
 
----
-
-## 📖 Table des matières
-
-- [✨ Fonctionnalités Principales](#-fonctionnalités-principales)
-- [🧰 Technologies utilisées](#-technologies-utilisées)
-- [🚀 Installation](#-installation)
-- [🔧 Configuration](#-configuration)
-- [🗣️ Contrôle Vocal](#️-contrôle-vocal)
-- [❓ Dépannage (FAQ)](#-dépannage-faq)
-- [🛣️ Feuille de Route](#️-feuille-de-route)
-  - [Juin 2025](#-juin-2025-)
-  - [Juillet 2025](#-juillet-2025---version-actuelle)
-  - [Août 2025](#️-août-2025----sortie-prévue-le-15-aoüt)
-- [💖 Crédits](#-crédits)
 
 ---
 
-## ✨ Fonctionnalités Principales
+## 📖 Table of Contents
 
-Pimmich est riche en fonctionnalités pour offrir une expérience complète et personnalisable :
+- ✨ Main Features
+- 🧰 Technologies Used
+- 🚀 Installation
+- 🔧 Configuration
+- ❓ Troubleshooting (FAQ)
+- 🛣️ Roadmap
+  - June 2025
+  - July 2025
+  - August 2025
 
-#### 🖼️ **Affichage & Diaporama**
-- **Multi-sources :** Affichez des photos depuis [Immich](https://immich.app/), un partage réseau (Samba/Windows), une clé USB, un smartphone ou via Telegram.
-- **Personnalisation avancée :** Réglez la durée d'affichage, les heures d'activité, les transitions (fondu, glissement), et activez un effet de mouvement "Pan & Zoom".
-- **Filtres créatifs :** Appliquez des filtres à vos photos (Noir & Blanc, Sépia, Vintage) et des effets uniques comme le **Polaroid** ou la **Carte Postale**.
-- **Gestion des formats :** Prise en charge intelligente des photos portraits (fond flou) et des vidéos (avec son et accélération matérielle optionnelle).
+---
 
-#### ⚙️ **Interface & Contrôle**
-- **Interface Web complète :** Une page de configuration locale, sécurisée par mot de passe et organisée en groupes et onglets thématiques pour une navigation intuitive.
-- **Contrôle Vocal :** Pilotez votre cadre avec des commandes vocales comme *"Cadre Magique, photo suivante"* ou *"Cadre Magique, lance la playlist Vacances"*.
-- **Gestion de contenu :**
-    - **Playlists :** Créez des albums virtuels, réorganisez les photos par glisser-déposer et lancez des diaporamas thématiques avec un écran de titre dynamique (pêle-mêle de photos sur fond en liège).
-    - **Favoris :** Marquez vos photos préférées pour qu'elles apparaissent plus souvent.
-    - **Légendes :** Ajoutez du texte personnalisé sur vos photos et cartes postales.
+## ✨ Main Features
 
-#### 🌐 **Connectivité & Interactions**
-- **Telegram :** Permettez à vos proches d'envoyer des photos sur le cadre via un bot Telegram, avec un système d'invitations sécurisé et temporaire.
-- **Wi-Fi & Réseau :** Configurez le Wi-Fi, scannez les réseaux et gérez les interfaces réseau directement depuis l'interface.
-- **Envoi depuis Smartphone :** Importez des photos directement depuis le navigateur de votre téléphone.
+PictureFrame is packed with features to provide a complete and customizable experience:
+
+#### 🖼️ **Display & Slideshow**
+- **Multi-source:** Import photos from a USB drive, smartphone, or computer browser.
+- **Existing library:** Previously imported photos remain available under **Imported photos**, with their captions, metadata, favorites, and playlists preserved.
+- **Advanced Customization:** Set display duration, active hours, transitions (fade, slide, or Random to choose an effect for each photo change), and enable a "Pan & Zoom" motion effect.
+- **Active-hour schedules:** Weekend hours apply on Friday and Saturday; weekday hours apply Sunday through Thursday.
+- **Creative Filters:** Apply filters to your photos (Black & White, Sepia, Vintage) and unique effects like **Polaroid** or **Postcard**.
+- **Format Handling:** Smart support for portrait photos (blurred background) and videos (with sound and optional hardware acceleration).
+
+#### ⚙️ **Interface & Control**
+- **Comprehensive Web Interface:** A local configuration page, password-protected and organized into thematic groups and tabs for an intuitive navigation.
+- **Content Management:**
+    - **Playlists:** Create virtual albums, reorder photos with drag-and-drop, and launch themed slideshows with a dynamic title screen (photo jumble on a corkboard background).
+    - **Favorites:** Mark your favorite photos to make them appear more often.
+    - **Captions:** Add custom text to your photos and postcards.
+
+#### 🌐 **Connectivity & Interactions**
+- **Wi-Fi & Network:** Configure Wi-Fi, scan for networks, and manage network interfaces directly from the interface.
+- **Smartphone Upload:** Import photos directly from your phone's browser.
 
 #### 🛠️ **Maintenance & Monitoring**
-- **Mise à jour facile :** Mettez à jour Pimmich en un clic depuis l'interface.
-- **Sauvegarde & Restauration :** Sauvegardez et restaurez l'ensemble de votre configuration.
-- **Monitoring système :** Suivez en temps réel la température, l'utilisation du CPU, de la RAM et du disque avec des graphiques d'historique.
-- **Logs détaillés :** Accédez aux journaux de chaque service (serveur web, diaporama, contrôle vocal) pour un dépannage facile.
+- **Manual Updates:** Application code is updated manually outside the web interface; no remote self-update service is included.
+- **Backup & Restore:** Back up and restore your entire configuration.
+- **System Monitoring:** Track real-time temperature, CPU, RAM, and disk usage with history graphs.
+- **Detailed Logs:** Access logs for each service (web server, slideshow) for easy troubleshooting.
 
 ---
 
-## 🧰 Technologies utilisées
+## 🧰 Technologies Used
 
-- **Backend :** Python, Flask
-- **Frontend :** HTML, TailwindCSS, JavaScript
-- **Diaporama :** Pygame
-- **Traitement d'image :** Pillow
-- **Contrôle Vocal :** Picovoice Porcupine (mot-clé) & Vosk (reconnaissance)
-- **Serveur Web :** NGINX (en tant que reverse proxy)
+- **Backend:** Python, Flask
+- **Frontend:** HTML, TailwindCSS, JavaScript
+- **Slideshow:** Pygame
+- **Image Processing:** Pillow
+- **Web Server:** NGINX (as a reverse proxy)
 
 ---
 
 ## 🚀 Installation
 
-Il existe deux méthodes pour installer Pimmich.
+There are two methods to install PictureFrame.
 
-### Méthode 1 : Image pré-configurée (Recommandée et plus simple)
+### Method 1: Pre-configured Image (Recommended and easier)
 
-Cette méthode est idéale pour une première installation rapide.
+This method is ideal for a quick first-time installation.
 
-1.  **Téléchargez l'image du mois en cours**
-    Téléchargez la version du Nouvel An (v1.6.0) directement ici : [pimmich271225.img.xz](https://github.com/gotenash/Pimmich/releases/download/v1.6.0/pimmich271225.img.xz) ou rendez-vous sur la page des Releases de Pimmich.
+1.  **Download the current month's image**
+    Use a current PictureFrame image if one is available; otherwise follow the manual installation below.
 
-2.  **Flashez l'image sur une carte SD**
-    Utilisez un logiciel comme Raspberry Pi Imager ou BalenaEtcher pour écrire le fichier image que vous venez de télécharger sur votre carte microSD.
+2.  **Flash the image to an SD card**
+    Use software like Raspberry Pi Imager or BalenaEtcher to write the image file you just downloaded to your microSD card.
 
-3.  **Démarrez votre Raspberry Pi**
-    Insérez la carte SD dans le Raspberry Pi, branchez l'écran et l'alimentation. Pimmich démarrera automatiquement.
+3.  **Start your Raspberry Pi**
+    Insert the SD card into the Raspberry Pi, connect the screen and power supply. PictureFrame will start automatically.
 
-### Méthode 2 : Installation manuelle depuis le dépôt Git
+### Method 2: Manual Installation from Git Repository
 
-Cette méthode est destinée aux utilisateurs avancés ou à ceux qui souhaitent suivre le développement de près.
+This method is for advanced users or those who want to follow development closely.
 
-#### ✅ Pré-requis
+#### ✅ Prerequisites
 
-- Un Raspberry Pi (modèle 3B+, 4 ou 5 recommandé) avec **Raspberry Pi OS Trixie (Debian 13)** Desktop (64-bit) — **Version recommandée**.
-- Une carte SD, une alimentation, un écran.
-- Une connexion Internet.
+- A Raspberry Pi (model 3B+, 4, or 5 recommended) with Raspberry Pi OS Desktop (64-bit).
+- An SD card, a power supply, a screen.
+- An Internet connection.
 
-#### 📝 Étapes d'installation
+#### 📝 Installation Steps
 
-1.  **Clonez le dépôt**
-    Ouvrez un terminal sur votre Raspberry Pi et exécutez :
+1.  **Clone the repository**
+    Open a terminal on your Raspberry Pi and run:
     ```bash
-    git clone https://github.com/gotenash/pimmich.git
-    cd pimmich
+    git clone https://github.com/ehenry7/picFrame.git
+    cd picFrame
     ```
 
-2.  **Lancez le script d'installation**
-    Ce script installe toutes les dépendances, configure l'environnement et prépare le démarrage automatique.
-    ```bash
-    chmod +x setup.sh
-    sudo ./setup.sh
-    ```
+2.  **Run the installation script**
+    This script installs all dependencies, configures the environment, and prepares for automatic startup.
+```bash
+chmod +x setup.sh
+sudo ./setup.sh
+```
 
-3.  **Redémarrez**
-    Une fois le script terminé, un redémarrage est nécessaire pour que tous les services se lancent correctement.
-    ```bash
-    sudo reboot
-    ```
+This script installs system and Python dependencies, sets up the environment, and configures auto-start of the slideshow.
 
----
+If a configured slideshow font is unavailable, PictureFrame logs one warning
+and uses a cached system font at the requested size for the rest of the session.
+Changing the configured font path tries the new font; restart to retry a repaired path.
 
-## 🔧 Configuration
+### Switch between frame mode and the desktop
 
-### 1. Première Connexion
+Maintenance and developer helpers live in `scripts/`, including `add_photos.py`,
+`reset_admin_password.py`, `check_*.py`, `verify_he.py`, `test_babel.py`, and
+`_extract.py`. Run them as `python scripts/<name>.py` from the project root.
+They locate project resources relative to their file, so they also work when
+invoked by absolute path from another directory. `_extract.py` writes its
+temporary `_untranslated.json` beside itself in `scripts/`.
+Only the main app/runtime modules and `setup.sh` / `start_pictureframe.sh`
+remain at the root; importable runtime helpers remain in `utils/`.
 
-- Au redémarrage, le cadre affichera un QR Code et l'adresse IP du Raspberry Pi.
-- Scannez le QR Code ou ouvrez un navigateur sur un autre appareil (PC, smartphone) sur le même réseau et entrez l'adresse IP (ex: `http://192.168.1.XX`).
-- Le mot de passe initial est généré aléatoirement lors de l'installation et est stocké dans le fichier `/boot/firmware/credentials.json`. Il est fortement recommandé de le changer via l'interface (onglet `Système` > `Sécurité`).
+After running setup, use either command from the project directory:
 
-### 2. Configuration des Sources
+```bash
+bash scripts/enable_auto_frame_start.sh   # Frame mode: console auto-login + Sway
+bash scripts/disable_auto_frame_start.sh  # Desktop mode: desktop auto-login
+```
 
-- **Immich :** Pour connecter votre serveur Immich, vous aurez besoin de :
-    1.  **L'URL de votre serveur** (ex: `http://192.168.1.YY:2283`).
-    2.  **Un Token API :** Dans Immich, allez dans `Paramètres du compte` > `Clés API` > `Générer une nouvelle clé`.
-    3.  **Le nom technique de l'album** que vous souhaitez afficher.
-- **Samba / Partage Windows :** Renseignez les informations de votre partage réseau.
-- **USB :** Branchez une clé USB et utilisez le bouton d'import dans l'onglet `Actions`.
-
-### 3. Personnalisation
-
-Explorez les différents onglets pour personnaliser votre cadre :
-- **Diaporama > Affichage :** Réglez les durées, les transitions, les effets...
-- **Diaporama > Horloge & Infos :** Activez et configurez l'affichage de l'heure, de la météo ou des marées.
-- **Contenu > Sources :** Cochez les sources que vous souhaitez voir dans le diaporama.
-
----
-
-## 🗣️ Contrôle Vocal
-
-Pimmich supporte le contrôle vocal en **Français** et en **Anglais**.
-
-Pour utiliser un mot-clé personnalisé ("Cadre Magique", "Magic Frame"...), une étape manuelle est requise :
-1.  Créez un compte gratuit sur la Picovoice Console.
-2.  Allez dans la section "Porcupine" et créez votre mot-clé personnalisé.
-3.  Téléchargez le modèle pour la plateforme **Raspberry Pi**.
-4.  Renommez le fichier `.ppn` téléchargé en `cadre-magique_raspberry-pi.ppn` (pour le français) ou `magic-frame_raspberry-pi_en.ppn` (pour l'anglais, exemple).
-5.  Placez ce fichier dans le dossier `voice_models` à la racine du projet Pimmich.
-6.  Dans l'interface Pimmich, allez dans l'onglet `Vocal`, sélectionnez la langue, entrez votre "Access Key" Picovoice et activez le service.
-
-### Commandes Disponibles
-
-Une fois le contrôle vocal activé, commencez toutes vos commandes par le mot-clé **"Cadre Magique"**.
-
-**Contrôle du Diaporama :**
-- *"photo suivante"*
-- *"photo précédente"*
-- *"pause"* / *"lecture"* (pour mettre en pause ou reprendre)
-
-**Gestion de l'Affichage :**
-- *"règle la durée à 15 secondes"*
-- *"affiche pendant 30 secondes"*
-
-**Gestion des Playlists & Sources :**
-- *"lance la playlist Vacances"*
-- *"afficher les cartes postales"* (lance un diaporama des photos Telegram)
-- *"activer la source Samba"*
-- *"désactiver la source USB"*
-
-**Contrôle du Système :**
-- *"passer en mode veille"* (éteint l'écran)
-- *"réveiller le cadre"* (rallume l'écran)
-- *"éteindre le cadre"* (éteint complètement le Raspberry Pi)
-- *"revenir au diaporama principal"* (quitte une playlist et relance le diaporama normal)
+The scripts request sudo privileges and **reboot automatically** after successfully
+changing the boot mode. Save your work before running either script.
+Enabling checks for Sway/Python and repairs the console profile and Sway launcher
+for the current installation before rebooting. Existing virtual environments are
+activated by the startup script when present; otherwise it uses global Python.
+If startup fails, open a console with Ctrl+Alt+F2 and check
+`tail -n 100 logs/pictureframe.log` from the project directory.
+disabling requires Raspberry Pi OS Desktop, not Lite. Neither script removes
+PictureFrame or changes its settings.
 
 ---
 
-## ❓ Dépannage (FAQ)
+### Connect to PictureFrame
 
-Pour toute question ou problème, consultez notre **Foire Aux Questions (FAQ.md)**. Vous y trouverez des solutions aux problèmes courants (Wi-Fi, affichage, etc.) et des astuces pour utiliser Pimmich au mieux.
+From a web browser on another device, access:
+
+```
+http://<your-raspberry-ip>:7090
+```
+
+For local development, run `python -u app.py` from the project directory and open
+`http://127.0.0.1:7090`. Look for `HTTP server READY` in the console.
+
+Startup stages, worker failures, and HTTP request timings are recorded in
+`logs/pictureframe.log`. If startup takes more than 30 seconds, thread stack traces
+are written to `logs/startup_threads.log`. A request with `HTTP started` but no
+matching `HTTP finished` identifies an unfinished handler.
+
+Existing Raspberry Pi installations using NGINX must change their
+`proxy_pass` upstream from port 5000 to 7090 and reload NGINX; updating the
+repository alone does not update the installed NGINX configuration.
+
+### Set or reset the admin password
+
+From the project directory on Raspberry Pi, run:
+
+```bash
+sudo python3 scripts/reset_admin_password.py
+```
+
+On Windows, run `python scripts\reset_admin_password.py` instead.
+Enter your chosen password twice at the hidden prompts, then log in as `admin`.
+No output-file argument or app restart is needed. The script uses the platform's
+credentials location, stores a password hash, and preserves other credential
+settings. It can also create the credentials file if it is missing.
 
 ---
 
-## 🛣️ Feuille de Route
+### Add photos from a folder without the web interface
 
-#*
-- **Projet du :** Gadgetaulab
+Stop the app before importing. From the project directory on Raspberry Pi:
 
+```bash
+# Prepare and enable photos already copied into static/photos/smartphone:
+python3 scripts/add_photos.py
 
-> 🎂 **SORTIE IMMINENTE : Version Anniversaire - 27 Mai**
-> Cette mise à jour majeure marque une étape clé dans le développement de Pimmich :
-> - 🚀 **Mise à jour fiabilisée :** Le moteur de mise à jour via l'interface est désormais 100% opérationnel et sécurisé.
-> - 📅 **Boost Anniversaire :** Revivez vos souvenirs avec une priorité d'affichage pour les photos prises à la même date les années passées.
-> - 🌍 **Métadonnées & Drapeaux :** Affichage personnalisable du lieu, de la date et du drapeau du pays d'origine.
-> - 📊 **Monitoring Avancé :** Nouveaux graphiques temps réel pour surveiller la santé de votre Raspberry Pi.
-> - 🔌 **Domotique :** Support des prises connectées pour une extinction totale de l'écran.
-> - 🖱️ **Playlists UX :** Organisation des albums par glisser-déposer.
-> - ⚡ **Hardware Accel :** Lecture vidéo optimisée pour Pi 4 et Pi 5.
-> - 🔘 **Bouton Physique :** Support GPIO pour le contrôle matériel de la veille.
+# Or copy photos from another folder, prepare them, and enable their source:
+python3 scripts/add_photos.py "/home/pi/Pictures"
+```
 
----
+Use `python3` instead of `./venv/bin/python` for a global Python installation,
+or `python` on Windows. Relative input paths are relative to your terminal's
+current directory. JPG, JPEG, PNG, HEIC, and HEIF files directly inside the
+folder are imported; subfolders and videos are not. HEIC/HEIF requires
+`pillow-heif`. Originals are kept, existing files are not overwritten, and
+conflicting filenames receive a numeric suffix. Photos with identical file contents
+are skipped, even under a different filename, so repeating an import does not add
+duplicate copies. Already prepared photos are also skipped by the preparation pipeline.
+Restart the app/slideshow after successful preparation. Do not use `sudo` unless
+your photo/configuration directories actually require it.
 
-### 🗓️ Historique des versions
+## ⚙️ Configuration Interface
 
-> 🗓️ À partir de juin 2025 — Une version majeure chaque mois
+### Slideshow Settings
 
-## ✅ Août 2026 - Mises à jour de Stabilité, Performance & Compatibilité Pi 2/3/4/5
-- 🚀 **Mise à jour asynchrone & Keep-Alives (anti-timeout) :** Toutes les tâches lourdes (Samba, Immich, photo/video prep) s'exécutent en arrière-plan avec pings réseau toutes les 10s pour éviter toute déconnexion de l'interface d'administration.
-- 🔁 **Synchronisation intelligente incrémentale :** Seuls les nouveaux médias et les suppressions sont synchronisés, préservant la bande passante, le CPU et l'usure de la carte SD.
-- ⚡ **Optimisation de la mémoire GPU (CMA) :** Technique innovante de réduction de fenêtre 1x1 masquée (`pygame.HIDDEN`) pour libérer 100% de la mémoire GPU lors de la lecture vidéo `mpv`, résolvant les crashs et lenteurs sous Wayland/Sway.
-- ⏱️ **Lecture vidéo instantanée :** Suppression des appels lents à `ffprobe` au profit d'un Watchdog de sécurité fixe de 90 secondes. La vidéo se lance en moins d'une seconde.
-- 📺 **Affichage vidéo robuste devant le diaporama :** Option `--ontop` sélective pour garantir que les vidéos se lisent toujours au premier plan, devant la fenêtre de Pygame sur Pi 1 et 2.
-- 🎨 **Transitions optimisées à 30/60 FPS :** Le fondu enchaîné est calculé à 50% de résolution sur Pi 1/2/3 (75% de pixels en moins à traiter) puis mis à l'échelle via l'accélération matérielle de SDL2, avec un sélecteur de FPS dans l'interface admin.
-- 🤫 **Zéro bruit CPU sonore au repos :** Le mixeur audio Pygame n'est initialisé qu'à la demande. Évite de charger les serveurs son (Pipewire) en tâche de fond et économise 40% de CPU sur les anciens Pi.
-- 🌐 **Vitesse réseau améliorée :** Optimisation de la détection Wi-Fi pour contourner les appels réseau lents sur les systèmes uniquement câblés (Pi 2).
-- 📦 **Dépendances optionnelles :** Support HEIF/HEIC et commandes vocales optionnels pour garantir le succès de l'installation sur toutes les architectures système, géré à la volée dans `setup.sh`.
-- 🇫🇷 **Langue française native :** Configuration et génération automatique de la locale `fr_FR.UTF-8` lors de l'installation pour des dates affichées en français natif.
+Here, you can set the display time per photo (minimum ~10s, due to background blur processing for portrait images) and define active hours for the slideshow.
 
-## ✅ Mai 2026
-- 🚀 **Compatibilité Debian Trixie (Debian 13) :**
-    - ✅ Migration complète vers **Python 3.13**.
-    - ✅ Optimisation du rendu vidéo pour **Sway/Wayland** (DMABUF et V4L2-copy).
-    - ✅ Support natif du Raspberry Pi 3 sur les nouveaux noyaux Linux.
-    - ✅ Sécurisation non-interactive des commandes `sudo` via règles ciblées.
+Photos are fitted and centered using the same framing during transitions and
+static display, including when prepared photos are larger than the Windows slideshow window.
+With Pan & Zoom enabled, transitions end at the animation's starting crop, so
+motion begins without a sudden change in framing.
+Pan and zoom now animate together throughout each photo's display time, from
+the configured **Start zoom** to **End zoom**, rather than zooming before panning.
+Start zoom can be as low as 0.01; below 1.00, the image is smaller and centered on
+a black background. End zoom is at least 1.00 (the full fitted image);
+1.15 means 15% enlargement.
+The default is 1.00 → 1.15. Use a larger start than end value to zoom out, or equal
+values to pan at a constant zoom. Transitions match the selected starting zoom.
+Pan/zoom targets 60 FPS independently of the transition FPS setting. Its overlay
+is refreshed once per second and reused between frames to reduce animation work.
+Actual smoothness still depends on display resolution and available CPU.
+Photo metadata uses cached details for previously imported photos and the original
+file's EXIF capture date / IPTC city and country for locally imported photos.
+Keep originals under `static/photos/{source}`. Missing dates or location names
+cannot be displayed; GPS coordinates alone are not converted into city names.
+Both live previews show the metadata text selected for display, or **No Metadata**
+if none is available under the saved settings. Hover over the single-line caption
+to read its full text when it is truncated.
+The Preview and Favorites photo tiles also show this caption below each image,
+next to its filter and caption controls. Both date-format fields include an
+expandable reference with codes and examples (such as `%d/%m/%Y` for 15/06/2020).
 
-## ✅ Septembre 2025 - (Sortie prévue le 15 septembre)
-- 🎨 **Refonte de l'Interface :** Nouvelle navigation par groupes et onglets pour une expérience plus claire et intuitive.
-- 🎵 **Gestion de Playlists Améliorée :**
-    - ✅ Nouvel écran de lancement dynamique avec un pêle-mêle de photos sur un fond en liège.
-    - ✅ Créez des albums virtuels, visualisez leur contenu, renommez-les et lancez des diaporamas thématiques.
-- 🔘 **Bouton Physique :**
-    - ✅ Ajout du support pour un bouton physique (via GPIO) pour mettre en veille et réveiller le cadre.
-- �️ **Contrôle Vocal :**
-    - ✅ Ajout de la commande vocale ("Cadre Magique") et intégration profonde avec le système.
-- 🚀 **Optimisations et Stabilité :**
-    - ✅ Amélioration de la réactivité de l'onglet "Système" grâce à une lecture optimisée des logs.
-    - ✅ Fiabilisation du script de mise à jour pour éviter les blocages.
-    - ✅ Nombreuses corrections de bugs pour une meilleure stabilité générale.
+Use **Crop photo** on a Preview or Favorites tile to select which part is displayed.
+Drag the selection and adjust **Selection size**; its aspect ratio always matches
+the configured slideshow width and height. Increase the size beyond the photo's
+edges to include more of a portrait (up to the entire photo); extra space is filled
+with a blurred background, while the original stays centered on the padded axis.
+**Save crop** regenerates that photo's
+prepared image, Polaroid and postcard versions, keeps saved filters/captions, and
+reloads a running slideshow. **Reset crop** restores the uncropped preparation.
+Originals are never modified and must remain in `static/photos/{source}`.
+Selections are saved in `config/crop_states.json` and reused during future preparation.
 
-## 🛠️✅ Août 2025  - (Version précédente)
-�
-- ✅ Gestion des vidéos
--  Ajout d'une vignette lors de lecture de la vidéo (onglet Actions)
-- ✅ Ajout de la fonction "Carte Postle" par telegram
-    - ✅ sécurisation par lien d'invitation
-- ✅ Gestion accélération matérielle pour Pi3
-- ✅ Ajout traduction de l'application (Anglais et Espagnol)
-- ✅ Ajout QR Code première connexion
-- ✅ Ajout de l'effet "Carte postale" pour toutes les sources de photos
-- ✅ Ajout de la fonctionnalité "Ajout de texte"
-- ✅ Ajout d'un bouton "Redémarrer l'appli Web"
-- ✅ Ajout de l'onglet Favoris (augmentation fréquence d'affichage d'une photo)
-- ✅ Modification météo et marées pour afficher 3 jours de prévisions
-- ✅ Corrections des bugs
-    - ✅ Heure début d'affichage
-    - ✅ Effacement des logs dans l'onglet système sans problème de container
+The Preview and Favorites filter menus also offer **Auto Enhance**, **Vivid**,
+**Warm**, **Cool**, **Dramatic B&W**, **Soft Glow**, **Sharpen**, **Duotone**
+(navy shadows and warm highlights), and **Posterize**. Filters are applied on demand,
+not per animation frame, and always start from the clean prepared backup.
+Choose **Original** to remove a color effect; this keeps the saved crop.
+Additional presets include **Matte** (lifted blacks), **Film Grain** (repeatable
+fine texture), **Pencil Sketch** (monochrome outlines), **Selective Color**
+(red, green or blue retained against grayscale), and **Tilt Shift** (a sharp
+horizontal center band with progressively blurred top and bottom).
+**Cinematic** adds teal shadows and warm highlights; **Cross Process** uses
+retro channel curves; **Watercolor** smooths detail into painted color patches
+with subtle outlines. **Vignette - Dark Edges** gently darkens the edges while
+retaining center brightness and color. The separate **B&W Background** effect
+(previously labeled Vignette) keeps the prepared foreground in color and makes
+its surroundings grayscale. If the photo fills the frame or an older photo
+lacks foreground bounds, it keeps a soft central oval in color instead.
+These effects do not detect subjects.
+These are stylized presets, not adjustable filter controls.
+Click a Preview or Favorites photo to enlarge it. The enlarged view includes its
+current filter, a filter selector, caption field, favorite star, crop and delete
+actions on a single row (scroll horizontally on narrow screens). Crop opens
+the existing editor after closing the enlarged view.
+Small live previews and Preview/Favorites tiles also show a separate location
+line with available city/country names and a country flag emoji. Missing data
+is labeled **No location metadata**. This line is independent of the slideshow
+overlay settings; flag appearance depends on the browser/system emoji font.
 
+Touch or click the local slideshow to reveal Previous, Pause/Play and Next
+buttons for five seconds. Tap a visible button to operate it and extend the
+display time. The first tap reveals controls without changing the photo.
+Keyboard shortcuts also work: Left = Previous, Right = Next, Space = Pause/Play.
+They reveal or extend the controls. Navigation can interrupt a fade or photo
+loading; it does not wait for the display duration or transition to finish.
 
-## ✅ Juillet 2025  - Version actuelle
+The enlarged photo toolbar also provides:
+- **Filter strength** (0–100%), saved per photo for color/effect filters.
+  Original, Polaroid and Postcard do not use strength. Saved strength is reused
+  when changing effects and when regenerating a crop.
+- **Before/After** (half-circle icon): hold the button, Space or Enter to see
+  the clean prepared photo with its saved crop; release to return to the edit.
+- **Edit location** (map-pin icon): enter a city and choose a country. These
+  app-only overrides are saved in `config/photo_edits.json`; originals are
+  never modified. **Use original location** removes the manual override.
 
-- ✅ 🧭 Ajout de la configuration Wi-Fi depuis l’interface Web  
-- ✅ 🗂️ Réorganisation de la page de configuration en onglets  
-- ✅ 🔁 Mise à jour automatique périodique de l’album Immich  
-- ✅ 📁 Support du protocole SMB pour accéder à des photos partagées en réseau
-- ✅ ⏰🌤️ Affichage de l’heure et de la météo sur l’écran
-- ✅ Ajout NGINX, plus besoin de mettre le numéro du port (50000)
-- ✅ Ajout des filtres (NB, Sépia, Polaroid ...)
-- ✅ Ajout des différents boutons supprimer
-- ✅ Ajout d'une option de sauvegarde de la configuration
-- ✅ Ajout d'un menu changement du mot de passe
-- ✅ Ajout de la création du credenrials.json pendant le setup
-- ✅ Ajout effet de transition
-- ✅ Ajout détection automatique de la résolution
-- ✅ Ajout de l'import à partir d'un smartphone (en admin et mode invité)
-- ✅ Interface de validation des photos proposées en mode invité
-- ✅ Ajout des logs dans l'onglet Système
-- ✅ Ajout des stats du Raspberry (température, stockage Ram, charge processeur)
+Photo grids and enlarged views use shared editing operations, with filter
+requests queued per photo. Slideshow country flags are cached and fetched
+outside rendering so unavailable network access does not block drawing.
 
-## ✅ Juin 2025 –
+### Photo Import Settings
 
-- ✅ Aperçus des photos avec suppression possible  
-- ✅ Véritable mise en veille de l’écran (gestion via `wlr-randr`)  
-- ✅ Paramètre de hauteur utile de l’écran (% d’écran utilisé)  
-- ✅ Correction de l’orientation via EXIF et préparation des images  
+Import from a USB stick or your browser, and manage your existing photo library.
 
-
-
- 
-## 💡 Idées pour les versions suivantes
-
-- 📱 Création d’une APK Android pour contrôler le cadre 
-- Pimmich télécomande
-- Pimmich Android TV
-- Import Google Photos
-- Import PhotoPrism    
-
-
-
-### Récupérer la Clef API (Token Immich)
-
-🧭 1. Se connecter à l'interface web d’Immich
-
-⚙️ 2. Accéder à la page "Paramètres du compte"
-Une fois connecté :
-
-Clique sur l’icône de profil (en haut à droite) ou ton nom d'utilisateur.
-
-![Paramètre du compte](https://drive.google.com/uc?id=1_c12UZ7g8IwsL99xP55eB4qqacGAY8Kc)
-
-
-Sélectionne “Account settings” ou “Paramètres du compte”.
-
-![Menu Clef API](https://drive.google.com/uc?id=1rofAi6HNhvJbBh2D_AUsedj3HwSrQHjP)
-
-
-🧪 3. Générer un nouveau token API
-Dans la section "API Key" ou "Clés API" :
-
-![Menu Clef API](https://drive.google.com/uc?id=1HrBVgvR4UXdkhLj-4KDohufr5nt57t2G)
-
-Clique sur “Generate new API Key” ou “Générer une nouvelle clé API”.
-![Menu Clef API](https://drive.google.com/uc?id=1dRBQMs0dsdM7vKlEuUzBnMmzzH3RNplc)
-
-
-
-Donne un nom à ta clé, par exemple :
-PimmichFrame
-
-✅ Une fois générée, une clé s'affiche. C’est le token à copier.
-
-![Menu Clef API](https://drive.google.com/uc?id=1hyt14hFPN3XEBu_0rh9XYIgLdXJau22y)
-
-⚠️ Attention
-
-Tu ne pourras plus voir cette clé après avoir quitté la page. Si tu la perds, il faudra en générer une nouvelle.
-
-Ne partage jamais ce token publiquement. Il donne un accès total à tes albums Immich.
-
-Le mieux est de créer un compte Immich réservé au cadre photo avec accès à un seul album que tu pourras alimenter à partir d'un autre compte.
-
-### Se connecter à Pimmich
-
-Dans un navigateur taper l'adresse ip du raspberry : http://xxx.xxx.xxx.xxx:5000
-
-![Menu Clef API](https://drive.google.com/uc?id=1VynC6umiYqPaln_kAb_DDd990YUkbT88)
-
-
-### Page de configuration
-
-## configuration du diaporama
-
-Dans ce cadre vous pourrez régler le temps d'affichage de chaque photo (pour l'instant on ne peut descendre en dessous de 10 secondes surement du temps de traitement des photos porttrait pour générer le fond flou). Vous pouvez aussi défoinir les heures où le diaporama fonctionnera.
-
-![Menu Clef API](https://drive.google.com/uc?id=1t_7MCKNNfHfTi5Pjc7_hDxbDzU18UvO7)
-
-## configuration de l'import des photos
-
-![Menu Clef API](https://drive.google.com/uc?id=1AwUgYbzGcdskt99q32VlaOc7jM303Tbd)
+In the Actions tab under photo importing, **Import photos** selects multiple
+files and **Import folder** selects a folder on the device running your browser
+(including its subfolders). Photos are added to the Smartphone source, prepared,
+and enabled automatically. Identical file contents are skipped, including renamed
+duplicates; different photos with matching names are preserved with numeric suffixes.
+Each selection is limited to 32 MB including upload overhead; use smaller selections
+or the command-line importer for large folders. Folder selection requires a browser
+that supports directory uploads.

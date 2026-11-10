@@ -1,39 +1,37 @@
 import pygame
 import sys
 import os
+import glob
+from platform_utils import IS_LINUX, get_pygame_display_flags, get_pygame_display_size
 
 def draw_text(surface, text, font, color, center_pos):
-    """Dessine du texte centré sur une position donnée."""
+    """Draw text centered at a given position."""
     text_surface = font.render(text, True, color)
     text_rect = text_surface.get_rect(center=center_pos)
     surface.blit(text_surface, text_rect)
 
 def main():
-    """Affiche un message centré sur l'écran pendant un court instant."""
+    """Display a centered message on screen briefly."""
     if len(sys.argv) < 2:
-        print("Usage: python display_message.py \"Votre message\"")
+        print("Usage: python display_message.py \"Your message\"")
         return
 
     message = sys.argv[1]
 
-    # Assurer que l'environnement d'affichage est correctement configuré
-    if "SWAYSOCK" not in os.environ:
-        # Logique de fallback si la variable n'est pas définie
-        # (peut être nécessaire si appelé depuis un contexte inattendu)
+    # Ensure the display environment is configured correctly.
+    if IS_LINUX and "SWAYSOCK" not in os.environ:
         user_id = os.getuid()
         sock_path_pattern = f"/run/user/{user_id}/sway-ipc.*"
-        import glob
         socks = glob.glob(sock_path_pattern)
         if socks:
             os.environ["SWAYSOCK"] = socks[0]
 
     pygame.init()
 
-    info = pygame.display.Info()
-    screen = pygame.display.set_mode((info.current_w, info.current_h), pygame.FULLSCREEN)
+    screen = pygame.display.set_mode(get_pygame_display_size(), get_pygame_display_flags())
     screen.fill((0, 0, 0)) # Fond noir
 
-    font = pygame.font.Font(None, 60) # Police par défaut, taille 60
+    font = pygame.font.Font(None, 60) # Default font, size 60.
     draw_text(screen, message, font, (255, 255, 255), screen.get_rect().center)
     pygame.display.flip()
 

@@ -3,11 +3,11 @@ import re
 
 def get_interface_status(interface_name: str):
     """
-    Récupère l'état (UP/DOWN) et l'adresse IP d'une interface réseau.
+    Get the state (UP/DOWN) and IP address of a network interface.
     """
     status = {"name": interface_name, "state": "DOWN", "ip_address": "N/A"}
     try:
-        # Commande pour obtenir les détails de l'interface
+        # Get interface details.
         ip_addr_output = subprocess.check_output(
             ['/usr/bin/ip', 'addr', 'show', interface_name],
             text=True,
@@ -17,26 +17,26 @@ def get_interface_status(interface_name: str):
         if "state UP" in ip_addr_output:
             status["state"] = "UP"
         
-        # Extraire l'adresse IP si elle existe
+        # Extract the IP address, if present.
         ip_match = re.search(r"inet (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})", ip_addr_output)
         if ip_match:
             status["ip_address"] = ip_match.group(1)
 
     except (subprocess.CalledProcessError, FileNotFoundError):
-        # L'interface n'existe probablement pas ou la commande a échoué
+        # The interface probably does not exist, or the command failed.
         status["state"] = "NOT_FOUND"
     
     return status
 
 def set_interface_state(interface_name: str, state: str):
     """
-    Active ('connect') ou désactive ('disconnect') une interface réseau via NetworkManager.
+    Enable ('connect') or disable ('disconnect') a network interface via NetworkManager.
     """
-    # 'up' devient 'connect', 'down' devient 'disconnect' pour nmcli
+    # nmcli uses 'connect' for 'up' and 'disconnect' for 'down'.
     action = 'connect' if state == 'up' else 'disconnect'
     
     try:
-        # Utiliser nmcli pour gérer l'état de l'interface
+        # Use nmcli to manage the interface state.
         subprocess.run(
             ['sudo', '-n', '/usr/bin/nmcli', 'device', action, interface_name],
             check=True,
@@ -44,9 +44,9 @@ def set_interface_state(interface_name: str, state: str):
             text=True,
             timeout=10
         )
-        print(f"Interface {interface_name} passée à l'état '{action}'.")
+        print(f"Interface {interface_name} set to '{action}'.")
     except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired) as e:
         stderr = getattr(e, 'stderr', str(e))
-        error_message = f"Impossible de changer l'état de l'interface {interface_name}: {stderr}"
+        error_message = f"Unable to change the state of interface {interface_name}: {stderr}"
         print(error_message)
         raise Exception(error_message)

@@ -18,28 +18,28 @@ def get_rotation_angle(image):
                     return 90
         return 0
     except Exception as e:
-        print(f"Erreur lors de la lecture EXIF : {e}")
+        print(f"Error reading EXIF data: {e}")
         return 0
         
         
         
-# Modification Sigalou 25/01/2026 - Ajout récupération date de prise de vue
+# Sigalou change 2026-01-25: added photo capture date extraction.
 def get_photo_date(image):
     """
-    Récupère la date de prise de vue de l'image.
-    Ordre de priorité:
-    1. DateTimeOriginal (date de prise de vue)
-    2. DateTimeDigitized (date de numérisation)
-    3. DateTime (date de modification)
+    Get the image capture date.
+    Priority order:
+    1. DateTimeOriginal (capture date)
+    2. DateTimeDigitized (digitization date)
+    3. DateTime (modification date)
     
-    Retourne: datetime object ou None si aucune date trouvée
+    Returns a datetime object, or None if no date is found.
     """
     try:
         exif = image._getexif()
         if not exif:
             return None
 
-        # Tags EXIF pour les dates, par ordre de priorité
+        # EXIF date tags, in priority order.
         date_tags = ["DateTimeOriginal", "DateTimeDigitized", "DateTime"]
         
         for tag, value in exif.items():
@@ -50,26 +50,26 @@ def get_photo_date(image):
                     photo_date = datetime.strptime(value, "%Y:%m:%d %H:%M:%S")
                     return photo_date
                 except ValueError:
-                    # Si le format est différent, continuer avec le prochain tag
+                    # If the format differs, continue with the next tag.
                     continue
         
         return None
     except Exception as e:
-        print(f"Erreur lors de la lecture de la date EXIF : {e}")
+        print(f"Error reading the EXIF date: {e}")
         return None
 
 def get_photo_date_formatted(image, format="%d/%m/%Y"):
     """
-    Récupère la date de prise de vue formatée.
+    Get the formatted capture date.
     
     Args:
         image: Image PIL
-        format: Format de sortie (par défaut: JJ/MM/AAAA)
+        format: Output format (default: DD/MM/YYYY)
     
-    Retourne: String formatée ou None
+    Returns the formatted string, or None.
     """
     photo_date = get_photo_date(image)
     if photo_date:
         return photo_date.strftime(format)
     return None
-# Fin Modification Sigalou 25/01/2026
+# End of Sigalou change 2026-01-25.

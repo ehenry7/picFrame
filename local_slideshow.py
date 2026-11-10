@@ -1,4 +1,8 @@
 import os
+if __name__ == "__main__" and os.name == "nt":
+    import truststore
+    truststore.inject_into_ssl()
+
 import random
 import time
 os.environ["PYGAME_BLEND_ALPHA_SDL2"] = "1"
@@ -13,6 +17,9 @@ import subprocess, sys
 import glob
 import collections
 import math
+import queue
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 import json
 import qrcode
@@ -21,52 +28,61 @@ import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from utils.text_drawer import draw_text_with_outline
-from utils.metadata_utils import get_photo_metadata, load_photo_metadata_cache # Import from new utility
+from utils.metadata_utils import get_photo_metadata, load_photo_metadata_cache, format_photo_metadata
 from utils.config_manager import load_config
+from utils.country_flags import country_flags
+from utils.slideshow_fonts import load_font, clear_font_cache
+from utils.weather_cities import get_city, WEATHER_TIMEZONE
+from platform_utils import (
+    IS_LINUX,
+    consume_slideshow_commands,
+    get_default_font_path,
+    get_pygame_display_flags,
+    get_pygame_display_size,
+    get_status_file,
+    get_pi_model as get_platform_pi_model,
+)
 
-# Helper minimal pour l'extraction des traductions (Pybabel)
+# Minimal helper for extracting translations (PyBabel).
 def _(text, **kwargs):
     try:
         return text % kwargs if kwargs else text
     except (KeyError, TypeError, ValueError):
         return text
 
-# Définition des chemins
+# Define paths.
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PREPARED_BASE_DIR = Path(BASE_DIR) / 'static' / 'prepared'
-STATUS_FILE = "/tmp/pimmich_slideshow_status.json"
+STATUS_FILE = str(get_status_file("pictureframe_slideshow_status.json"))
 SOUNDS_DIR = Path(BASE_DIR) / 'static' / 'sounds'
-CUSTOM_PLAYLIST_FILE = "/tmp/pimmich_custom_playlist.json"
+CUSTOM_PLAYLIST_FILE = str(get_status_file("pictureframe_custom_playlist.json"))
 ICONS_DIR = Path(BASE_DIR) / 'static' / 'icons'
-NEW_POSTCARD_FLAG = Path(BASE_DIR) / 'cache' / 'new_postcard.flag'
-CURRENT_PHOTO_FILE = "/tmp/pimmich_current_photo.txt"
+CURRENT_PHOTO_FILE = str(get_status_file("pictureframe_current_photo.txt"))
 CONFIG_PATH = os.path.join(BASE_DIR, 'config', 'config.json')
 FAVORITES_PATH = os.path.join(BASE_DIR, 'config', 'favorites.json')
 FILTER_STATES_PATH = os.path.join(BASE_DIR, 'config', 'filter_states.json')
 TIDES_CACHE_FILE = Path(BASE_DIR) / 'cache' / 'tides.json'
-_icon_cache = {} # Cache pour les icônes météo chargées
-_envelope_blink_end_time = None # Pour gérer le clignotement de l'icône
-_postcard_count_cache = 0
-_last_postcard_count_check = 0
+MPV_LOG_FILE = get_status_file("mpv_pictureframe.log")
+_icon_cache = {} # Cache for loaded weather icons.
 
-# --- Variables globales pour le contrôle du diaporama ---
+# --- Global variables for slideshow control ---
 paused = False
 next_photo_requested = False
 previous_photo_requested = False
 
-# État interne pour le fichier de statut
+# Internal state for the status file.
 _current_status = {"paused": False, "is_custom": False}
 
-_current_background_music = None # Pour rejouer après une vidéo
-# Chemin et cache pour les codes pays ISO 3166 (drapeaux)
+_current_background_music = None # Resume after a video.
+# Paths and cache for ISO 3166 country codes (flags).
 COUNTRY_CODES_PATH = Path(BASE_DIR) / 'static' / 'flags' / 'country_codes.json'
-_country_codes_cache = None  # Cache chargé une fois
+_country_codes_cache = None  # Loaded once and cached.
 
 LOGS_DIR = Path(__file__).resolve().parent / "logs"
 LOGS_DIR.mkdir(exist_ok=True)
 
 class EmojiFormatter(logging.Formatter):
-    """Formatter personnalisé avec émojis selon le niveau."""
+    """Format log records with an emoji based on their severity."""
     EMOJI_MAP = {
         "DEBUG": "🔍",
         "INFO": "ℹ️",
@@ -83,7 +99,7 @@ class EmojiFormatter(logging.Formatter):
 config = load_config()
 
 file_handler = RotatingFileHandler(
-    LOGS_DIR / "pimmich.log",
+    LOGS_DIR / "pictureframe.log",
     maxBytes=10 * 1024 * 1024,
     backupCount=3,
     encoding="utf-8"
@@ -108,164 +124,197 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 def button_callback(channel):
-    """Callback exécuté lors de l'appui sur le bouton."""
-    logger.info(f"Bouton physique pressé (GPIO {channel}). Basculement de la veille...")
+    """Callback run when the button is pressed."""
+    logger.info(f"Physical button pressed (GPIO {channel}). Toggling sleep...")
     try:
-        # Appelle l'API de l'application web pour basculer l'état du diaporama
-        requests.post("http://127.0.0.1:5000/api/slideshow/toggle_sleep", timeout=5)
+        # Call the web application API to toggle the slideshow state.
+        requests.post("http://127.0.0.1:7090/api/slideshow/toggle_sleep", timeout=5)
     except requests.RequestException as e:
-        logger.error(f"Impossible de contacter l'API pour la mise en veille: {e}")
+        logger.error(f"Unable to contact the API to enter sleep mode: {e}")
 
 
-# Messages de démarrage
+# Startup messages.
 logger.debug("----------------Initialisation local_Slideshow  ----------------")
 
 
 
 def load_country_codes():
-    """Charge le mapping ISO → nom pays (pour lookup inverse)"""
+    """Load the ISO-to-country-name mapping for reverse lookups."""
     global _country_codes_cache
     if _country_codes_cache is None:
         try:
             with open(COUNTRY_CODES_PATH, 'r', encoding='utf-8') as f:
                 codes = json.load(f)
-                # Inverse : nom_pays → iso (ex: "France" → "fr")
+                # Reverse mapping: country name → ISO code (e.g. "France" → "fr").
                 _country_codes_cache = {name.lower(): iso for iso, name in codes.items()}
         except FileNotFoundError:
             logger.info(f"⚠️  country_codes.json manquant dans config/")
             _country_codes_cache = {}
         except Exception as e:
-            logger.info(f"❌ Erreur chargement country_codes.json: {e}")
+            logger.info(f"❌ Error loading country_codes.json: {e}")
             _country_codes_cache = {}
     return _country_codes_cache
 
 def update_status_file(new_fields):
-    """Met à jour le fichier de statut JSON en préservant les autres champs."""
+    """Update the JSON status file while preserving other fields."""
     global _current_status
     _current_status.update(new_fields)
     try:
         with open(STATUS_FILE, "w") as f:
             json.dump(_current_status, f)
     except IOError as e:
-        logger.info(f"Erreur écriture fichier statut : {e}")
+        logger.info(f"Error writing status file: {e}")
 
 def signal_handler_next(signum, frame):
-    global next_photo_requested
+    global next_photo_requested, previous_photo_requested
     next_photo_requested = True
+    previous_photo_requested = False
 
 def signal_handler_previous(signum, frame):
-    global previous_photo_requested
+    global next_photo_requested, previous_photo_requested
     previous_photo_requested = True
+    next_photo_requested = False
 
 def signal_handler_pause_toggle(signum, frame):
     global paused
     paused = not paused
     update_status_file({"paused": paused})
 
-# NOUVELLE FONCTION POUR GERER LES EVENEMENTS (QUIT, TACTILE)
+def handle_platform_commands():
+    """Apply queued controls on platforms that do not support POSIX signals."""
+    global next_photo_requested, previous_photo_requested
+    for command in consume_slideshow_commands():
+        if command == "next":
+            signal_handler_next(None, None)
+        elif command == "previous":
+            signal_handler_previous(None, None)
+        elif command == "toggle_pause":
+            signal_handler_pause_toggle(None, None)
+
+# NEW FUNCTION TO HANDLE EVENTS (QUIT, TOUCH)
 def handle_slideshow_events(screen_width):
-    """Gère les événements Pygame comme QUIT et les clics de souris pour le contrôle tactile."""
+    """Handle window, keyboard and touch controls."""
     global paused, next_photo_requested, previous_photo_requested
+    if not IS_LINUX:
+        handle_platform_commands()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
-        # --- NOUVEAU : Gestion des clics pour le contrôle tactile ---
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            # On ne gère que le clic gauche (bouton 1), qui correspond à un appui sur l'écran tactile
-            if event.button == 1:
-                pos = pygame.mouse.get_pos()
-                if pos[0] < screen_width / 3:
-                    logger.info("📸 Zone gauche de l'écran touchée -> Photo précédente")
-                    previous_photo_requested = True
-                elif pos[0] > screen_width * 2 / 3:
-                    logger.info("📸 Zone droite de l'écran touchée -> Photo suivante")
-                    next_photo_requested = True
-                else:
-                    logger.info("📸 Zone centrale de l'écran touchée -> Pause/Reprise")
-                    paused = not paused
-                    update_status_file({"paused": paused})
+        elif event.type == pygame.KEYDOWN:
+            from utils import slideshow_controls
+            if event.key in (pygame.K_LEFT, pygame.K_RIGHT, pygame.K_SPACE):
+                slideshow_controls.reveal()
+                if event.key == pygame.K_LEFT:
+                    signal_handler_previous(None, None)
+                elif event.key == pygame.K_RIGHT:
+                    signal_handler_next(None, None)
+                elif not getattr(event, "repeat", False):
+                    signal_handler_pause_toggle(None, None)
+        # --- NEW: Handle touch controls ---
+        elif event.type in (pygame.MOUSEBUTTONDOWN, pygame.FINGERDOWN):
+            from utils import slideshow_controls
+            surface = pygame.display.get_surface()
+            if surface is None:
+                continue
+            height = surface.get_height()
+            if event.type == pygame.FINGERDOWN:
+                pos = (event.x * screen_width, event.y * height)
+            elif event.button == 1 and not getattr(event, "touch", False):
+                pos = event.pos
+            else:
+                continue
+            action = slideshow_controls.click(pos, screen_width, height)
+            if action == "previous":
+                signal_handler_previous(None, None)
+            elif action == "next":
+                signal_handler_next(None, None)
+            elif action == "pause":
+                signal_handler_pause_toggle(None, None)
 
 def play_background_music(filename):
-    """Charge et joue une musique de fond en boucle."""
+    """Load and play background music in a loop."""
     if not filename: return
     music_path = Path(BASE_DIR) / 'static' / 'music' / filename
     if music_path.exists():
         try:
             if not pygame.mixer.get_init(): pygame.mixer.init()
             pygame.mixer.music.load(str(music_path))
-            pygame.mixer.music.play(-1) # -1 pour boucler à l'infini
-            logger.info(f"🎵 Musique de fond lancée : {filename}")
+            pygame.mixer.music.play(-1) # -1 loops indefinitely.
+            logger.info(f"🎵 Background music started: {filename}")
         except Exception as e:
-            logger.error(f"❌ Erreur lors de la lecture de la musique : {e}")
+            logger.error(f"❌ Error reading music: {e}")
 
 VIDEO_EXTENSIONS = ('.mp4', '.mov', '.avi', '.mkv')
 
 def reinit_pygame():
-    """Quitte et réinitialise complètement Pygame et les ressources associées."""
-    logger.debug(f"📸 Réinitialisation complète de Pygame...")
+    """Completely quit and reset Pygame and its associated resources."""
+    logger.debug("📸 Fully resetting Pygame...")
     pygame.quit()
     pygame.display.init()
     pygame.font.init()
+    clear_font_cache()
 
     global _icon_cache
     _icon_cache = {}
-    logger.debug(f"📸 Cache des icônes météo vidé.")
+    logger.debug("📸 Weather icon cache cleared.")
 
     info = pygame.display.Info()
     width, height = info.current_w, info.current_h
-    screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN)
+    if not IS_LINUX:
+        width, height = get_pygame_display_size()
+    screen = pygame.display.set_mode((width, height), get_pygame_display_flags())
     pygame.mouse.set_visible(False)
-    logger.debug(f"📸 Pygame entièrement réinitialisé à {width}x{height}.")
+    logger.debug(f"📸 Pygame fully reset to {width}x{height}.")
     return screen, width, height
 
 def load_filter_states():
-    """Charge les états des filtres depuis un fichier JSON."""
+    """Load filter states from a JSON file."""
     if not os.path.exists(FILTER_STATES_PATH):
         return {}
     try:
         with open(FILTER_STATES_PATH, 'r') as f:
             return json.load(f)
     except (json.JSONDecodeError, IOError):
-        logger.info(f"Avertissement: Impossible de lire le fichier d'état des filtres '{FILTER_STATES_PATH}'.")
+        logger.info(f"Warning: Unable to read filter state file '{FILTER_STATES_PATH}'.")
         return {}
 
 def load_favorites():
-    """Charge la liste des photos favorites et la retourne comme un ensemble (set) pour des recherches rapides."""
+    """Load the favorites list and return it as a set for fast lookups."""
     if not os.path.exists(FAVORITES_PATH):
         return set()
     try:
         with open(FAVORITES_PATH, 'r') as f:
-            # On s'attend à une liste de chemins dans le JSON
+            # Expect a list of paths in the JSON.
             favorites_list = json.load(f)
             if isinstance(favorites_list, list):
                 return set(favorites_list)
             else:
-                logger.info(f"Avertissement: Le fichier des favoris '{FAVORITES_PATH}' ne contient pas une liste. Il sera ignoré.")
+                logger.info(f"Warning: Favorites file '{FAVORITES_PATH}' does not contain a list. It will be ignored.")
                 return set()
     except (json.JSONDecodeError, IOError):
-        logger.info(f"Avertissement: Impossible de lire le fichier des favoris '{FAVORITES_PATH}'.")
+        logger.info(f"Warning: Unable to read favorites file '{FAVORITES_PATH}'.")
         return set()
 
 def get_local_ip():
-    """Tente de récupérer l'adresse IP locale de la machine de manière robuste."""
-    # Méthode 1: Utiliser `hostname -I` (plus fiable sur Linux/RPi)
+    """Robustly retrieve the machine's local IP address."""
+    # Method 1: Use `hostname -I` (more reliable on Linux/RPi).
     try:
         result = subprocess.run(
             ['hostname', '-I'],
             capture_output=True, text=True, check=True, timeout=2
         )
-        # Prend la première adresse IP de la liste
+        # Take the first IP address in the list.
         ip = result.stdout.strip().split()[0]
         if ip:
             return ip
     except (FileNotFoundError, subprocess.CalledProcessError, IndexError, subprocess.TimeoutExpired):
-        pass # La commande a échoué, on passe à la méthode suivante
+        pass # The command failed; try the next method.
 
-    # Méthode 2: Méthode socket (fallback)
+    # Method 2: Socket method (fallback).
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
-        # Cette IP n'a pas besoin d'être joignable
+        # This IP does not need to be reachable.
         s.connect(("8.8.8.8", 80))
         ip = s.getsockname()[0]
     except Exception:
@@ -274,31 +323,10 @@ def get_local_ip():
         s.close()
     return ip
 
-# NOUVELLE FONCTION
+# NEW FUNCTION
 def get_pi_model():
-    """Détecte le modèle du Raspberry Pi pour un décodage vidéo optimal."""
-    try:
-        with open('/proc/device-tree/model', 'r') as f:
-            model_str = f.read()
-            if 'Raspberry Pi 4' in model_str:
-                return 4
-            if 'Raspberry Pi 5' in model_str:
-                return 5
-            if 'Raspberry Pi 3' in model_str:
-                return 3
-            if 'Raspberry Pi 2' in model_str:
-                return 2
-            if 'Zero' in model_str:
-                return 1
-            if 'Raspberry Pi' in model_str:
-                return 1
-    except FileNotFoundError:
-        # Pas un Raspberry Pi ou un système où ce fichier n'existe pas
-        return None
-    except Exception as e:
-        logger.info(f"[Pi Detect] Erreur lors de la détection du modèle de Pi : {e}")
-        return None
-    return None # Modèle non reconnu
+    """Detect the Raspberry Pi model for optimal video decoding."""
+    return get_platform_pi_model()
 
 # Helper function to parse hex colors (including alpha)
 def parse_color(hex_color):
@@ -310,8 +338,91 @@ def parse_color(hex_color):
     else:
         return (255, 255, 255) # Default to white if invalid
 
+def fit_photo_to_screen(pil_image, screen_width, screen_height):
+    """Fit a photo onto a centered screen-sized canvas without distortion."""
+    fitted_image = pil_image.convert('RGB')
+    fitted_image.thumbnail((screen_width, screen_height), Image.Resampling.LANCZOS)
+    canvas = Image.new('RGB', (screen_width, screen_height), (0, 0, 0))
+    canvas.paste(fitted_image, (
+        (screen_width - fitted_image.width) // 2,
+        (screen_height - fitted_image.height) // 2,
+    ))
+    return canvas
+
+
+def prepare_pan_zoom(pil_image, screen_width, screen_height, config):
+    start_zoom = max(0.01, float(config.get("pan_zoom_start_factor", 1.0)))
+    zoom_factor = max(1.0, float(config.get("pan_zoom_factor", 1.15)))
+
+    def edge_point():
+        edge = random.choice(("top", "bottom", "left", "right"))
+        if edge == "top":
+            return random.random(), 0.0
+        if edge == "bottom":
+            return random.random(), 1.0
+        if edge == "left":
+            return 0.0, random.random()
+        return 1.0, random.random()
+
+    start = edge_point()
+    end = edge_point()
+    if end == start:
+        end = (1.0 - start[0], 1.0 - start[1])
+    return pil_image, start, end, start_zoom, zoom_factor
+
+
+def render_pan_zoom_frame(base_surface, screen_width, screen_height, start_offset, end_offset, start_zoom, end_zoom, progress):
+    zoom = start_zoom + (end_zoom - start_zoom) * progress
+    width = max(1, int(screen_width * zoom))
+    height = max(1, int(screen_height * zoom))
+    scaled = pygame.transform.smoothscale(base_surface, (width, height))
+    if width < screen_width or height < screen_height:
+        frame = pygame.Surface((screen_width, screen_height)).convert()
+        frame.fill((0, 0, 0))
+        frame.blit(scaled, ((screen_width - width) // 2, (screen_height - height) // 2))
+        return frame
+    x_fraction = start_offset[0] + (end_offset[0] - start_offset[0]) * progress
+    y_fraction = start_offset[1] + (end_offset[1] - start_offset[1]) * progress
+    x = int(x_fraction * (width - screen_width))
+    y = int(y_fraction * (height - screen_height))
+    return scaled.subsurface((x, y, screen_width, screen_height))
+
+
+def read_slideshow_photo(photo_path, screen_width, screen_height):
+    with Image.open(photo_path) as image:
+        return fit_photo_to_screen(image, screen_width, screen_height)
+
+
+def load_slideshow_photo(screen, photo_path, screen_width, screen_height, loader):
+    """Keep processing navigation while the worker decodes and resizes a photo."""
+    future = loader.submit(read_slideshow_photo, photo_path, screen_width, screen_height)
+    background = screen.copy()
+    clock = pygame.time.Clock()
+    try:
+        while True:
+            handle_slideshow_events(screen_width)
+            if next_photo_requested or previous_photo_requested:
+                return None
+            if future.done():
+                return future.result()
+            screen.blit(background, (0, 0))
+            draw_pause_icon(screen, screen_width, screen_height)
+            pygame.display.flip()
+            clock.tick(60)
+    finally:
+        if not future.cancel() and (next_photo_requested or previous_photo_requested):
+            def report_discarded_load(completed):
+                error = completed.exception()
+                if error is not None:
+                    logger.error("Skipped photo failed to load: %s", photo_path,
+                                 exc_info=(type(error), error, error.__traceback__))
+            future.add_done_callback(report_discarded_load)
+
+
 # New function to perform a transition between two images
-def perform_transition(screen, old_image_surface, new_image_path, duration, screen_width, screen_height, main_font, config, transition_type):
+def perform_transition(screen, old_image_surface, new_image_path, duration, screen_width, screen_height, main_font, config, transition_type, initial_image=None, prepared_image=None):
+    if transition_type == "random":
+        transition_type = random.choice(("fade", "slide_left", "slide_right", "slide_up", "slide_down"))
     clock = pygame.time.Clock()
     fps_config = config.get("transition_fps", "auto")
     if fps_config == "30":
@@ -326,33 +437,20 @@ def perform_transition(screen, old_image_surface, new_image_path, duration, scre
 
     # Load and prepare new image
     try:
-        new_pil_image = Image.open(new_image_path)
+        new_pil_image = (prepared_image if prepared_image is not None
+                         else read_slideshow_photo(new_image_path, screen_width, screen_height))
     except (FileNotFoundError, Image.UnidentifiedImageError) as e:
         logger.info(f"[Transition] ERREUR: Impossible de charger l'image '{new_image_path}': {e}")
-        return None # Retourner None pour signaler l'échec
-    if new_pil_image.mode != 'RGB': # type: ignore
-        new_pil_image = new_pil_image.convert('RGB')
+        return None # Return None to indicate failure.
+    transition_image = initial_image if initial_image is not None else new_pil_image
+    new_surface_scaled = pygame.image.fromstring(
+        transition_image.tobytes(), transition_image.size, transition_image.mode
+    ).convert()
 
-    # Scale new image to fit the screen (maintain aspect ratio, center)
-    # This is the base image for the transition, not the pan/zoom scaled one
-    new_pil_image_scaled = new_pil_image.copy()
-    new_pil_image_scaled.thumbnail((screen_width, screen_height), Image.Resampling.LANCZOS)
-    
-    # Optimisation majeure : convert() pour aligner le format de pixels sur celui de l'écran
-    new_surface_scaled = pygame.Surface((screen_width, screen_height)).convert()
-    new_surface_scaled.fill((0,0,0)) # Black background for new image
-    
-    img_x = (screen_width - new_pil_image_scaled.width) // 2
-    img_y = (screen_height - new_pil_image_scaled.height) // 2
-    
-    # Optimisation majeure : convert() pour aligner le format de pixels de l'image sur celui de l'écran
-    temp_surf = pygame.image.fromstring(new_pil_image_scaled.tobytes(), new_pil_image_scaled.size, new_pil_image_scaled.mode).convert()
-    new_surface_scaled.blit(temp_surf, (img_x, img_y))
-
-    # Récupérer les métadonnées pour l'image en cours de transition
+    # Get metadata for the image currently being transitioned.
     photo_metadata = get_photo_metadata(new_image_path)
 
-    # Pré-calculer l'overlay pour ne pas le redessiner à chaque frame (optimisation performances)
+    # Pre-render the overlay instead of redrawing it each frame (performance optimization).
     overlay_surface = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
     draw_overlay(overlay_surface, screen_width, screen_height, config, main_font, photo_metadata)
 
@@ -364,7 +462,11 @@ def perform_transition(screen, old_image_surface, new_image_path, duration, scre
         new_surface_small = pygame.transform.scale(new_surface_scaled, (small_width, small_height)).convert()
         temp_surface_small = pygame.Surface((small_width, small_height)).convert()
 
-    for i in range(num_frames + 1):
+    i = 0
+    while i <= num_frames:
+        handle_slideshow_events(screen_width)
+        if next_photo_requested or previous_photo_requested:
+            return new_pil_image
         progress = i / num_frames # 0.0 to 1.0
 
         if transition_type == "fade":
@@ -375,7 +477,7 @@ def perform_transition(screen, old_image_surface, new_image_path, duration, scre
                 temp_surface_small.blit(new_surface_small, (0, 0))
                 pygame.transform.scale(temp_surface_small, (screen_width, screen_height), screen)
             else:
-                # Optimisation majeure : on modifie l'alpha directement sur la surface d'origine sans faire de copie lourde
+                # Major optimization: modify alpha directly on the original surface without making a costly copy.
                 new_surface_scaled.set_alpha(alpha)
                 screen.blit(old_image_surface, (0, 0))
                 screen.blit(new_surface_scaled, (0, 0))
@@ -402,22 +504,26 @@ def perform_transition(screen, old_image_surface, new_image_path, duration, scre
         
         # Draw overlay during transition
         screen.blit(overlay_surface, (0, 0))
+        draw_pause_icon(screen, screen_width, screen_height)
 
         pygame.display.flip()
         clock.tick(fps)
+        if not paused:
+            i += 1
 
     # Ensure the new image is fully blitted at the end of the transition
     screen.blit(new_surface_scaled, (0, 0))
     draw_overlay(screen, screen_width, screen_height, config, main_font, photo_metadata)
+    draw_pause_icon(screen, screen_width, screen_height)
     pygame.display.flip()
 
     return new_pil_image
 
-# Vérifie si on est dans les heures actives
+# Check whether the current time is within the active hours.
 def is_within_active_hours(config):
     now = datetime.now()
     try:
-        if now.weekday() >= 5:
+        if now.weekday() in (4, 5):
             start = config.get("active_start_weekend", config.get("active_start", "07:00"))
             end = config.get("active_end_weekend", config.get("active_end", "22:00"))
         else:
@@ -428,7 +534,7 @@ def is_within_active_hours(config):
         end_time = datetime.strptime(end, "%H:%M").time()
         now_time = now.time()
     except Exception as e:
-        logger.info(f"Erreur format horaire : {e}")
+        logger.info(f"Schedule format error: {e}")
         return True
 
     if start_time <= end_time:
@@ -436,130 +542,184 @@ def is_within_active_hours(config):
     else:
         return now_time >= start_time or now_time <= end_time
 
-# --- Gestion de la météo ---
+# --- Weather handling ---
 _weather_and_forecast_data = None
 _last_weather_and_forecast_fetch = None
 _weather_warning_printed = False
+_last_weather_city = None
+_last_weather_units = None
+
+WMO_ICON_MAP = {
+    0: "01", 1: "02", 2: "03", 3: "04",
+    45: "50", 48: "50",
+    51: "09", 53: "09", 55: "09", 56: "09", 57: "09",
+    61: "10", 63: "10", 65: "10", 66: "10", 67: "10",
+    71: "13", 73: "13", 75: "13", 77: "13",
+    80: "09", 81: "09", 82: "09", 85: "13", 86: "13",
+    95: "11", 96: "11", 99: "11",
+}
+
+WMO_DESCRIPTIONS = {
+    0: "Clear sky", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
+    45: "Fog", 48: "Rime fog",
+    51: "Light drizzle", 53: "Drizzle", 55: "Dense drizzle",
+    56: "Freezing drizzle", 57: "Dense freezing drizzle",
+    61: "Light rain", 63: "Rain", 65: "Heavy rain",
+    66: "Freezing rain", 67: "Heavy freezing rain",
+    71: "Light snow", 73: "Snow", 75: "Heavy snow", 77: "Snow grains",
+    80: "Light showers", 81: "Showers", 82: "Violent showers",
+    85: "Snow showers", 86: "Heavy snow showers",
+    95: "Thunderstorm", 96: "Thunderstorm with hail",
+    99: "Thunderstorm with heavy hail",
+}
+
+
+def _wmo_icon(code, is_day=True):
+    """Map a WMO weather code to an existing weather icon filename."""
+    return WMO_ICON_MAP.get(code, "01") + ("d" if is_day else "n")
+
 
 def get_weather_and_forecast(config):
-    """Récupère la météo actuelle et les prévisions sur 3 jours."""
-    global _weather_and_forecast_data, _last_weather_and_forecast_fetch, _weather_warning_printed
-    
-    api_key = config.get("weather_api_key")
-    city = config.get("weather_city")
+    """Fetch current weather and a five-day forecast from Open-Meteo."""
+    global _weather_and_forecast_data, _last_weather_and_forecast_fetch
+    global _weather_warning_printed, _last_weather_city, _last_weather_units
+
+    city_name = config.get("weather_city")
+    city = get_city(city_name)
     units = config.get("weather_units", "metric")
     try:
         interval_minutes = int(config.get("weather_update_interval_minutes", 30))
     except (ValueError, TypeError):
         interval_minutes = 30
 
-    if not api_key or not city:
+    if not city:
         if not _weather_warning_printed:
-            logger.info(f"[Weather] Clé API ou ville manquante. La météo est désactivée.")
+            logger.info("[Weather] Unknown or missing city '%s'. Weather is disabled.", city_name)
             _weather_warning_printed = True
         return None
 
     now = datetime.now()
-    if _last_weather_and_forecast_fetch and (now - _last_weather_and_forecast_fetch).total_seconds() < interval_minutes * 60:
+    if (
+        city_name == _last_weather_city
+        and units == _last_weather_units
+        and _last_weather_and_forecast_fetch
+        and (now - _last_weather_and_forecast_fetch).total_seconds() < interval_minutes * 60
+    ):
         return _weather_and_forecast_data
 
-    logger.info(f"[Weather] Récupération des prévisions météo...")
-    _last_weather_and_forecast_fetch = now # Mettre à jour pour éviter les appels répétés en cas d'échec
+    if city_name != _last_weather_city or units != _last_weather_units:
+        _weather_and_forecast_data = None
+    logger.info("[Weather] Fetching weather forecast...")
+    _last_weather_and_forecast_fetch = now
+    _last_weather_city = city_name
+    _last_weather_units = units
 
     try:
-        # Utilise l'API de prévision 5 jours / 3 heures (disponible en offre gratuite)
-        url = f"https://api.openweathermap.org/data/2.5/forecast?q={city}&appid={api_key}&units={units}&lang=fr"
-        response = requests.get(url, timeout=10)
+        params = {
+            "latitude": city["lat"],
+            "longitude": city["lon"],
+            "current": "temperature_2m,wind_speed_10m,precipitation,weather_code,is_day",
+            "daily": "temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code",
+            "timezone": WEATHER_TIMEZONE,
+            "forecast_days": 5,
+        }
+        imperial = units == "imperial"
+        if imperial:
+            params["temperature_unit"] = "fahrenheit"
+            params["wind_speed_unit"] = "mph"
+        response = requests.get(
+            "https://api.open-meteo.com/v1/forecast", params=params, timeout=10)
         response.raise_for_status()
         api_data = response.json()
 
-        # --- Traitement des données pour obtenir une prévision par jour ---
-        current_weather = api_data['list'][0]
-        
-        daily_forecasts = collections.defaultdict(lambda: {'temps': [], 'icons': []})
-        
-        # Grouper les données par jour
-        for forecast in api_data['list']:
-            day = datetime.fromtimestamp(forecast['dt']).strftime('%Y-%m-%d')
-            daily_forecasts[day]['temps'].append(forecast['main']['temp'])
-            daily_forecasts[day]['icons'].append((forecast['weather'][0]['icon'], forecast['dt_txt'], forecast['weather'][0]['description']))
+        current = api_data["current"]
+        current_code = current.get("weather_code", 0)
+        current_weather = {
+            "city": city_name,
+            "weather": [{
+                "icon": _wmo_icon(current_code, bool(current.get("is_day", 1))),
+                "description": WMO_DESCRIPTIONS.get(current_code, "Unknown"),
+            }],
+            "main": {"temp": current.get("temperature_2m")},
+            "wind_speed": current.get("wind_speed_10m"),
+            "precipitation": current.get("precipitation"),
+            "units": {
+                "temperature": "°F" if imperial else "°C",
+                "wind_speed": "mph" if imperial else "km/h",
+            },
+        }
 
+        # Show the five daily entries returned by Open-Meteo.
         processed_forecast = []
-        # Trier les jours et prendre les 3 prochains jours (en excluant aujourd'hui)
-        today_str = datetime.now().strftime('%Y-%m-%d')
-        sorted_days = sorted([day for day in daily_forecasts.keys() if day > today_str])[:3]
-
-        day_map_fr = {'Mon':'Lun', 'Tue':'Mar', 'Wed':'Mer', 'Thu':'Jeu', 'Fri':'Ven', 'Sat':'Sam', 'Sun':'Dim'}
-
-        for i, day_str in enumerate(sorted_days):
-            day_data = daily_forecasts[day_str]
-            
-            if i == 0:
-                day_name_fr = "Demain"
-            else:
-                day_name_en = datetime.strptime(day_str, '%Y-%m-%d').strftime('%a')
-                day_name_fr = day_map_fr.get(day_name_en, day_name_en.upper())
-
-            min_temp = round(min(day_data['temps']))
-            max_temp = round(max(day_data['temps']))
-            
-            # Choisir une icône représentative (celle la plus proche de 13h)
-            midday_icon = day_data['icons'][0][0] # icon
-            midday_desc = day_data['icons'][0][2] # description
-            min_hour_diff = 24
-            for icon, dt_txt, desc in day_data['icons']:
-                hour = int(dt_txt.split(' ')[1].split(':')[0])
-                if abs(hour - 13) < min_hour_diff:
-                    min_hour_diff = abs(hour - 13)
-                    midday_icon = icon
-                    midday_desc = desc
-
+        daily = api_data["daily"]
+        weekdays = (
+            "Monday", "Tuesday", "Wednesday", "Thursday",
+            "Friday", "Saturday", "Sunday",
+        )
+        for index, (date, maximum, minimum, precipitation, code) in enumerate(zip(
+            daily["time"],
+            daily["temperature_2m_max"],
+            daily["temperature_2m_min"],
+            daily["precipitation_sum"],
+            daily["weather_code"],
+        )):
+            if index == 5:
+                break
+            day_name = (
+                "Today" if index == 0
+                else "Tomorrow" if index == 1
+                else weekdays[datetime.strptime(date, "%Y-%m-%d").weekday()]
+            )
             processed_forecast.append({
-                'day': day_name_fr,
-                'min_temp': min_temp,
-                'max_temp': max_temp,
-                'icon': midday_icon,
-                'description': midday_desc.capitalize()
+                "day": day_name,
+                "min_temp": round(minimum),
+                "max_temp": round(maximum),
+                "icon": _wmo_icon(code),
+                "description": WMO_DESCRIPTIONS.get(code, "Unknown"),
+                "precipitation": precipitation,
             })
-        
-        _weather_and_forecast_data = {'current': current_weather, 'forecast': processed_forecast}
-        logger.info(f"[Weather] Météo et prévisions mises à jour pour {city}.")
+
+        _weather_and_forecast_data = {
+            "current": current_weather,
+            "forecast": processed_forecast,
+        }
+        logger.info("[Weather] Weather and forecast updated for %s.", city_name)
         return _weather_and_forecast_data
 
     except requests.exceptions.RequestException as e:
-        logger.info(f"[Weather] Erreur réseau lors de la récupération des prévisions : {e}")
+        logger.info(f"[Weather] Network error retrieving forecast: {e}")
         return None
     except Exception as e:
-        logger.info(f"[Weather] Erreur générale lors de la récupération des prévisions : {e}")
+        logger.info(f"[Weather] General error retrieving forecast: {e}")
         traceback.print_exc()
         return None
 
-# --- Gestion des marées ---
+# --- Tide handling ---
 _tides_data = None
 _last_tides_fetch = None
 _tides_warning_printed = False
 
 def get_tides(config):
-    """Récupère les prochaines marées haute et basse, avec un cache en mémoire et un cache fichier persistant."""
+    """Get the next high and low tides using in-memory and persistent file caches."""
     global _tides_data, _last_tides_fetch, _tides_warning_printed
     api_key = config.get("stormglass_api_key")
     lat = config.get("tide_latitude")
     lon = config.get("tide_longitude")
-    # Intervalle de cache de 12 heures pour limiter les appels API à 2 par jour max.
+    # Cache for 12 hours to limit API calls to at most two per day.
     cache_duration_seconds = 12 * 3600
 
     if not all([api_key, lat, lon]):
         if not _tides_warning_printed:
-            logger.info(f"[Tides] Clé API StormGlass, latitude ou longitude manquante. Les marées sont désactivées.")
+            logger.info("[Tides] StormGlass API key, latitude, or longitude missing. Tides are disabled.")
             _tides_warning_printed = True
         return None
 
-    # 1. Vérifier le cache en mémoire d'abord
+    # 1. Check the in-memory cache first.
     now = datetime.now()
     if _last_tides_fetch and (now - _last_tides_fetch).total_seconds() < cache_duration_seconds:
         return _tides_data
 
-    # 2. Le cache mémoire est expiré, on vérifie le cache fichier
+    # 2. The in-memory cache has expired; check the file cache.
     TIDES_CACHE_FILE.parent.mkdir(exist_ok=True)
     if TIDES_CACHE_FILE.exists():
         try:
@@ -569,34 +729,34 @@ def get_tides(config):
             last_file_fetch_dt = datetime.fromisoformat(cache_content['timestamp'])
             
             if (now - last_file_fetch_dt).total_seconds() < cache_duration_seconds:
-                # Si c'est une entrée de cooldown, on ne fait rien et on attend.
+                # If this is a cooldown entry, do nothing and wait.
                 if cache_content.get('cooldown'):
-                    logger.info(f"[Tides] Cooldown API actif depuis le cache fichier.")
-                    _last_tides_fetch = now # Mettre à jour le timer en mémoire pour respecter le cooldown
+                    logger.info("[Tides] API cooldown active from file cache.")
+                    _last_tides_fetch = now # Update the in-memory timer to respect the cooldown.
                     _tides_data = None
                     return None
 
                 tide_data_from_cache = cache_content.get('data')
 
-                # --- NOUVEAU: Vérification du format du cache pour la compatibilité ascendante ---
+                # --- NEW: Check the cache format for backward compatibility ---
                 if isinstance(tide_data_from_cache, list):
-                    logger.info(f"[Tides] Données de marée valides (format liste) trouvées dans le cache fichier.")
+                    logger.info("[Tides] Valid tide data (list format) found in file cache.")
                     _tides_data = tide_data_from_cache
                     _last_tides_fetch = now
                     return tide_data_from_cache
                 else:
-                    logger.info(f"[Tides] Ancien format de cache détecté (dictionnaire). Le cache sera invalidé et recréé.")
-                    # On laisse l'exécution continuer pour appeler l'API
+                    logger.info("[Tides] Legacy cache format (dictionary) detected. Cache will be invalidated and recreated.")
+                    # Continue execution so the API can be called.
         except Exception as e:
-            logger.info(f"[Tides] Erreur lecture du cache fichier, récupération depuis l'API. Erreur: {e}")
+            logger.info(f"[Tides] Error reading file cache; fetching from API. Error: {e}")
 
-    # 3. Les deux caches sont invalides, appeler l'API
-    logger.info(f"[Tides] Récupération des données de marée depuis l'API StormGlass...")
-    _last_tides_fetch = now # Mettre à jour pour éviter les appels répétés en cas d'échec
+    # 3. Both caches are invalid; call the API.
+    logger.info("[Tides] Fetching tide data from the StormGlass API...")
+    _last_tides_fetch = now # Update this to avoid repeated calls after a failure.
 
     try:
         start_time_utc = datetime.utcnow()
-        end_time_utc = start_time_utc + timedelta(days=7) # --- MODIFICATION: Récupérer 7 jours de données ---
+        end_time_utc = start_time_utc + timedelta(days=7) # --- CHANGE: Retrieve 7 days of data ---
 
         headers = {'Authorization': api_key}
         params = {'lat': lat, 'lng': lon, 'start': start_time_utc.isoformat(), 'end': end_time_utc.isoformat()}
@@ -605,52 +765,52 @@ def get_tides(config):
         response.raise_for_status()
         extremes_data = response.json().get('data', [])
 
-        # Filtrer pour ne garder que les marées futures
+        # Keep only future tides.
         now_utc = datetime.utcnow().replace(tzinfo=None)
         future_extremes = [e for e in extremes_data if datetime.fromisoformat(e['time'].replace('Z', '+00:00')).replace(tzinfo=None) > now_utc]
 
         if not future_extremes:
-            logger.info(f"[Tides] Aucune marée future trouvée dans les données de l'API pour les prochaines 24h.")
+            logger.info("[Tides] No future tides found in the API data for the next 24 hours.")
             return None
 
-        # Sauvegarder la liste complète des marées futures dans le cache
+        # Save the full list of future tides to the cache.
         data_to_cache = {'data': future_extremes, 'timestamp': datetime.now().isoformat()}
         
         with open(TIDES_CACHE_FILE, 'w') as f:
             json.dump(data_to_cache, f, indent=2)
         
-        logger.info(f"[Tides] Données de marée mises à jour et cache sauvegardé.")
-        # --- CORRECTION: Mettre à jour le cache en mémoire avant de retourner ---
+        logger.info("[Tides] Tide data updated and cache saved.")
+        # --- FIX: Update the in-memory cache before returning ---
         _tides_data = future_extremes
         return _tides_data
     except requests.exceptions.HTTPError as e:
         if e.response.status_code == 402:
-            logger.info(f"[Tides] ERREUR: Quota API StormGlass dépassé. Prochaine tentative dans 12h.")
-            # Écrire un timestamp de cooldown dans le cache pour éviter les re-tentatives si le script redémarre
+            logger.info("[Tides] ERROR: StormGlass API quota exceeded. Retrying in 12 hours.")
+            # Write a cooldown timestamp to the cache to avoid retries after a restart.
             cooldown_data = {'data': {}, 'timestamp': datetime.now().isoformat(), 'cooldown': True}
             try:
                 with open(TIDES_CACHE_FILE, 'w') as f:
                     json.dump(cooldown_data, f, indent=2)
-                logger.info(f"[Tides] Timestamp de cooldown écrit dans le cache fichier.")
+                logger.info("[Tides] Cooldown timestamp written to file cache.")
             except Exception as write_e:
-                logger.info(f"[Tides] Impossible d'écrire le cooldown dans le cache fichier: {write_e}")
+                logger.info(f"[Tides] Unable to write cooldown to file cache: {write_e}")
         else:
-            logger.info(f"[Tides] Erreur HTTP lors de la récupération des marées : {e}")
+            logger.info(f"[Tides] HTTP error retrieving tides: {e}")
         _tides_data = None
         return None
     except Exception as e:
-        logger.info(f"[Tides] Erreur générale lors de la récupération des marées : {e}")
+        logger.info(f"[Tides] General error retrieving tides: {e}")
         traceback.print_exc()
-        _tides_data = None # Mettre le cache en mémoire à None pour forcer une nouvelle tentative
+        _tides_data = None # Clear the in-memory cache to force another attempt.
         return None
 
 def load_icon(icon_name, size, is_weather_icon=True):
     """
-    Charge une icône, la met en cache et la retourne comme une surface Pygame.
-    Retourne un carré rouge en cas d'échec pour un débogage visuel.
+    Load an icon, cache it, and return it as a Pygame surface.
+    Return a red square on failure for visual debugging.
     """
     if size <= 0:
-        logger.info(f"[Display] AVERTISSEMENT: Taille d'icône invalide ({size}px) pour '{icon_name}'.")
+        logger.info(f"[Display] WARNING: Invalid icon size ({size}px) for '{icon_name}'.")
         return None
 
     icon_key = f"{icon_name}_{size}"
@@ -671,93 +831,33 @@ def load_icon(icon_name, size, is_weather_icon=True):
             _icon_cache[icon_key] = icon_surface
             return icon_surface
         except Exception as e:
-            logger.info(f"[Display] Erreur chargement icône '{icon_path}': {e}")
+            logger.info(f"[Display] Error loading icon '{icon_path}': {e}")
             # Fall through to return placeholder
     else:
         warning_key = f"warn_{icon_name}"
         if warning_key not in _icon_cache:
-            logger.info(f"[Display] AVERTISSEMENT: Fichier icône non trouvé : {icon_path}")
+            logger.info(f"[Display] WARNING: Icon file not found: {icon_path}")
             _icon_cache[warning_key] = True
     
-    # --- Retourner None en cas d'échec ---
-    # Cela permet à la logique d'affichage de simplement ignorer l'icône.
+    # --- Return None on failure ---
+    # This allows the display logic to skip the icon.
     return None
 
 def draw_pause_icon(screen, screen_width, screen_height):
-    """Affiche une icône de pause en bas au centre de l'écran."""
-    icon_size = 50 # Taille de l'icône de pause réduite
-    # On utilise load_icon qui gère le cache et le chemin static/icons
-    pause_icon = load_icon("pause", icon_size, is_weather_icon=False)
-    if pause_icon:
-        # Positionnée en bas au centre avec une marge de 40 pixels (10 + 30) du bord
-        rect = pause_icon.get_rect(centerx=screen_width // 2, bottom=screen_height - 40)
-        screen.blit(pause_icon, rect)
-
-def draw_postcard_notification_icon(screen, screen_width, screen_height, count, font):
-    """Affiche une icône de notification de carte postale avec un compteur en bas au centre."""
-    icon_size = 50 
-    # Charge postale.png dans static/icons
-    postale_icon = load_icon("postale", icon_size, is_weather_icon=False)
-    if postale_icon and font:
-        text_str = str(count)
-        text_color = (255, 255, 255)
-        outline_color = (0, 0, 0)
-        
-        # Calcul de la largeur totale pour centrer le bloc [Icône + Nombre]
-        text_surf = font.render(text_str, True, text_color)
-        spacing = 10
-        total_width = icon_size + spacing + text_surf.get_width()
-        
-        start_x = (screen_width - total_width) // 2
-        icon_rect = postale_icon.get_rect(left=start_x, bottom=screen_height - 40)
-        screen.blit(postale_icon, icon_rect)
-        
-        # Dessin du texte à côté de l'icône (centré verticalement sur l'icône)
-        text_y = icon_rect.top + (icon_size - text_surf.get_height()) // 2
-        draw_text_with_outline(screen, text_str, font, text_color, outline_color, (icon_rect.right + spacing, text_y), anchor="topleft")
-
-def get_today_postcard_count():
-    """Compte le nombre de cartes postales reçues aujourd'hui."""
-    global _postcard_count_cache, _last_postcard_count_check
-    if time.time() - _last_postcard_count_check < 60:
-        return _postcard_count_cache
-
-    count = 0
-    today_date = datetime.now().date()
-    telegram_dir = PREPARED_BASE_DIR / 'telegram'
-
-    if not telegram_dir.is_dir():
-        return 0
-
-    # On ne compte que les fichiers de cartes postales pour éviter les doublons
-    for f in telegram_dir.glob('*_postcard.jpg'):
-        # Utilise une regex pour extraire le timestamp du nom de fichier
-        match = re.search(r'telegram_(\d+)_', f.name)
-        if match:
-            try:
-                timestamp = int(match.group(1))
-                photo_date = datetime.fromtimestamp(timestamp).date()
-                if photo_date == today_date:
-                    count += 1
-            except (ValueError, OSError):
-                continue # Ignorer les fichiers avec un timestamp invalide
-    
-    _postcard_count_cache = count
-    _last_postcard_count_check = time.time()
-    
-    return count
+    from utils import slideshow_controls
+    slideshow_controls.draw(screen, screen_width, screen_height, paused)
 
 def get_path_to_display(photo_path_obj, source, filter_states):
     """
-    Détermine le chemin de fichier correct à afficher en fonction de la source et des filtres.
+    Determine the correct file path to display based on the source and filters.
     """
     relative_path_str = f"{source}/{photo_path_obj.name}"
     active_filter = filter_states.get(relative_path_str, 'none')
     
-    # Par défaut, on affiche l'image de base
+    # Display the base image by default.
     path_to_display = str(photo_path_obj)
 
-    # Priorité 1: Filtre explicite de l'utilisateur
+    # Priority 1: Explicit user filter.
     if active_filter == 'polaroid':
         polaroid_path = photo_path_obj.with_name(f"{photo_path_obj.stem}_polaroid.jpg")
         if polaroid_path.exists():
@@ -766,22 +866,14 @@ def get_path_to_display(photo_path_obj, source, filter_states):
         postcard_path = photo_path_obj.with_name(f"{photo_path_obj.stem}_postcard.jpg")
         if postcard_path.exists():
             path_to_display = str(postcard_path)
-    # Priorité 2: Comportement par défaut pour la source Telegram (si aucun filtre n'est actif)
-    elif source == 'telegram' and active_filter in ['none', 'original']:
-        postcard_path = photo_path_obj.with_name(f"{photo_path_obj.stem}_postcard.jpg")
-        if postcard_path.exists():
-            path_to_display = str(postcard_path)
             
     return path_to_display
 
 def build_playlist(media_list, config, favorites):
     """
-    Construit la playlist finale en appliquant les boosts pour les favoris et les photos récentes.
+    Build the final playlist, applying boosts for favorites and recent photos.
     """
     favorite_boost = int(config.get("favorite_boost_factor", 2))
-    telegram_boost_enabled = config.get("telegram_boost_enabled", True)
-    telegram_boost_factor = int(config.get("telegram_boost_factor", 4))
-    telegram_boost_duration_days = int(config.get("telegram_boost_duration_days", 7))
     anniversary_boost_enabled = config.get("anniversary_boost_enabled", False)
     anniversary_boost_factor = int(config.get("anniversary_boost_factor", 2))
 
@@ -791,10 +883,6 @@ def build_playlist(media_list, config, favorites):
         relative_path = str(Path(media_path).relative_to(PREPARED_BASE_DIR))
         normalized_relative_path = re.sub(r'(_polaroid|_postcard)\.jpg$', '.jpg', relative_path)
 
-        if telegram_boost_enabled and 'telegram' in media_path:
-            match = re.search(r'telegram_(\d+)_', Path(media_path).name)
-            if match and (datetime.now() - datetime.fromtimestamp(int(match.group(1)))).days < telegram_boost_duration_days:
-                for _ in range(telegram_boost_factor): playlist.append(media_path)
         if normalized_relative_path in favorites:
             for _ in range(favorite_boost): playlist.append(media_path)
 
@@ -815,26 +903,26 @@ def build_playlist(media_list, config, favorites):
                     try:
                         photo_date = datetime.fromisoformat(date_taken_str.replace('Z', '+00:00'))
                         if photo_date.month == datetime.now().month and photo_date.day == datetime.now().day:
-                            logger.debug(f"📸 Boost anniversaire pour {Path(media_path).name} (prise le {photo_date.strftime('%d/%m')})")
+                            logger.debug(f"📸 Anniversary boost for {Path(media_path).name} (taken on {photo_date.strftime('%d/%m')})")
                             for _ in range(anniversary_boost_factor): playlist.append(media_path)
                     except Exception as e:
-                        logger.debug(f"Erreur lors de la lecture de la date pour le boost anniversaire: {e}")
+                        logger.debug(f"Error reading the date for the anniversary boost: {e}")
     return playlist
 
 try:
     import RPi.GPIO as GPIO
-    GPIO.setmode(GPIO.BCM) # Utiliser la numérotation BCM des pins
+    GPIO.setmode(GPIO.BCM) # Use BCM pin numbering.
     GPIO_AVAILABLE = True
 except ImportError:
-    logger.debug(f"RPi.GPIO non disponible. Le contrôle du ventilateur est désactivé.")
+    logger.debug("RPi.GPIO is unavailable. Fan control is disabled.")
     GPIO_AVAILABLE = False
 
 def set_gpio_output(pin, state):
     """
-    Définit l'état (HIGH/True ou LOW/False) d'un pin GPIO en sortie.
+    Set a GPIO pin's output state (HIGH/True or LOW/False).
 
     Args:
-        pin (int): Le numéro du pin GPIO (en numérotation BCM).
+        pin (int): The GPIO pin number (BCM numbering).
         state (bool): True pour HIGH (3.3V), False pour LOW (0V).
 
     Returns:
@@ -845,103 +933,130 @@ def set_gpio_output(pin, state):
             GPIO.setup(pin, GPIO.OUT)
             GPIO.output(pin, GPIO.HIGH if state else GPIO.LOW)
         except Exception as e:
-            logger.info(f"Erreur lors de la manipulation du GPIO {pin}: {e}")
+            logger.info(f"Error handling GPIO pin {pin}: {e}")
 
 def control_fan(temperature, threshold=55, pin=14):
     if temperature >= threshold:
         set_gpio_output(pin, True)
-        # logger.info(f"Ventilateur activé (température : {temperature}°C, seuil : {threshold}°C)") # Commenté pour réduire le bruit dans les logs
+        # logger.info(f"Fan enabled (temperature: {temperature}°C, threshold: {threshold}°C)") # Commented out to reduce log noise
     else:
         set_gpio_output(pin, False)
+
+class OverlayDataCache:
+    """Keep weather/tide acquisition off the rendering thread.
+
+    One worker and one pending job bound resource use. Existing getters retain
+    their refresh intervals, persistent tide cache, and API cooldown behavior.
+    """
+
+    KEYS = (
+        "show_weather", "show_clock", "show_tides",
+        "weather_city", "weather_units", "weather_update_interval_minutes",
+        "stormglass_api_key", "tide_latitude", "tide_longitude",
+    )
+
+    def __init__(self, weather_loader=None, tide_loader=None, clock=time.monotonic):
+        self._weather_loader = weather_loader or get_weather_and_forecast
+        self._tide_loader = tide_loader or get_tides
+        self._clock = clock
+        self._lock = threading.Lock()
+        self._queue = queue.Queue(maxsize=1)
+        self._worker = None
+        self._pending = False
+        self._key = None
+        self._snapshot = (None, None)
+        self._next_check = 0
+        self._closed = False
+
+    def get(self, config):
+        """Return memory-only snapshots and schedule a background refresh."""
+        selected = {name: config.get(name) for name in self.KEYS}
+        key = tuple(selected.values())
+        with self._lock:
+            snapshot = self._snapshot if key == self._key else (None, None)
+            if self._closed or self._pending:
+                return snapshot
+            if key == self._key and self._clock() < self._next_check:
+                return snapshot
+            self._pending = True
+            self._queue.put_nowait((key, dict(config)))
+            if self._worker is None:
+                self._worker = threading.Thread(
+                    target=self._run, name="overlay-data", daemon=True)
+                self._worker.start()
+            return snapshot
+
+    def close(self):
+        with self._lock:
+            self._closed = True
+            worker = self._worker
+        if worker is not None:
+            self._queue.join()
+            self._queue.put(None)
+            worker.join()
+            self._worker = None
+
+    def _run(self):
+        while True:
+            job = self._queue.get()
+            try:
+                if job is None:
+                    return
+                key, config = job
+                weather, tides = None, None
+                for enabled, loader, kind in (
+                    (config.get("show_weather", False), self._weather_loader, "weather"),
+                    (config.get("show_clock", False) and config.get("show_tides", False),
+                     self._tide_loader, "tides"),
+                ):
+                    if enabled:
+                        try:
+                            value = loader(config)
+                            if kind == "weather":
+                                weather = value
+                            else:
+                                tides = value
+                        except Exception:
+                            logger.warning("Background %s overlay acquisition failed", kind)
+                with self._lock:
+                    self._key = key
+                    self._snapshot = (weather, tides)
+                    self._next_check = self._clock() + 1
+            finally:
+                with self._lock:
+                    self._pending = False
+                self._queue.task_done()
+
+
+overlay_data = OverlayDataCache()
+
 
 # New function to draw the overlay elements (clock, date, weather)
 def draw_overlay(screen, screen_width, screen_height, config, main_font, photo_metadata=None):
     now = datetime.now()
     text_color = parse_color(config.get("clock_color", "#FFFFFF"))
     outline_color = parse_color(config.get("clock_outline_color", "#000000"))
-    display_telegram_notification_overlay = config.get("display_telegram_notification_overlay", True)
-    country_codes = load_country_codes()
+    weather_and_forecast, tides_data = overlay_data.get(config)
 
-
-    # --- Météo et Prévisions ---
-    weather_and_forecast = None
-    if config.get("show_weather", False):
-        weather_and_forecast = get_weather_and_forecast(config)
-
-    if config.get("show_clock", False):
+    show_clock = config.get("show_clock", False)
+    if show_clock or config.get("show_weather", False):
         separator = "  |  "
         icon_padding = 10
 
-        # --- Préparation des éléments à afficher ---
+        # --- Prepare the items to display ---
         elements = []
 
-        # Heure
-        time_str = now.strftime(config.get("clock_format", "%H:%M"))
-        elements.append({'type': 'text', 'text': time_str})
+        # Time
+        if show_clock:
+            time_str = now.strftime(config.get("clock_format", "%H:%M"))
+            elements.append({'type': 'text', 'text': time_str})
 
         # Date
-        if config.get("show_date", False):
+        if show_clock and config.get("show_date", False):
             date_str = now.strftime(config.get("date_format", "%A %d %B %Y"))
             elements.append({'type': 'text', 'text': separator + date_str})
 
-        # Météo Actuelle (utilisant les données déjà récupérées)
-        if weather_and_forecast and weather_and_forecast.get('current'):
-            try:
-                current_weather = weather_and_forecast['current']
-                icon_code = current_weather['weather'][0]['icon']
-                icon_surface = load_icon(icon_code, main_font.get_height(), is_weather_icon=True)
-                if icon_surface:
-                    elements.append({'type': 'icon', 'surface': icon_surface, 'padding': icon_padding})
-
-                temp = round(current_weather['main']['temp'])
-                description = current_weather['weather'][0]['description'].capitalize()
-                weather_str = f"{temp}°C, {description}"
-                elements.append({'type': 'text', 'text': " " + weather_str})
-            except Exception as e:
-                logger.info(f"[Display] Erreur préparation météo actuelle: {e}")
-
-        # --- Prévisions sur 3 jours ---
-        if weather_and_forecast and weather_and_forecast.get('forecast'):
-            for forecast_day in weather_and_forecast.get('forecast', []):
-                try:
-                    elements.append({'type': 'text', 'text': separator})
-
-                    # Icône pour le jour de prévision
-                    icon_code = forecast_day.get('icon')
-                    if icon_code:
-                        icon_surface = load_icon(icon_code, main_font.get_height(), is_weather_icon=True)
-                        if icon_surface:
-                            elements.append({'type': 'icon', 'surface': icon_surface, 'padding': icon_padding})
-
-                    # Texte de la prévision
-                    day_name = forecast_day.get('day', '')
-                    temp_str = f"{forecast_day['max_temp']}°/{forecast_day['min_temp']}°"
-                    weather_str = f"{day_name}: {temp_str}"
-                    elements.append({'type': 'text', 'text': " " + weather_str})
-                except (IndexError, KeyError) as e:
-                    logger.info(f"[Display] Erreur préparation météo pour un jour: {e}")
-
-        if display_telegram_notification_overlay:
-            # --- Compteur de cartes postales du jour ---
-            today_postcard_count = get_today_postcard_count()
-            if today_postcard_count > 0:
-                elements.append({'type': 'text', 'text': separator})
-
-                # --- Logique de clignotement ---
-                global _envelope_blink_end_time
-                is_blinking = _envelope_blink_end_time and datetime.now() < _envelope_blink_end_time
-                
-                icon_surface = load_icon("postale", main_font.get_height(), is_weather_icon=False)
-                if icon_surface:
-                    # On ajoute toujours l'icône à la liste pour la largeur, mais on contrôle sa visibilité
-                    should_draw_icon = not is_blinking or (is_blinking and datetime.now().second % 2 == 0)
-                    elements.append({'type': 'icon', 'surface': icon_surface, 'padding': icon_padding, 'visible': should_draw_icon})
-                
-                # Texte du compteur
-                elements.append({'type': 'text', 'text': f" {today_postcard_count}"})
-
-
-        # --- Calcul de la taille totale et positionnement du bloc ---
+        # --- Calculate the total size and position of the block ---
         total_width = 0
         max_height = 0
         for el in elements:
@@ -964,22 +1079,23 @@ def draw_overlay(screen, screen_width, screen_height, config, main_font, photo_m
         else: # center
             block_x = (screen_width - total_width) // 2 + offset_x
         
-        # Positionner le bloc en haut de l'écran avec un padding de 15px
+        # Place the block at the top of the display with 15px padding.
         block_y = 15 + offset_y
+        clock_block_bottom = block_y + max_height
 
-        # --- Dessin du fond semi-transparent ---
+        # --- Draw the semi-transparent background ---
         if config.get("clock_background_enabled", False):
             bg_color_hex = config.get("clock_background_color", "#00000080")
             bg_color_rgba = parse_color(bg_color_hex)
             
             if len(bg_color_rgba) == 3:
-                bg_color_rgba = bg_color_rgba + (128,) # Ajouter une semi-transparence par défaut
+                bg_color_rgba = bg_color_rgba + (128,) # Add semi-transparency by default.
             
             bg_surface = pygame.Surface((screen_width, max_height + 20), pygame.SRCALPHA)
             bg_surface.fill(bg_color_rgba)
             screen.blit(bg_surface, (0, block_y - 10))
 
-        # --- Dessin des éléments séquentiellement ---
+        # --- Draw the elements in sequence ---
         current_x = block_x
         for el in elements:
             el_y = block_y + (max_height - el['surface'].get_height()) // 2
@@ -987,7 +1103,7 @@ def draw_overlay(screen, screen_width, screen_height, config, main_font, photo_m
             if el.get('padding'):
                 current_x += el['padding']
 
-            # On ne dessine l'élément que s'il est visible (par défaut True)
+            # Draw the element only if it is visible (True by default).
             if el.get('visible', True):
                 if el['type'] == 'text':
                     draw_text_with_outline(screen, el['text'], main_font, text_color, outline_color, (current_x, el_y), anchor="topleft")
@@ -996,9 +1112,69 @@ def draw_overlay(screen, screen_width, screen_height, config, main_font, photo_m
             
             current_x += el['surface'].get_width()
 
-        # --- Bloc du bas pour les marées ---
-        if config.get("show_tides", False):
-            tides_data = get_tides(config)
+    # Draw current weather below the clock.
+    if (
+        config.get("show_weather", False) and weather_and_forecast
+    ) or (show_clock and config.get("show_tides", False)):
+        current_weather = (weather_and_forecast or {}).get("current") or {}
+        units = current_weather.get("units", {})
+        temperature_unit = units.get("temperature", "°C")
+        weather_parts = []
+
+        temperature = current_weather.get("main", {}).get("temp")
+        conditions = (current_weather.get("weather") or [{}])[0].get("description")
+        current_parts = []
+        if current_weather.get("city"):
+            current_parts.append(current_weather["city"])
+        if temperature is not None:
+            current_parts.append(f"{round(temperature)}{temperature_unit}")
+        if conditions:
+            current_parts.append(conditions.capitalize())
+        if current_parts:
+            weather_parts.append("  ".join(current_parts))
+
+        if weather_parts:
+            weather_font_size = max(16, min(30, int(main_font.get_height() * 0.4)))
+            weather_font = load_font(
+                config.get("clock_font_path", get_default_font_path()),
+                weather_font_size,
+            )
+            max_line_width = max(1, screen_width - 30)
+            weather_lines = []
+            for text in weather_parts:
+                words = text.split()
+                line_words = []
+                for word in words:
+                    candidate = " ".join(line_words + [word])
+                    if line_words and weather_font.size(candidate)[0] > max_line_width:
+                        weather_lines.append(" ".join(line_words))
+                        line_words = [word]
+                    else:
+                        line_words.append(word)
+                if line_words:
+                    weather_lines.append(" ".join(line_words))
+
+            line_height = weather_font.get_linesize()
+            weather_y = clock_block_bottom + 6
+            for line in weather_lines:
+                line_surface = weather_font.render(line, True, text_color)
+                line_x = max(15, (screen_width - line_surface.get_width()) // 2)
+                if config.get("clock_background_enabled", False):
+                    bg_color = parse_color(config.get("clock_background_color", "#00000080"))
+                    if len(bg_color) == 3:
+                        bg_color += (128,)
+                    bg_surface = pygame.Surface(
+                        (screen_width, line_height + 8), pygame.SRCALPHA)
+                    bg_surface.fill(bg_color)
+                    screen.blit(bg_surface, (0, weather_y - 4))
+                draw_text_with_outline(
+                    screen, line, weather_font, text_color, outline_color,
+                    (line_x, weather_y), anchor="topleft",
+                )
+                weather_y += line_height
+
+        # --- Bottom block for tides ---
+        if show_clock and config.get("show_tides", False):
             tide_text = None
             font_to_use = main_font
 
@@ -1008,7 +1184,7 @@ def draw_overlay(screen, screen_width, screen_height, config, main_font, photo_m
                 tomorrow = today + timedelta(days=1)
                 day_map = {'Mon':'Lun', 'Tue':'Mar', 'Wed':'Mer', 'Thu':'Jeu', 'Fri':'Ven', 'Sat':'Sam', 'Sun':'Dim'}
 
-                # Afficher les 4 prochaines marées pour avoir une bonne visibilité sur les jours à venir
+                # Show the next four tides for a useful view of the coming days.
                 for tide in tides_data[:4]:
                     tide_dt = datetime.fromisoformat(tide['time']).astimezone()
                     tide_date = tide_dt.date()
@@ -1025,15 +1201,15 @@ def draw_overlay(screen, screen_width, screen_height, config, main_font, photo_m
                 if tide_parts:
                     tide_text = " | ".join(tide_parts)
             else:
-                # Afficher un message si les données ne sont pas disponibles mais que la fonction est activée
+                # Show a message if the feature is enabled but no data is available.
                 tide_text = _("Données de marée non disponibles")
                 try:
-                    # Utiliser une police légèrement plus petite pour le message d'erreur
-                    font_path = config.get("clock_font_path", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf")
+                    # Use a slightly smaller font for the error message.
+                    font_path = config.get("clock_font_path", get_default_font_path())
                     font_size = int(main_font.get_height() * 0.8) # 80% de la taille de la police principale
-                    font_to_use = pygame.font.Font(font_path, font_size)
+                    font_to_use = load_font(font_path, font_size)
                 except Exception as e:
-                    logger.info(f"[Display] Erreur chargement police pour message marée: {e}")
+                    logger.info(f"[Display] Error loading font for tide message: {e}")
                     font_to_use = main_font # Fallback
 
             if tide_text:
@@ -1043,7 +1219,7 @@ def draw_overlay(screen, screen_width, screen_height, config, main_font, photo_m
                 tide_surface = font_to_use.render(tide_text, True, text_color)
                 tide_rect = tide_surface.get_rect(centerx=(screen_width // 2) + tide_offset_x, bottom=(screen_height - 15) + tide_offset_y)
 
-                # --- Ajout du fond pour les marées ---
+                # --- Add a background for tides ---
                 if config.get("clock_background_enabled", False):
                     bg_color_hex = config.get("clock_background_color", "#00000080")
                     bg_color_rgba = parse_color(bg_color_hex)
@@ -1051,19 +1227,19 @@ def draw_overlay(screen, screen_width, screen_height, config, main_font, photo_m
                     if len(bg_color_rgba) == 3:
                         bg_color_rgba = bg_color_rgba + (128,)
 
-                    # Créer une surface de fond sur toute la largeur de l'écran
+                    # Create a background surface across the full display width.
                     bg_height = tide_rect.height + 10  # Ajouter 5px de padding en haut et en bas
                     bg_surface = pygame.Surface((screen_width, bg_height), pygame.SRCALPHA)
                     bg_surface.fill(bg_color_rgba)
-                    # Positionner le fond verticalement pour qu'il encadre le texte
+                    # Position the background vertically to frame the text.
                     screen.blit(bg_surface, (0, tide_rect.top - 5))
 
                 draw_text_with_outline(screen, tide_text, font_to_use, text_color, outline_color, tide_rect.topleft, anchor="topleft")
 
 
-    # --- Modification Sigalou 25/01/2026 - Affichage des métadonnées photo en bas de l'écran ---
-    # Ce bloc affiche la date de prise de vue et/ou la localisation de la photo
-    # si ces informations sont disponibles dans les métadonnées Immich
+    # --- Sigalou change 2026-01-25: show photo metadata at the bottom of the display ---
+    # This block displays the photo capture date and/or location
+    # when this information is available in the photo metadata.
     has_any_date = False
     if photo_metadata is not None:
         has_any_date = any(photo_metadata.get(field) for field in [
@@ -1075,88 +1251,25 @@ def draw_overlay(screen, screen_width, screen_height, config, main_font, photo_m
         ])
 
     if photo_metadata and (has_any_date or config.get("show_photo_location", False)):
-    
-    
-    
-        metadata_elements = []
-        metadata_separator = "  •  "
-
-        # Récupérer la police personnalisée pour les métadonnées
-        metadata_font_path = config.get("photo_metadata_font_path", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf")
+        # Get the custom font for metadata.
+        metadata_font_path = config.get("photo_metadata_font_path", get_default_font_path())
         metadata_font_size = int(config.get("photo_metadata_font_size", 23))
 
-        try:
-            metadata_font = pygame.font.Font(metadata_font_path, metadata_font_size)
-        except Exception as e:
-            logger.info(f"[Display] Erreur chargement police métadonnées : {e}.")
-            metadata_font = main_font
+        metadata_font = load_font(metadata_font_path, metadata_font_size)
 
-        # Couleurs personnalisées pour les métadonnées
+        # Custom metadata colors.
         metadata_text_color = parse_color(config.get("photo_metadata_color", "#ffffff"))
         metadata_outline_color = parse_color(config.get("photo_metadata_outline_color", "#000000"))
         
-        # Extraction de la date de prise de vue (priorité 16 champs)
-        date_priority = [
-            "subSecDateTimeOriginal", "dateTimeOriginal", "SubSecDateTimeOriginal", "DateTimeOriginal",
-            "subSecCreateDate", "createDate", "SubSecCreateDate", "CreateDate",
-            "subSecModifyDate", "modifyDate", "SubSecModifyDate",
-            "mediaCreateDate", "dateTimeCreated", "MediaCreateDate", "DateTimeCreated",
-            "fileModifiedAt", "fileCreatedAt"
-        ]
-        date_candidates = [photo_metadata.get(field) for field in date_priority]
-        date_taken_str = next((d for d in date_candidates if d), None)
-
-        # Affichage de la date de prise de vue
-        if config.get("show_photo_date", False) and date_taken_str:
-            try:
-                photo_date = datetime.fromisoformat(date_taken_str.replace('Z', '+00:00'))
-                photo_date_format = config.get("photo_date_format", "%d %B %Y")
-                metadata_elements.append(photo_date.strftime(photo_date_format))
-            except Exception as e:
-                logger.info(f"[Display] Erreur formatage date : {e}")
-
-        # Mention "Anniversaire" (Il y a X ans)
-        if config.get("anniversary_boost_enabled", True) and date_taken_str:
-            try:
-                p_date = datetime.fromisoformat(date_taken_str.replace('Z', '+00:00'))
-                now = datetime.now()
-                if p_date.month == now.month and p_date.day == now.day:
-                    years_ago = now.year - p_date.year
-                    if years_ago > 0:
-                        msg = _("(Anniversaire) Il y a %(num)d an") if years_ago == 1 else _("(Anniversaire) Il y a %(num)d ans")
-                        metadata_elements.append(msg % {"num": years_ago})
-            except:
-                pass
-
-        # Localisation
-        if config.get("show_photo_location", False):
-            location_format = config.get("photo_location_format", "city_country")
-
-            if location_format == "city":
-                location_str = photo_metadata.get("city", "")
-            elif location_format == "country":
-                location_str = photo_metadata.get("country", "")
-            else:  # city_country (par défaut)
-                city = photo_metadata.get("city", "")
-                country = photo_metadata.get("country", "")
-                if city and country:
-                    location_str = f"{city}, {country}"
-                else:
-                    location_str = city or country
-
-            if location_str:
-                metadata_elements.append(location_str)
-
-        # Assembler et afficher les métadonnées
-        if metadata_elements:
-            metadata_text = metadata_separator.join(metadata_elements)
+        metadata_text = format_photo_metadata(photo_metadata, config, _)
+        if metadata_text:
             metadata_surface = metadata_font.render(metadata_text, True, metadata_text_color)
 
             # Offsets optionnels
             metadata_offset_x = int(config.get("photo_metadata_offset_x", 0))
             metadata_offset_y = int(config.get("photo_metadata_offset_y", 0))
 
-            # Position selon la configuration
+            # Position according to the configuration.
             position = config.get("photo_metadata_position", "bottom_left")
 
             if position == "bottom_left":
@@ -1190,7 +1303,7 @@ def draw_overlay(screen, screen_width, screen_height, config, main_font, photo_m
                     bottom=(screen_height - 15) + metadata_offset_y
                 )
 
-            # Dessiner le fond si activé
+            # Draw the background if enabled.
             if config.get("photo_metadata_background_enabled", True):
                 bg_color_hex = config.get("photo_metadata_background_color", "#00000080")
                 bg_color_rgba = parse_color(bg_color_hex)
@@ -1204,7 +1317,7 @@ def draw_overlay(screen, screen_width, screen_height, config, main_font, photo_m
                 bg_surface.fill(bg_color_rgba)
                 screen.blit(bg_surface, (metadata_rect.left - 10, metadata_rect.top - 5))
 
-            # Dessiner le texte avec contour
+            # Draw the text with an outline.
             draw_text_with_outline(
                 screen, 
                 metadata_text, 
@@ -1214,119 +1327,86 @@ def draw_overlay(screen, screen_width, screen_height, config, main_font, photo_m
                 metadata_rect.topleft, 
                 anchor="topleft"
             )
-    # --- Fin Modification Sigalou 25/01/2026 ---
+    # --- End of Sigalou change 2026-01-25 ---
 
-        # --- DRAPEAU PAYS en haut à droite (ajout Sigalou 29/01/2026) ---
-        if photo_metadata and config.get("show_country_flag", True):
-            
-            if country:
-                iso_code = country_codes.get(country.lower())
-                iso_code_country_flag_url = None   
+    # Flag display is independent of the date/location text settings.
+    if photo_metadata and config.get("show_country_flag", True):
+        country = (photo_metadata.get("countryCode") or photo_metadata.get("country_code")
+                   or photo_metadata.get("country", ""))
+        flag_pil = country_flags.get(country, config.get("country_flag_size", "128x96"))
+        if flag_pil is not None:
+            opacity = config.get("country_flag_opacity", 0.7)
+            r, g, b, a = flag_pil.split()
+            a = a.point(lambda p: int(p * opacity))
+            flag_pil = Image.merge('RGBA', (r, g, b, a))
+            flag_surf = pygame.image.fromstring(
+                flag_pil.tobytes(), flag_pil.size, flag_pil.mode
+            )
+            flag_position = config.get("country_flag_position", "top_right")
+            flag_offset_x = int(config.get("country_flag_offset_x", 15))
+            flag_offset_y = int(config.get("country_flag_offset_y", 15))
 
-                if iso_code:
-                    iso_code_country_flag_url = f"{iso_code}.png"
-                #else:
-                    #flag_url = None A VOIR SI ON AJOUTE UN DRAPEAU QUI DIT QUE C EST INCONNU
-                    try:
-                        import requests
-                        from PIL import Image
-                        from io import BytesIO
-                        
-                        flag_size = config.get("country_flag_size", "128x96")
-                        flag_url = f"https://flagcdn.com/{flag_size}/{iso_code_country_flag_url}"
-                            
-                        response = requests.get(flag_url, timeout=1.5)
-                        if response.status_code == 200:
-                            flag_pil = Image.open(BytesIO(response.content)).convert('RGBA')
-                            
-                            
-                            # --- AJOUT : Appliquer une opacité au drapeau ---
-                            opacity = config.get("country_flag_opacity", 0.7)
-                            # Séparer les canaux RGBA
-                            r, g, b, a = flag_pil.split()
-                            # Réduire l'opacité du canal alpha
-                            a = a.point(lambda p: int(p * opacity))
-                            # Recombiner les canaux
-                            flag_pil = Image.merge('RGBA', (r, g, b, a))
-                            # --- FIN AJOUT ---
-                            
-                            flag_surf = pygame.image.fromstring(
-                                flag_pil.tobytes(), flag_pil.size, flag_pil.mode
-                            )
-                            
-                            # Positionnement du drapeau
-                            flag_position = config.get("country_flag_position", "top_right")
-                            flag_offset_x = int(config.get("country_flag_offset_x", 15))
-                            flag_offset_y = int(config.get("country_flag_offset_y", 15))
-
-                            if flag_position == "top_left":
-                                flag_rect = flag_surf.get_rect(topleft=(flag_offset_x, flag_offset_y))
-                            elif flag_position == "bottom_left":
-                                flag_rect = flag_surf.get_rect(bottomleft=(flag_offset_x, screen_height - flag_offset_y))
-                            elif flag_position == "bottom_right":
-                                flag_rect = flag_surf.get_rect(bottomright=(screen_width - flag_offset_x, screen_height - flag_offset_y))
-                            else: # top_right (default)
-                                flag_rect = flag_surf.get_rect(topright=(screen_width - flag_offset_x, flag_offset_y))
-                            
-                            screen.blit(flag_surf, flag_rect)
-                            
-                    except ImportError:
-                        logger.info(f"[Display] pip install requests pillow")
-                    except Exception as e:
-                        pass  # Silencieux
-        # --- Fin DRAPEAU ---
+            if flag_position == "top_left":
+                flag_rect = flag_surf.get_rect(topleft=(flag_offset_x, flag_offset_y))
+            elif flag_position == "bottom_left":
+                flag_rect = flag_surf.get_rect(bottomleft=(flag_offset_x, screen_height - flag_offset_y))
+            elif flag_position == "bottom_right":
+                flag_rect = flag_surf.get_rect(bottomright=(screen_width - flag_offset_x, screen_height - flag_offset_y))
+            else:  # top_right (default)
+                flag_rect = flag_surf.get_rect(topright=(screen_width - flag_offset_x, flag_offset_y))
+            screen.blit(flag_surf, flag_rect)
 
 def display_title_slide(screen, screen_width, screen_height, title, duration, config, photos_for_slide=None):
-    """Affiche un écran titre avec le nom de la playlist et un pêle-mêle de photos."""
-    logger.info(f"📸 Affichage de l'écran titre : '{title}'")
+    """Display a title screen with the playlist name and a photo collage."""
+    logger.info(f"📸 Displaying title screen: '{title}'")
  
-    # --- NOUVEAU: Charger les images des punaises en tant qu'images PIL ---
+    # --- NEW: Load the thumbtack images as PIL images ---
     thumbtack_pil_images = []
     try:
         icons_dir = Path(BASE_DIR) / 'static' / 'icons'
-        # On cherche des punaises de différentes couleurs
+        # Look for thumbtacks in different colors.
         thumbtack_paths = list(icons_dir.glob('thumbtack_*.png'))
         if thumbtack_paths:
             for tack_path in thumbtack_paths:
                 tack_img = Image.open(str(tack_path)).convert("RGBA")
-                # Redimensionner à une taille raisonnable (ex: 40x40 pixels)
+                # Resize to a reasonable size (e.g. 40x40 pixels).
                 tack_img.thumbnail((40, 40), Image.Resampling.LANCZOS)
                 thumbtack_pil_images.append(tack_img)
         else:
-            logger.info(f"[Title Slide] Avertissement: Aucune image de punaise (thumbtack_*.png) trouvée dans static/icons/.")
+            logger.info("[Title Slide] Warning: No thumbtack image (thumbtack_*.png) found in static/icons/.")
     except Exception as e:
-        logger.info(f"[Title Slide] Avertissement: Impossible de charger les punaises: {e}")
+        logger.info(f"[Title Slide] Warning: Unable to load thumbtacks: {e}")
 
-    # Créer une surface temporaire pour dessiner tous les éléments avant de les afficher
-    # Cela évite les problèmes de rafraîchissement et garantit que tout est dessiné dans le bon ordre.
+    # Draw all elements to a temporary surface before displaying them.
+    # This avoids refresh issues and ensures everything is drawn in the right order.
     temp_surface = pygame.Surface((screen_width, screen_height))
 
     try:
         cork_bg_path = Path(BASE_DIR) / 'static' / 'backgrounds' / 'cork_background.jpg'
         if cork_bg_path.exists():
             cork_bg_img = pygame.image.load(str(cork_bg_path)).convert()
-            # --- NOUVEAU: Logique de redimensionnement et de centrage du fond ---
+            # --- NEW: Background resizing and centering logic ---
             screen_height_percent = int(config.get("screen_height_percent", "100"))
             
-            # Calculer la hauteur utile pour le fond
+            # Calculate the usable background height.
             new_bg_height = int(screen_height * (screen_height_percent / 100.0))
 
-            # Redimensionner l'image de fond pour qu'elle remplisse la zone utile sans être déformée.
+            # Resize the background image to fill the usable area without distortion.
             original_bg_width, original_bg_height = cork_bg_img.get_size()
             bg_aspect_ratio = original_bg_width / original_bg_height
             
-            # On scale pour que la largeur corresponde à la largeur de l'écran
+            # Scale the image so its width matches the display width.
             scaled_w = screen_width
             scaled_h = int(scaled_w / bg_aspect_ratio)
             
-            # Si l'image est devenue moins haute que la zone utile, on la scale par la hauteur
+            # If the image is shorter than the usable area, scale it by height.
             if scaled_h < new_bg_height:
                 scaled_h = new_bg_height
                 scaled_w = int(scaled_h * bg_aspect_ratio)
 
             scaled_cork_bg = pygame.transform.smoothscale(cork_bg_img, (scaled_w, scaled_h))
 
-            # On va rogner l'image de fond si elle est plus grande que la zone utile
+            # Crop the background image if it is larger than the usable area.
             crop_area = pygame.Rect(
                 (scaled_w - screen_width) // 2,
                 (scaled_h - new_bg_height) // 2,
@@ -1334,20 +1414,20 @@ def display_title_slide(screen, screen_width, screen_height, title, duration, co
                 new_bg_height
             )
 
-            # Position de la zone utile sur l'écran final
+            # Position of the usable area on the final display.
             bg_y = (screen_height - new_bg_height) // 2
             
-            temp_surface.fill((0, 0, 0)) # Remplir le fond de l'écran en noir (pour les bords)
-            temp_surface.blit(scaled_cork_bg, (0, bg_y), crop_area) # Dessiner la partie rognée et centrée
+            temp_surface.fill((0, 0, 0)) # Fill the screen background with black (for the borders).
+            temp_surface.blit(scaled_cork_bg, (0, bg_y), crop_area) # Draw the cropped and centered section.
         else:
-            # Fallback sur une couleur unie si l'image n'est pas trouvée
-            logger.info(f"[Title Slide] Avertissement: Image de fond non trouvée à {cork_bg_path}. Utilisation d'une couleur unie.")
-            temp_surface.fill((181, 136, 99)) # Une couleur proche du liège
+            # Fall back to a solid color if the image is not found.
+            logger.info(f"[Title Slide] Warning: Background image not found at {cork_bg_path}. Using a solid color.")
+            temp_surface.fill((181, 136, 99)) # A cork-like color.
     except Exception as e:
-        logger.info(f"[Title Slide] Erreur lors du chargement du fond : {e}. Utilisation d'une couleur unie.")
+        logger.info(f"[Title Slide] Error loading background: {e}. Using a solid color.")
         temp_surface.fill((181, 136, 99))
 
-    # --- Pêle-mêle de photos ---
+    # --- Photo collage ---
     if photos_for_slide:
         num_photos = min(len(photos_for_slide), 4)
         if num_photos > 0:
@@ -1356,20 +1436,20 @@ def display_title_slide(screen, screen_width, screen_height, title, duration, co
             photo_surfaces = []
             for path in selected_paths:
                 try:
-                    # Charger l'image avec PIL
+                    # Load the image with PIL.
                     img = Image.open(path)
-                    # Créer une miniature
+                    # Create a thumbnail.
                     img.thumbnail((400, 400), Image.Resampling.LANCZOS)
-                    # Ajouter une bordure blanche pour l'effet polaroid
+                    # Add a white border for the Polaroid effect.
                     img_with_border = ImageOps.expand(img, border=20, fill='white')
                     
                     image_to_rotate = img_with_border.convert("RGBA")
 
-                    # --- NOUVEAU: Ajouter la punaise sur une toile plus grande AVANT la rotation ---
+                    # --- NEW: Add the thumbtack to a larger canvas BEFORE rotation ---
                     if thumbtack_pil_images:
                         tack_img = random.choice(thumbtack_pil_images)
                         
-                        # Créer une nouvelle toile plus grande pour inclure la punaise qui dépasse
+                        # Create a larger canvas to include the protruding thumbtack.
                         new_height = image_to_rotate.height + tack_img.height // 2
                         composite_canvas = Image.new('RGBA', (image_to_rotate.width, new_height), (0, 0, 0, 0))
                         
@@ -1382,19 +1462,19 @@ def display_title_slide(screen, screen_width, screen_height, title, duration, co
                         
                         image_to_rotate = composite_canvas
                         
-                    # Inclinaison aléatoire
+                    # Random tilt.
                     angle = random.uniform(-15, 15)
                     rotated_img = image_to_rotate.rotate(angle, expand=True, resample=Image.Resampling.BICUBIC, fillcolor=(0, 0, 0, 0))
                     
                     py_surface = pygame.image.fromstring(rotated_img.tobytes(), rotated_img.size, rotated_img.mode).convert_alpha()
                     photo_surfaces.append(py_surface)
                 except Exception as e:
-                    logger.info(f"[Title Slide] Erreur lors de la préparation de l'image {path}: {e}")
+                    logger.info(f"[Title Slide] Error preparing image {path}: {e}")
 
-            # Ligne de débogage pour vérifier si des photos ont été traitées
-            logger.info(f"[Title Slide] DEBUG: Nombre de surfaces photos préparées : {len(photo_surfaces)}")
+            # Debug line to check whether any photos were processed.
+            logger.info(f"[Title Slide] DEBUG: Number of prepared photo surfaces: {len(photo_surfaces)}")
 
-            # Positionner les photos de manière aléatoire mais répartie
+            # Position the photos randomly but evenly.
             base_positions = [
                 (screen_width * 0.25, screen_height * 0.25),
                 (screen_width * 0.75, screen_height * 0.35),
@@ -1414,161 +1494,116 @@ def display_title_slide(screen, screen_width, screen_height, title, duration, co
     outline_color = parse_color(config.get("clock_outline_color", "#000000"))
 
     try:
-        # Utiliser une police cursive et plus grande pour le titre
+        # Use a larger cursive font for the title.
         font_path = str(Path(BASE_DIR) / "static" / "fonts" / "Caveat-Regular.ttf")
-        # Augmenter la taille de la police pour un meilleur impact visuel
+        # Increase the font size for greater visual impact.
         title_font_size = int(config.get("clock_font_size", 72) * 2.5)
-        title_font = pygame.font.Font(font_path, title_font_size)
+        title_font = load_font(font_path, title_font_size)
     except Exception as e:
-        logger.info(f"Erreur chargement police pour l'écran titre: {e}")
+        logger.info(f"Error loading font for title screen: {e}")
         title_font = pygame.font.SysFont("Arial", 150, bold=True)
 
-    # Dessiner le titre au centre, par-dessus les photos
+    # Draw the title centered over the photos.
     draw_text_with_outline(temp_surface, title, title_font, text_color, outline_color, (screen_width // 2, screen_height // 2), anchor="center")
 
-    # Afficher la surface finale sur l'écran principal
+    # Display the final surface on the main screen.
     screen.blit(temp_surface, (0, 0))
     pygame.display.flip()
 
-    # Boucle d'attente pour rester réactif aux signaux (ex: QUIT)
+    # Wait in a loop to remain responsive to signals (e.g. QUIT).
     start_sleep = time.time()
     while time.time() - start_sleep < duration:
         handle_slideshow_events(screen_width)
+        if next_photo_requested or previous_photo_requested:
+            return
+        screen.blit(temp_surface, (0, 0))
+        draw_pause_icon(screen, screen_width, screen_height)
+        pygame.display.flip()
         time.sleep(0.1)
 
-# Fonction pour afficher une image et l'heure                        
+# Function to display an image and the time.
 
-def display_photo_with_pan_zoom(screen, pil_image, screen_width, screen_height, config, main_font, photo_path=None, ignore_postcard_flag=False):
+def display_photo_with_pan_zoom(screen, pil_image, screen_width, screen_height, config, main_font, photo_path=None, pan_zoom_plan=None):
     """
-    Affiche une image préparée avec un effet de pan/zoom et gère les contrôles (pause, suivant, précédent).
+    Display a prepared image with a pan/zoom effect and handle controls (pause, next, previous).
     """
     global paused, next_photo_requested, previous_photo_requested
-    # Modification Sigalou 25/01/2026 - Récupération des métadonnées de la photo
+    # Sigalou change 2026-01-25: retrieve the photo metadata.
     photo_metadata = get_photo_metadata(photo_path) if photo_path else None
-    # Fin Modification Sigalou 25/01/2026
+    # End of Sigalou change 2026-01-25.
 
-    # Préparer l'image et les métadonnées dès le début pour éviter les erreurs de définition (NameError)
-    if pil_image.mode != 'RGB':
-        pil_image = pil_image.convert('RGB')
+    # Prepare the image and metadata at the start to avoid definition errors (NameError).
+    pil_image = fit_photo_to_screen(pil_image, screen_width, screen_height)
     pygame_image_base = pygame.image.fromstring(pil_image.tobytes(), pil_image.size, pil_image.mode)
 
 
-    # Boucle de pause : si le diaporama est en pause, on attend ici.
+    # Pause loop: wait here while the slideshow is paused.
     while paused:
-        config = load_config() # Recharger pour réagir au changement de notification immédiat
+        config = load_config() # Reload to respond immediately to notification changes.
         handle_slideshow_events(screen_width)
         if next_photo_requested or previous_photo_requested: return
-        
-        ticks = pygame.time.get_ticks()
-        p_count = get_today_postcard_count() if config.get("display_telegram_notification_overlay", True) else 0
-        if (ticks // 500) % 2 == 0:
-            draw_pause_icon(screen, screen_width, screen_height)
-        elif p_count > 0:
-            draw_postcard_notification_icon(screen, screen_width, screen_height, p_count, main_font)
-            
+
+        screen.blit(pygame_image_base, (0, 0))
+        draw_overlay(screen, screen_width, screen_height, config, main_font, photo_metadata)
+        draw_pause_icon(screen, screen_width, screen_height)
+
         pygame.display.flip()
-        time.sleep(0.1) # Évite de surcharger le CPU pendant la pause
+        time.sleep(0.1) # Avoid overloading the CPU while paused.
 
-    """Affiche une image préparée et l'heure sur l'écran."""
+    """Display a prepared image and the time on screen."""
     try:
-        # Ensure it's in a compatible mode for Pygame (RGB is generally safe)
-        if pil_image.mode != 'RGB':
-            pil_image = pil_image.convert('RGB')
-
         pan_zoom_enabled = config.get("pan_zoom_enabled", False)
         display_duration = config.get("display_duration", 10)
         logger.info(f"⏳ Pause de {display_duration} secondes.") # Debug print
         
-        # Always blit the base image first (this will be overwritten by animation if enabled)
-        pygame_image_base = pygame.image.fromstring(pil_image.tobytes(), pil_image.size, pil_image.mode)
-        screen.blit(pygame_image_base, (0, 0))
-        
         if not pan_zoom_enabled: # If pan/zoom is disabled, just show static image
-            # Affichage statique : blit une fois et attendre la durée
+            # Static display: blit once, then wait for the duration.
+            screen.blit(pygame_image_base, (0, 0))
             draw_overlay(screen, screen_width, screen_height, config, main_font, photo_metadata)
+            draw_pause_icon(screen, screen_width, screen_height)
             pygame.display.flip()
-            # Boucle d'attente pour rester réactif aux signaux
+            # Wait in a loop to remain responsive to signals.
             start_sleep = time.time()
             while time.time() - start_sleep < display_duration:
                 handle_slideshow_events(screen_width)
-                # Vérification en temps réel de l'arrivée d'une nouvelle carte postale
-                if not ignore_postcard_flag and NEW_POSTCARD_FLAG.exists(): return
 
                 if next_photo_requested or previous_photo_requested: return
+                screen.blit(pygame_image_base, (0, 0))
+                draw_overlay(screen, screen_width, screen_height, config, main_font, photo_metadata)
+                draw_pause_icon(screen, screen_width, screen_height)
+                pygame.display.flip()
                 was_paused = False
                 while paused:
-                    config = load_config() # Recharger pour réaction immédiate au bouton
+                    config = load_config() # Reload to respond immediately to the button.
                     was_paused = True
                     handle_slideshow_events(screen_width)
                     if next_photo_requested or previous_photo_requested: return
 
-                    # Redessiner le fond pour effacer l'icône de la phase précédente
+                    # Redraw the background to clear the previous phase icon.
                     screen.blit(pygame_image_base, (0, 0))
                     draw_overlay(screen, screen_width, screen_height, config, main_font, photo_metadata)
 
-                    # Logique de clignotement/alternance (Pause / Nouvelle Postale)
-                    ticks = pygame.time.get_ticks()
-                    # Vérifier l'option de notification même en pause
-                    p_count = get_today_postcard_count() if config.get("display_telegram_notification_overlay", True) else 0
-                    if (ticks // 500) % 2 == 0: draw_pause_icon(screen, screen_width, screen_height)
-                    elif p_count > 0: draw_postcard_notification_icon(screen, screen_width, screen_height, p_count, main_font)
-                    
+                    draw_pause_icon(screen, screen_width, screen_height)
+
                     pygame.display.flip()
                     time.sleep(0.1)
                     start_sleep += 0.1
 
-                # Gestion du clignotement de l'icône postale pendant la lecture statique
-                config = load_config() # Rafraîchir la config ici aussi
-                ticks = pygame.time.get_ticks()
-                p_count = get_today_postcard_count() if config.get("display_telegram_notification_overlay", True) else 0
-                if was_paused or p_count > 0:
-                    screen.blit(pygame_image_base, (0, 0))
-                    draw_overlay(screen, screen_width, screen_height, config, main_font, photo_metadata)
-                    if p_count > 0 and (ticks // 500) % 2 != 0:
-                        draw_postcard_notification_icon(screen, screen_width, screen_height, p_count, main_font)
-                    pygame.display.flip()
-
                 time.sleep(0.1)
         else:
-            # Logique de l'effet Pan/Zoom
-            zoom_factor = float(config.get("pan_zoom_factor", 1.15)) # Récupérer le facteur de zoom de la config
-            
-            # Calculate scaled image dimensions
-            scaled_width = int(screen_width * zoom_factor)
-            scaled_height = int(screen_height * zoom_factor)
-
-            # Scale the image once using PIL for quality, then convert to Pygame surface
-            scaled_pil_image = pil_image.resize((scaled_width, scaled_height), Image.Resampling.LANCZOS)
-            scaled_pygame_image = pygame.image.fromstring(scaled_pil_image.tobytes(), scaled_pil_image.size, scaled_pil_image.mode)
-
-            # --- NOUVELLE LOGIQUE DE PANNING AMÉLIORÉE ---
-            max_x_offset = scaled_width - screen_width
-            max_y_offset = scaled_height - screen_height
-
-            # S'assurer que les offsets ne sont pas négatifs (si l'image est plus petite que l'écran)
-            max_x_offset = max(0, max_x_offset)
-            max_y_offset = max(0, max_y_offset)
-
-            def get_random_edge_point(max_x, max_y):
-                """Génère un point aléatoire sur l'un des quatre bords du rectangle de rognage."""
-                edge = random.choice(['top', 'bottom', 'left', 'right'])
-                if edge == 'top':
-                    return (random.randint(0, max_x), 0)
-                elif edge == 'bottom':
-                    return (random.randint(0, max_x), max_y)
-                elif edge == 'left':
-                    return (0, random.randint(0, max_y))
-                else: # right
-                    return (max_x, random.randint(0, max_y))
-
-            # Générer un point de départ et un point d'arrivée qui ne sont pas identiques
-            start_offset = get_random_edge_point(max_x_offset, max_y_offset)
-            end_offset = get_random_edge_point(max_x_offset, max_y_offset)
-            while end_offset == start_offset:
-                end_offset = get_random_edge_point(max_x_offset, max_y_offset)
-
-            start_x, start_y = start_offset
-            end_x, end_y = end_offset
+            if pan_zoom_plan is None:
+                pan_zoom_plan = prepare_pan_zoom(pil_image, screen_width, screen_height, config)
+            base_image, start_offset, end_offset, start_zoom, end_zoom = pan_zoom_plan
+            base_surface = pygame.image.fromstring(base_image.tobytes(), base_image.size, base_image.mode)
+            initial_frame = render_pan_zoom_frame(base_surface, screen_width, screen_height,
+                                                 start_offset, end_offset, start_zoom, end_zoom, 0)
+            overlay = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
+            draw_overlay(overlay, screen_width, screen_height, config, main_font, photo_metadata)
+            overlay_updated = time.monotonic()
+            screen.blit(initial_frame, (0, 0))
+            screen.blit(overlay, (0, 0))
+            draw_pause_icon(screen, screen_width, screen_height)
+            pygame.display.flip()
 
             clock = pygame.time.Clock()
             start_animation_time = time.time()
@@ -1577,57 +1612,46 @@ def display_photo_with_pan_zoom(screen, pil_image, screen_width, screen_height, 
                 elapsed_animation_time = time.time() - start_animation_time
 
                 handle_slideshow_events(screen_width)
-                # Vérification en temps réel de l'arrivée d'une nouvelle carte postale
-                if not ignore_postcard_flag and NEW_POSTCARD_FLAG.exists(): return
 
-                # Vérifier les signaux à chaque image de l'animation
+                # Check for signals on every animation frame.
                 if next_photo_requested or previous_photo_requested: return
-                
-                # Appliquer une fonction d'accélération/décélération (ease-in-out) pour un mouvement plus doux
+
+                # Apply an ease-in-out function for smoother motion.
                 raw_progress = min(1.0, elapsed_animation_time / display_duration)
                 eased_progress = 0.5 * (1 - math.cos(raw_progress * math.pi))
 
-                # Calculate current pan position
-                current_x = int(start_x + (end_x - start_x) * eased_progress)
-                current_y = int(start_y + (end_y - start_y) * eased_progress)
+                frame = render_pan_zoom_frame(base_surface, screen_width, screen_height,
+                                              start_offset, end_offset, start_zoom, end_zoom, eased_progress)
+                screen.blit(frame, (0, 0))
 
-                # Blit the portion of the scaled image onto the screen
-                screen.blit(scaled_pygame_image, (0, 0), (current_x, current_y, screen_width, screen_height))
+                # Refresh text once per second instead of rebuilding it for every animation frame.
+                now = time.monotonic()
+                if now - overlay_updated >= 1.0:
+                    overlay.fill((0, 0, 0, 0))
+                    draw_overlay(overlay, screen_width, screen_height, config, main_font, photo_metadata)
+                    overlay_updated = now
+                screen.blit(overlay, (0, 0))
+                draw_pause_icon(screen, screen_width, screen_height)
 
-                # Draw overlay (clock/date/weather)
-                draw_overlay(screen, screen_width, screen_height, config, main_font, photo_metadata)
-
-                # Gestion de la pause et des notifications (Enveloppe / Pause)
-                ticks = pygame.time.get_ticks()
-                p_count = get_today_postcard_count() if config.get("display_telegram_notification_overlay", True) else 0
-                
+                # Pause handling.
                 if paused:
-                    # En pause : Alternance entre l'icône de pause et l'enveloppe
                     config = load_config() # Recharger pendant la pause de l'animation
-                    p_count = get_today_postcard_count() if config.get("display_telegram_notification_overlay", True) else 0
-                    if (ticks // 500) % 2 == 0:
-                        draw_pause_icon(screen, screen_width, screen_height)
-                    elif p_count > 0:
-                        draw_postcard_notification_icon(screen, screen_width, screen_height, p_count, main_font)
-                    
+                    overlay_updated = float("-inf")
+
                     pygame.display.flip()
                     time.sleep(0.1)
-                    start_animation_time += 0.1 # On décale le temps pour ne pas "sauter" l'animation
+                    start_animation_time += 0.1 # Offset the time to avoid skipping the animation.
                     continue # On recommence la boucle sans avancer l'image
-
-                # En lecture : Clignotement de l'enveloppe seule si p_count > 0
-                if p_count > 0 and (ticks // 500) % 2 != 0:
-                    draw_postcard_notification_icon(screen, screen_width, screen_height, p_count, main_font)
 
                 pygame.display.flip()
                 clock.tick(60) # Limit frame rate to 60 FPS for smoother animation
                 
     except Exception as e:
-        logger.info(f"Erreur affichage photo avec pan/zoom : {e}")
+        logger.info(f"Error displaying photo with pan/zoom: {e}")
         traceback.print_exc()
 
 def fade_to_black(screen, previous_surface, duration, clock):
-    """Effectue un fondu au noir sur la surface donnée."""
+    """Fade the given surface to black."""
     num_frames = int(duration * 60)
     if num_frames == 0: num_frames = 1
     
@@ -1645,7 +1669,7 @@ def fade_to_black(screen, previous_surface, duration, clock):
         clock.tick(60)
 
 def draw_loading_banner(screen, text, width, height, font):
-    """Affiche un écran noir avec un message au centre pour informer l'utilisateur."""
+    """Display a black screen with a centered message for the user."""
     try:
         screen.fill((0, 0, 0))
         text_surface = font.render(text, True, (255, 255, 255))
@@ -1653,10 +1677,10 @@ def draw_loading_banner(screen, text, width, height, font):
         screen.blit(text_surface, text_rect)
         pygame.display.flip()
     except Exception as e:
-        logger.warning(f"Erreur lors du dessin du bandeau : {e}")
+        logger.warning(f"Error drawing banner: {e}")
 
 def display_video(screen, video_path, screen_width, screen_height, config, main_font, previous_surface, clock):
-    """Affiche une vidéo en plein écran en utilisant le lecteur externe mpv."""
+    """Display a video full-screen using the external mpv player."""
     global _current_background_music
     audio_enabled = config.get("video_audio_enabled", False)
     audio_output = config.get("video_audio_output", "auto")
@@ -1665,16 +1689,15 @@ def display_video(screen, video_path, screen_width, screen_height, config, main_
     hwdec_enabled = config.get("video_hwdec_enabled", True)
     pi_model = get_pi_model()
 
-    # 1. Afficher un bandeau de chargement avant le lancement (avec symbole sablier unicode supporté par la police)
+    # 1. Display a loading banner before starting (using a Unicode hourglass supported by the font).
     if main_font:
-        draw_loading_banner(screen, "⌛ Chargement de la vidéo...", screen_width, screen_height, main_font)
+        draw_loading_banner(screen, "⌛ Loading video...", screen_width, screen_height, main_font)
         time.sleep(0.5)
 
-    # Pour éviter les conflits de surface graphique (CMA et Wayland scanout) entre Pygame et mpv,
-    # on ferme proprement Pygame avant le lancement de mpv sur TOUS les modèles de Raspberry Pi (1/2/3/4/5).
-    # Sur ces cartes, laisser Pygame ouvert crée un conflit de ressources EGL sur le GPU, bloquant mpv indéfiniment.
-    # On ajoute une pause de 0.8 seconde après la fermeture pour laisser le temps au compositeur Wayland
-    # de libérer la surface d'affichage.
+    # To avoid graphics-surface conflicts (CMA and Wayland scanout) between Pygame and mpv,
+    # shut down Pygame cleanly before launching mpv on every Raspberry Pi model (1/2/3/4/5).
+    # Leaving Pygame open on these boards can cause an EGL resource conflict on the GPU and block mpv.
+    # After shutdown, wait 0.8 seconds for the Wayland compositor to release the display surface.
     if pi_model in [1, 2, 3, 4, 5]:
         logger.info(f"📸 [Pi {pi_model}] Closing Pygame to release graphics overlay context for mpv.")
         pygame.quit()
@@ -1683,16 +1706,16 @@ def display_video(screen, video_path, screen_width, screen_height, config, main_
         if pygame.mixer.get_init(): pygame.mixer.quit()
 
     try:
-        # 1. Fondu au noir avant de lancer la vidéo (Uniquement si Pygame n'est pas déjà fermé)
+        # 1. Fade to black before starting the video (only if Pygame is not already closed).
         if previous_surface and pi_model not in [1, 2, 3, 4, 5]:
             fade_to_black(screen, previous_surface, transition_duration / 2, clock)
         
-        logger.info(f"📸 Lancement de la vidéo avec mpv : {video_path}")
-        # On réaffiche la souris au cas où l'utilisateur voudrait interagir avec mpv (barre de progression, etc.)
+        logger.info(f"📸 Starting video with mpv: {video_path}")
+        # Show the cursor in case the user wants to interact with mpv (progress bar, etc.).
         if pi_model not in [1, 2, 3, 4, 5]:
             pygame.mouse.set_visible(True)
         
-        # --- NOUVELLE APPROCHE : Retour à MPV avec une configuration robuste ---
+        # --- New approach: return to mpv with a robust configuration ---
         command = [
             'mpv',
             '--no-config',
@@ -1700,27 +1723,32 @@ def display_video(screen, video_path, screen_width, screen_height, config, main_
             '--fs', '--no-osc', '--no-osd-bar', '--loop=no'
         ]
         
-        # Si on est sur Pi 3, on ne met pas --ontop (bug Wayland). 
-        # Pour tous les autres modèles (Pi 1/2 où Pygame tourne en dessous, ou Pi 4/5), on force --ontop au premier plan.
+        # Do not use --ontop on Pi 3 (Wayland bug).
+        # For other models (Pi 1/2 with Pygame underneath, or Pi 4/5), force --ontop.
         if pi_model != 3:
             command.append('--ontop')
 
         if hwdec_enabled:
-            # Pour tous les modèles de Raspberry Pi (1/2/3/4/5), on essaie en premier le mode DMABUF Haute Performance.
-            # C'est le seul mode matériel direct (zéro-copie) qui évite les saccades de bande passante et l'écran noir de 15s.
+            # Try high-performance DMABUF first on every Raspberry Pi model (1/2/3/4/5).
+            # It is the only direct (zero-copy) hardware mode, avoiding bandwidth stutter and a 15s black screen.
             if pi_model in [1, 2, 3, 4, 5]:
-                logger.info(f"[Video Playback] Raspberry Pi {pi_model} détecté. Mode DMABUF Haute Performance.")
-                command.extend(['-v', '--hwdec=v4l2m2m', '--vo=dmabuf-wayland', '--wayland-app-id=mpv', '--log-file=/tmp/mpv_pimmich.log'])
+                logger.info(f"[Video Playback] Raspberry Pi {pi_model} detected. High-performance DMABUF mode.")
+                command.extend(['-v', '--hwdec=v4l2m2m', '--vo=dmabuf-wayland', '--wayland-app-id=mpv', f'--log-file={MPV_LOG_FILE}'])
             else:
-                # Fallback pour les autres systèmes ou si la détection échoue
-                logger.info(f"[Video Playback] Modèle de Pi non spécifique détecté. Utilisation de '--hwdec=auto'.")
-                command.extend(['--hwdec=auto', '--vo=gpu'])
+                # Fall back on other systems or if detection fails.
+                logger.info("[Video Playback] No specific Pi model detected. Using '--hwdec=auto'.")
+                if IS_LINUX:
+                    command.extend(['--hwdec=auto', '--vo=gpu'])
+                else:
+                    command.append('--hwdec=auto')
             # --- FIN MODIFICATION ---
         else:
-            # Mode logiciel par défaut (plus stable sur certains systèmes mais plus lent)
-            logger.info(f"[Video Playback] Décodage matériel désactivé. Utilisation du mode logiciel.")
-            # MODIFICATION: Sur Pi 4/5, x11 est trop lent. On utilise gpu même en mode logiciel.
-            if pi_model in [4, 5]:
+            # Default software mode (more stable on some systems, but slower).
+            logger.info("[Video Playback] Hardware decoding disabled. Using software mode.")
+            # CHANGE: x11 is too slow on Pi 4/5; use gpu even in software mode.
+            if not IS_LINUX:
+                pass
+            elif pi_model in [4, 5]:
                 command.extend(['--hwdec=no', '--vo=gpu'])
             else:
                 command.extend(['--hwdec=no', '--vo=x11'])
@@ -1728,20 +1756,20 @@ def display_video(screen, video_path, screen_width, screen_height, config, main_
         command.append(video_path)
 
         if audio_enabled:
-            # Régler le volume système avec amixer pour une meilleure compatibilité
+            # Set the system volume with amixer for better compatibility.
             try:
                 subprocess.run(['amixer', 'sset', 'Master', f'{audio_volume}%', 'unmute'], check=False, capture_output=True, text=True)
-                logger.info(f"[Audio] Volume système réglé à {audio_volume}% via amixer.")
+                logger.info(f"[Audio] System volume set to {audio_volume}% via amixer.")
             except FileNotFoundError:
-                logger.info(f"[Audio] AVERTISSEMENT: 'amixer' non trouvé. Le volume ne peut pas être réglé.")
-                   # Passer le volume à mpv également
+                logger.info("[Audio] WARNING: 'amixer' not found. Volume cannot be adjusted.")
+                   # Also pass the volume to mpv.
             command.extend([f'--volume={audio_volume}', '--no-mute'])
         else:
              command.append('--no-audio')
 
         
-        # Si on est sur un Raspberry Pi (1/2/3/4/5), on essaie d'abord le mode DMABUF Haute Performance.
-        # Si cela échoue, on se rabat sur le mode de compatibilité GPU (avec cache de shaders).
+        # On Raspberry Pi models 1/2/3/4/5, try high-performance DMABUF mode first.
+        # If this fails, fall back to GPU compatibility mode (with shader caching).
         commands_to_try = [command]
         if hwdec_enabled and pi_model in [1, 2, 3, 4, 5]:
             shader_cache_dir = os.path.join(BASE_DIR, "cache", "mpv_shaders")
@@ -1763,7 +1791,7 @@ def display_video(screen, video_path, screen_width, screen_height, config, main_
                 '--dscale=bilinear',
                 '--vd-lavc-dr=yes',
                 '--wayland-app-id=mpv',
-                '--log-file=/tmp/mpv_pimmich.log',
+                f'--log-file={MPV_LOG_FILE}',
                 video_path
             ]
             if pi_model != 3:
@@ -1778,13 +1806,13 @@ def display_video(screen, video_path, screen_width, screen_height, config, main_
         success = False
         last_error = None
         
-        # Watchdog (timeout de sécurité) fixe de 90 secondes pour éviter de bloquer le diaporama si mpv freeze.
-        # Pas d'appel ffprobe dynamique pour optimiser la réactivité au démarrage.
+        # Use a fixed 90-second watchdog timeout so a frozen mpv process cannot block the slideshow.
+        # Avoid a dynamic ffprobe call to keep startup responsive.
         timeout_limit = 90.0
 
         for idx, cmd_to_run in enumerate(commands_to_try):
             logger.info(f"📸 Executing mpv command (try {idx+1}/{len(commands_to_try)}): {' '.join(cmd_to_run)}")
-            # Très courte pause pour laisser le système se caler
+            # Briefly wait for the system to settle.
             time.sleep(0.1)
             
             try:
@@ -1800,49 +1828,50 @@ def display_video(screen, video_path, screen_width, screen_height, config, main_
                 success = True
                 break
             except subprocess.TimeoutExpired:
-                logger.warning(f"⏱️ Le lecteur vidéo mpv a dépassé la limite de temps de sécurité ({timeout_limit}s). Processus tué.")
+                logger.warning(f"⏱️ mpv exceeded the safety timeout ({timeout_limit}s). Process terminated.")
                 break
             except subprocess.CalledProcessError as e:
                 last_error = e
-                logger.info(f"⚠️ Échec du mode d'affichage de l'essai {idx+1}. Tentative suivante...")
+                logger.info(f"⚠️ Display mode attempt {idx+1} failed. Trying the next mode...")
                 
         if not success:
-            logger.info(f"Erreur lors de l'exécution de mpv pour la vidéo {video_path}. mpv a retourné un code d'erreur.")
+            logger.info(f"Error running mpv for video {video_path}. mpv returned an error code.")
             
-            # Extraction du log de diagnostic réel
+            # Extract the actual diagnostic log.
             log_content = ""
-            if os.path.exists("/tmp/mpv_pimmich.log"):
+            if MPV_LOG_FILE.exists():
                 try:
-                    with open("/tmp/mpv_pimmich.log", "r") as f:
-                        # On ne prend que les 50 dernières lignes pour ne pas saturer le log Pimmich
+                    with MPV_LOG_FILE.open("r", encoding="utf-8") as f:
+                        # Keep only the last 50 lines to avoid flooding the PictureFrame log.
                         log_content = "".join(f.readlines()[-50:])
                 except Exception: 
                     pass
             
-            combined_output = last_error.stdout if (last_error and last_error.stdout and last_error.stdout.strip()) else (log_content if log_content.strip() else "Aucun message d'erreur capturé.")
-            logger.info(f"Détails de l'erreur mpv :\n{combined_output}")
+            combined_output = last_error.stdout if (last_error and last_error.stdout and last_error.stdout.strip()) else (log_content if log_content.strip() else "No error message captured.")
+            logger.info(f"mpv error details:\n{combined_output}")
     except Exception as e:
-        logger.info(f"Erreur inattendue lors de la lecture de la vidéo {video_path}: {e}")
+        logger.info(f"Unexpected error playing video {video_path}: {e}")
     finally:
-        # --- Ré-initialiser le mixer de Pygame après la lecture vidéo ---
-        # C'est crucial pour que Pygame puisse potentiellement jouer des sons plus tard,
-        # et pour maintenir un état cohérent.
+        # --- Reinitialize the Pygame mixer after video playback ---
+        # This is essential so Pygame can play audio later,
+        # and maintain a consistent state.
         if audio_enabled and pi_model not in [1, 2, 3, 4, 5]:
             logger.info(f"📸 Re-initializing pygame.mixer.")
             try:
                 pygame.mixer.init()
             except pygame.error as e:
-                logger.info(f"AVERTISSEMENT: Impossible de réinitialiser pygame.mixer: {e}")
+                logger.info(f"WARNING: Unable to reset pygame.mixer: {e}")
         
-        # Relancer la musique de fond de la playlist si nécessaire
+        # Restart the playlist background music if needed.
         if _current_background_music and pi_model not in [1, 2, 3, 4, 5]:
             play_background_music(_current_background_music)
 
 
-# Boucle principale du diaporama
+# Main slideshow loop.
 def start_slideshow():
     pi_model = get_pi_model()
     global _current_background_music
+    photo_loader = ThreadPoolExecutor(max_workers=2, thread_name_prefix="slideshow-photo")
     try:
         logger.debug(f"📸 Starting slideshow initialization.")
         config = load_config()
@@ -1853,54 +1882,61 @@ def start_slideshow():
         time.sleep(2)
         logger.debug(f"📸 Attente de 2s pour stabilisation ")
         
-        # ✅ NOUVEAU : Initialiser uniquement les modules d'affichage et de police pour économiser du CPU (éviter d'init le mixer)
+        # ✅ NEW: Initialize only the display and font modules to save CPU (avoid initializing the mixer).
         pygame.display.init()
         pygame.font.init()
         logger.debug(f"📸 Pygame display and font modules initialized.")
         
-        # ✅ FORCER l'initialisation du module display
+        # ✅ FORCE initialization of the display module.
         pygame.display.init()
-        logger.debug(f"📸 pygame.display.init() appelé explicitement")
+        logger.debug("📸 pygame.display.init() called explicitly")
         
-        # Vérifier les infos d'environnement
+        # Check environment information.
         logger.debug(f"📸 Environment check:")
         logger.debug(f"   DISPLAY={os.environ.get('DISPLAY', 'NOT SET')}")
         logger.debug(f"   WAYLAND_DISPLAY={os.environ.get('WAYLAND_DISPLAY', 'NOT SET')}")
         logger.debug(f"   XDG_RUNTIME_DIR={os.environ.get('XDG_RUNTIME_DIR', 'NOT SET')}")
         logger.debug(f"   SDL_VIDEODRIVER={os.environ.get('SDL_VIDEODRIVER', 'NOT SET')}")
         
-        # ✅ NOUVEAU : Vérifier que pygame.display.get_driver() fonctionne
+        # ✅ NEW: Check that pygame.display.get_driver() works.
         try:
             driver = pygame.display.get_driver()
-            logger.debug(f"📸 Driver vidéo détecté: {driver}")
+            logger.debug(f"📸 Video driver detected: {driver}")
         except Exception as e:
-            logger.error(f"❌ Impossible de détecter le driver: {e}")
+            logger.error(f"❌ Unable to detect the video driver: {e}")
         
         info = pygame.display.Info()
-        SCREEN_WIDTH, SCREEN_HEIGHT = info.current_w, info.current_h
+        if IS_LINUX:
+            SCREEN_WIDTH, SCREEN_HEIGHT = info.current_w, info.current_h
+        else:
+            SCREEN_WIDTH, SCREEN_HEIGHT = get_pygame_display_size()
         logger.debug(f"📸 Screen resolution detected: {SCREEN_WIDTH}x{SCREEN_HEIGHT}")
         
-        # Si résolution invalide, forcer 1920x1080
+        # Force 1920x1080 if the resolution is invalid.
         if SCREEN_WIDTH == 0 or SCREEN_HEIGHT == 0:
-            logger.warning(f"❌ Résolution invalide détectée (0x0), utilisation de 1920x1080 par défaut")
+            logger.warning("❌ Invalid resolution detected (0x0); using the default 1920x1080")
             SCREEN_WIDTH, SCREEN_HEIGHT = 1920, 1080
         
-        # Création de l'écran
-        logger.debug(f"📸 Tentative de création de l'écran {SCREEN_WIDTH}x{SCREEN_HEIGHT}...")
-        screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
-        logger.info(f"✅ Écran créé avec succès : {screen.get_size()}")
+        # Create the display.
+        logger.debug(f"📸 Attempting to create display {SCREEN_WIDTH}x{SCREEN_HEIGHT}...")
+        screen = pygame.display.set_mode(
+            (SCREEN_WIDTH, SCREEN_HEIGHT),
+            get_pygame_display_flags()
+        )
+        logger.info(f"✅ Display created successfully: {screen.get_size()}")
         
         pygame.mouse.set_visible(False)
         logger.debug(f"📸 Mouse cursor hidden.")       
 
 
-        # --- Enregistrement des gestionnaires de signaux ---
-        signal.signal(signal.SIGUSR1, signal_handler_next)      # Pour "suivant"
-        signal.signal(signal.SIGUSR2, signal_handler_previous)   # Pour "précédent"
-        signal.signal(signal.SIGTSTP, signal_handler_pause_toggle) # Pour "pause/reprendre"
+        # --- Register signal handlers ---
+        if all(hasattr(signal, name) for name in ("SIGUSR1", "SIGUSR2", "SIGTSTP")):
+            signal.signal(signal.SIGUSR1, signal_handler_next)      # Pour "suivant"
+            signal.signal(signal.SIGUSR2, signal_handler_previous) # For "previous".
+            signal.signal(signal.SIGTSTP, signal_handler_pause_toggle) # Pour "pause/reprendre"
         logger.debug(f"📸 Signal handlers registered.")
 
-        # Initialiser le fichier de statut
+        # Initialize the status file.
         update_status_file({"paused": False})
 
         try:
@@ -1908,34 +1944,34 @@ def start_slideshow():
             locale.setlocale(locale.LC_TIME, 'fr_FR.UTF-8')
             logger.debug(f"📸 Locale set to fr_FR.UTF-8.")
         except locale.Error:
-            logger.warning(f"Avertissement: locale fr_FR.UTF-8 non disponible. Les dates seront en anglais.")
+            logger.warning("Warning: fr_FR.UTF-8 locale is unavailable. Dates will be in English.")
 
-        # --- Gestion du bouton physique ---
+        # --- Physical button handling ---
         button_enabled = config.get("button_enabled", False)
-        button_pin = int(config.get("button_pin", 23)) # GPIO 23 par défaut
+        button_pin = int(config.get("button_pin", 23)) # GPIO 23 by default.
 
         if GPIO_AVAILABLE and button_enabled:
             try:
-                # Nettoyage d'une éventuelle configuration précédente du pin
+                # Clean up any previous pin configuration.
                 GPIO.remove_event_detect(button_pin)
-                # Configuration du pin en entrée avec une résistance de pull-up interne.
-                # Le bouton doit connecter le pin au GND.
+                # Configure the pin as input with an internal pull-up resistor.
+                # The button must connect the pin to GND.
                 GPIO.setup(button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
                 
-                # Ajout de la détection d'événement sur front descendant (appui sur le bouton)
-                # bouncetime évite les détections multiples pour un seul appui.
+                # Detect falling-edge events (button press).
+                # bouncetime prevents multiple detections for one press.
                 GPIO.add_event_detect(button_pin, GPIO.FALLING, callback=button_callback, bouncetime=500)
-                logger.info(f"✅ Bouton physique activé sur le pin GPIO {button_pin}.")
+                logger.info(f"✅ Physical button enabled on GPIO pin {button_pin}.")
             except Exception as e:
-                logger.error(f"❌ Erreur lors de l'initialisation du bouton GPIO {button_pin}: {e}")
-        # --- FIN : Gestion du bouton physique ---
+                logger.error(f"❌ Error initializing GPIO button {button_pin}: {e}")
+        # --- END: Physical button handling ---
 
         logger.debug(f"📸 Entering main slideshow loop.")
         
-        # --- Initialisation de la surface précédente pour la transition ---
+        # --- Initialize the previous surface for transitions ---
         previous_photo_surface = None
 
-        # --- Vérification et chargement de la playlist personnalisée (une seule fois) ---
+        # --- Check for and load a custom playlist (once) ---
         custom_playlist = None
         playlist_name = None
         is_custom_run = False # Drapeau pour indiquer un cycle de playlist unique
@@ -1948,112 +1984,48 @@ def start_slideshow():
                     playlist_name = playlist_data['name']
                     custom_playlist_paths = playlist_data['photos']
                 else:
-                    # Fallback pour l'ancienne structure (juste une liste de chemins)
+                    # Fallback for the old structure (a simple list of paths).
                     custom_playlist_paths = playlist_data
                 
-                # Convertir les chemins relatifs en chemins absolus
+                # Convert relative paths to absolute paths.
                 custom_playlist = [str(Path(BASE_DIR) / 'static' / 'prepared' / p) for p in custom_playlist_paths]
                 
-                # Gestion de la musique
+                # Music handling.
                 _current_background_music = playlist_data.get('music_file')
                 if _current_background_music:
                     play_background_music(_current_background_music)
 
-                logger.info(f"📸 Playlist personnalisée '{playlist_name or 'Sans nom'}' chargée avec {len(custom_playlist)} photos.")
+                logger.info(f"📸 Custom playlist '{playlist_name or 'Untitled'}' loaded with {len(custom_playlist)} photos.")
                 is_custom_run = True # On active le drapeau pour le premier passage
                 update_status_file({"is_custom": True})
-                os.remove(CUSTOM_PLAYLIST_FILE) # Supprimer pour ne pas la réutiliser au prochain démarrage
+                os.remove(CUSTOM_PLAYLIST_FILE) # Remove it to prevent reuse on the next startup.
             except Exception as e:
-                logger.info(f"📸 Erreur chargement playlist personnalisée: {e}. Utilisation de la playlist par défaut.")
+                logger.info(f"📸 Error loading custom playlist: {e}. Using the default playlist.")
 
-        # Afficher l'écran titre si une playlist personnalisée est lancée
+        # Show the title screen when a custom playlist starts.
         if playlist_name:
-            # Utiliser une durée spécifique pour les écrans d'info, configurable
+            # Use a configurable duration for information screens.
             info_duration = int(config.get("info_display_duration", 5))
             display_title_slide(screen, SCREEN_WIDTH, SCREEN_HEIGHT, playlist_name, info_duration, config, photos_for_slide=custom_playlist)
-            previous_photo_surface = screen.copy() # Capturer l'écran titre pour la première transition
+            previous_photo_surface = screen.copy() # Capture the title screen for the first transition.
 
         while True:
-            config = load_config() # Recharger la config à chaque itération
+            config = load_config() # Reload the config on every iteration.
 
-            # --- CORRECTION: Charger les paramètres de transition ici pour qu'ils soient toujours définis ---
-            # Auparavant, ils n'étaient définis que si aucune playlist personnalisée n'était utilisée.
+            # --- FIX: Load transition settings here so they are always defined ---
+            # Previously, they were only set when no custom playlist was used.
             transition_type = config.get("transition_type", "fade")
             transition_enabled = config.get("transition_enabled", True)
             transition_duration = float(config.get("transition_duration", 1.0))
 
-            # --- Vérification et affichage immédiat de nouvelle carte postale ---
-            if NEW_POSTCARD_FLAG.exists():
-                logger.info(f"📸 Nouvelle carte postale détectée.")
-                
-                # Déclencher le clignotement de l'icône pour 30 secondes
-                global _envelope_blink_end_time
-                _envelope_blink_end_time = datetime.now() + timedelta(seconds=30)
-
-                new_postcard_path_str = ""
-                try:
-                    # 1. Lire le chemin de la nouvelle photo
-                    with open(NEW_POSTCARD_FLAG, 'r') as f:
-                        new_postcard_path_str = f.read().strip()
-                    
-                    new_postcard_path = Path(new_postcard_path_str)
-
-                    if new_postcard_path.exists():
-                        # 2. Jouer le son
-                        lang = config.get('language', 'fr') # Récupérer la langue, avec 'fr' comme défaut
-                        
-                        # Construire le chemin du son spécifique à la langue
-                        lang_sound_path = SOUNDS_DIR / f'notification_{lang}.wav'
-                        
-                        # Utiliser le son spécifique s'il existe, sinon le son par défaut
-                        notification_sound_path = lang_sound_path if lang_sound_path.exists() else SOUNDS_DIR / 'notification.wav'
-                        
-                        if notification_sound_path.exists():
-                            if not pygame.mixer.get_init(): # S'assurer que le mixer est initialisé
-                                pygame.mixer.init()
-                            # Appliquer le volume configuré
-                            volume = int(config.get('notification_sound_volume', 80)) / 100.0
-                            pygame.mixer.music.set_volume(volume)
-                            notification_sound = pygame.mixer.Sound(str(notification_sound_path))
-                            notification_sound.play()
-                        
-                        # 3. Afficher immédiatement la nouvelle carte postale
-                        logger.info(f"📸 Affichage immédiat de la nouvelle carte postale : {new_postcard_path}")
-                        
-                        # Recharger la police pour l'overlay
-                        font_path_config = config.get("clock_font_path", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf")
-                        clock_font_size_config = int(config.get("clock_font_size", 72))
-                        try:
-                            main_font_loaded = pygame.font.Font(font_path_config, clock_font_size_config)
-                        except Exception as e:
-                            main_font_loaded = pygame.font.SysFont("Arial", clock_font_size_config)
-
-                        pil_image = Image.open(new_postcard_path)
-
-                        # Afficher avec pan/zoom pour la durée configurée
-                        display_photo_with_pan_zoom(screen, pil_image, SCREEN_WIDTH, SCREEN_HEIGHT, config, main_font_loaded, ignore_postcard_flag=True, photo_path=None)
-                        
-                        # Mettre à jour la surface précédente pour la transition suivante
-                        previous_photo_surface = screen.copy()
-                    else:
-                        logger.info(f"📸 Erreur: le chemin '{new_postcard_path_str}' dans le fichier drapeau n'existe pas.")
-
-                except Exception as e:
-                    logger.info(f"📸 Erreur lors du traitement de la nouvelle carte postale: {e}")
-                    traceback.print_exc()
-                finally:
-                    # 4. Supprimer le drapeau pour ne pas rejouer
-                    if NEW_POSTCARD_FLAG.exists():
-                        NEW_POSTCARD_FLAG.unlink()
-
-            # --- Construction de la playlist ---
+            # --- Build the playlist ---
             if is_custom_run:
                 playlist = custom_playlist
             else:
-                # Construction de la playlist par défaut
+                # Build the default playlist.
                 filter_states = load_filter_states()
                 favorites = load_favorites()
-                display_sources = config.get("display_sources", ["immich"])
+                display_sources = config.get("display_sources", ["usb", "smartphone", "invités"])
                 slideshow_video_enabled = config.get("slideshow_video_enabled", True)
                 
                 all_media = []
@@ -2062,7 +2034,7 @@ def start_slideshow():
                     if source_dir.is_dir():
                         base_photos = [f for f in source_dir.iterdir() if f.is_file() and (f.suffix.lower() in ('.jpg', '.jpeg', '.png') or f.suffix.lower() in VIDEO_EXTENSIONS) and not f.name.endswith(('_polaroid.jpg', '_thumbnail.jpg', '_postcard.jpg'))]
                         for photo_path_obj in base_photos:
-                            # Filtrer les vidéos si l'option est désactivée
+                            # Filter out videos if the option is disabled.
                             if photo_path_obj.suffix.lower() in VIDEO_EXTENSIONS and not slideshow_video_enabled:
                                 continue
                                 
@@ -2072,19 +2044,15 @@ def start_slideshow():
                 playlist = build_playlist(all_media, config, favorites)
                 random.shuffle(playlist)
             
-            # --- Chargement de la police à chaque itération ---
-            # C'est plus robuste, surtout après une réinitialisation de l'affichage.
-            font_path_config = config.get("clock_font_path", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf")
+            # --- Load the font on every iteration ---
+            # This is more robust, especially after a display reset.
+            font_path_config = config.get("clock_font_path", get_default_font_path())
             clock_font_size_config = int(config.get("clock_font_size", 72))
-            try:
-                main_font_loaded = pygame.font.Font(font_path_config, clock_font_size_config)
-            except Exception as e:
-                logger.info(f"Erreur chargement police : {e}. Utilisation de la police système.")
-                main_font_loaded = pygame.font.SysFont("Arial", clock_font_size_config)
-            # --- Fin du chargement de la police ---
+            main_font_loaded = load_font(font_path_config, clock_font_size_config)
+            # --- Font loading complete ---
             
             if not playlist:
-                logger.info(f"Aucune photo trouvée dans les sources activées. Vérification dans 60 secondes.")
+                logger.info("No photos found in enabled sources. Checking again in 60 seconds.")
                 
                 screen.fill((0, 0, 0))
                 
@@ -2092,47 +2060,41 @@ def start_slideshow():
                 outline_color = parse_color(config.get("clock_outline_color", "#000000"))
                 
                 try:
-                    font_path = config.get("clock_font_path", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf")
-                    font_size = int(config.get("clock_font_size", 72) * 0.6) # Augmenté de 0.5
-                    message_font = pygame.font.Font(font_path, font_size)
-                    ip_font_size = int(config.get("clock_font_size", 72) * 0.8) # Augmenté de 0.65
-                    ip_font = pygame.font.Font(font_path, ip_font_size)
-                    small_font_size = int(config.get("clock_font_size", 72) * 0.4) # Augmenté de 0.35
-                    small_font = pygame.font.Font(font_path, small_font_size)
+                    font_path = config.get("clock_font_path", get_default_font_path())
+                    font_size = int(config.get("clock_font_size", 72) * 0.6) # Increased from 0.5.
+                    message_font = load_font(font_path, font_size)
+                    ip_font_size = int(config.get("clock_font_size", 72) * 0.8) # Increased from 0.65.
+                    ip_font = load_font(font_path, ip_font_size)
+                    small_font_size = int(config.get("clock_font_size", 72) * 0.4) # Increased from 0.35.
+                    small_font = load_font(font_path, small_font_size)
                 except Exception:
                     message_font = pygame.font.SysFont("Arial", 48)
                     ip_font = pygame.font.SysFont("Arial", 64)
                     small_font = pygame.font.SysFont("Arial", 32)
 
                 # --- Logo ---
-                logo_surface, logo_height, logo_spacing = None, 0, 30
-                try:
-                    logo_path = Path(BASE_DIR) / 'static' / 'pimmich_logo.png'
-                    if logo_path.exists():
-                        logo_img = pygame.image.load(str(logo_path)).convert_alpha()
-                        original_width, original_height = logo_img.get_size()
-                        new_width = 300
-                        new_height = int(new_width * (original_height / original_width))
-                        logo_surface = pygame.transform.smoothscale(logo_img, (new_width, new_height))
-                        logo_height = logo_surface.get_height()
-                except Exception as e:
-                    logger.info(f"Erreur chargement du logo : {e}")
+                logo_surface = message_font.render("PictureFrame", True, (67, 165, 214))
+                if logo_surface.get_width() > SCREEN_WIDTH - 40:
+                    width = max(1, SCREEN_WIDTH - 40)
+                    height = max(1, int(logo_surface.get_height() * width / logo_surface.get_width()))
+                    logo_surface = pygame.transform.smoothscale(logo_surface, (width, height))
+                logo_height, logo_spacing = logo_surface.get_height(), 30
 
-                # --- Génération du QR Code ---
+                # --- Generate the QR code ---
                 qr_surface, qr_height, qr_spacing = None, 0, 30
                 try:
                     ip_address_for_qr = get_local_ip()
-                    url = f"http://{ip_address_for_qr}"
+                    url = f"http://{ip_address_for_qr}:7090"
                     qr_img_pil = qrcode.make(url, box_size=8).convert('RGB')
                     qr_surface = pygame.image.fromstring(qr_img_pil.tobytes(), qr_img_pil.size, qr_img_pil.mode)
                     qr_height = qr_surface.get_height()
                 except Exception as e:
-                    logger.info(f"Erreur génération QR code : {e}")
+                    logger.info(f"Error generating QR code: {e}")
 
                 ip_address = get_local_ip()
                 messages = [
                     (message_font, _("Aucune photo trouvée.")),
-                    (ip_font, _("Configurez sur : http://%(ip)s", ip=ip_address)),
+                    (ip_font, _("Configurez sur : http://%(ip)s", ip=f"{ip_address}:7090")),
                     (small_font, _("(Identifiants dans credentials.json à la racine de la SD)")),
                     (message_font, _("Résolution de l'écran : [%(w)s x %(h)s]", w=SCREEN_WIDTH, h=SCREEN_HEIGHT)),
                     (message_font, _("Nouvelle tentative dans 60 secondes..."))
@@ -2141,7 +2103,7 @@ def start_slideshow():
                 line_spacing = 20
                 text_block_height = sum(font.get_height() for font, _ in messages) + (len(messages) - 1) * line_spacing
                 
-                # Calcul de la hauteur totale pour un centrage parfait
+                # Calculate the total height for perfect centering.
                 total_height = text_block_height
                 if logo_surface: total_height += logo_height + logo_spacing
                 if qr_surface: total_height += qr_height + qr_spacing + small_font.get_height() + 10
@@ -2158,7 +2120,7 @@ def start_slideshow():
                     draw_text_with_outline(screen, txt, font, text_color, outline_color, text_rect.topleft, anchor="topleft")
                     current_y += font.get_height() + line_spacing
 
-                # Affichage du QR Code
+                # Display the QR code.
                 if qr_surface:
                     current_y += qr_spacing - line_spacing # Ajuster l'espacement avant le QR
                     qr_title_text = _("Scannez pour configurer")
@@ -2171,105 +2133,108 @@ def start_slideshow():
                 
                 pygame.display.flip()
 
-                time.sleep(60)
+                retry_deadline = time.monotonic() + 60
+                while time.monotonic() < retry_deadline:
+                    handle_slideshow_events(SCREEN_WIDTH)
+                    time.sleep(0.05)
                 continue
 
             playlist_index = 0
             while 0 <= playlist_index < len(playlist):
-                # Vérifier si une carte postale est arrivée pour sortir de la boucle et la traiter immédiatement
-                if NEW_POSTCARD_FLAG.exists():
-                    break
-
                 photo_path = playlist[playlist_index]
                 
-                # Réinitialiser les requêtes de changement de photo
+                # Reset photo-change requests.
                 global next_photo_requested, previous_photo_requested
                 next_photo_requested = False
                 previous_photo_requested = False
 
                 logger.info(f"🖼️ Affichage de la photo: {photo_path}")
                 
-                # --- Contrôle du ventilateur ---
+                # --- Fan control ---
                 if GPIO_AVAILABLE:
                     try:
                         temp = psutil.sensors_temperatures()['cpu_thermal'][0].current
                         control_fan(temp)
                     except Exception as e:
-                        logger.debug(f"Erreur lors de la lecture de la température ou du contrôle du ventilateur : {e}")
+                        logger.debug(f"Error reading temperature or controlling the fan: {e}")
 
-                # --- CORRECTIF: Vérifier si le fichier existe avant de tenter de l'afficher ---
+                # --- FIX: Check that the file exists before attempting to display it ---
                 if not os.path.exists(photo_path):
-                    logger.warning(f"🖼️ Fichier non trouvé (probablement supprimé) : {photo_path}. Passage au suivant.")
+                    logger.warning(f"🖼️ File not found (probably deleted): {photo_path}. Skipping to the next.")
                     playlist_index += 1
                     continue
 
-                # Vérifier si le fichier est une vidéo ou une image
+                # Check whether the file is a video or an image.
                 is_video = any(photo_path.lower().endswith(ext) for ext in VIDEO_EXTENSIONS)
 
-                # Écrire le chemin de la photo actuelle dans le fichier d'état
+                # Write the current photo path to the status file.
                 try:
                     with open(CURRENT_PHOTO_FILE, "w") as f:
                         path_to_write = Path(photo_path)
                         if is_video:
-                            # Pour une vidéo, on écrit le chemin de sa vignette pour l'aperçu live
+                            # For a video, write the thumbnail path for the live preview.
                             thumbnail_path = path_to_write.with_name(f"{path_to_write.stem}_thumbnail.jpg")
                             if thumbnail_path.exists():
                                 path_to_write = thumbnail_path
 
-                        # Convertir le chemin absolu en chemin relatif au dossier 'static'
+                        # Convert the absolute path to a path relative to the 'static' directory.
                         relative_path = path_to_write.relative_to(Path(BASE_DIR) / 'static')
                         f.write(str(relative_path))
                 except Exception as e:
-                    logger.info(f"Erreur écriture fichier photo actuelle : {e}")
+                    logger.info(f"Error writing current photo file: {e}")
 
                 if is_video:
                     display_video(screen, photo_path, SCREEN_WIDTH, SCREEN_HEIGHT, config, main_font_loaded, previous_photo_surface, pygame.time.Clock())
                     
-                    # Si Pygame a été fermé pour la vidéo (sur tous les Raspberry Pi), on ré-initialise l'affichage.
-                    # On laisse 0.8 seconde de pause pour laisser Wayland détruire la surface mpv avant de relancer Pygame.
+                    # If Pygame was closed for video playback (on all Raspberry Pi models), reinitialize the display.
+                    # Wait 0.8 seconds for Wayland to destroy the mpv surface before restarting Pygame.
                     if pi_model in [1, 2, 3, 4, 5]:
-                        logger.info("📸 Attente de 0.8s de stabilisation avant réinitialisation d'affichage...")
+                        logger.info("📸 Waiting 0.8s for stabilization before resetting the display...")
                         time.sleep(0.8)
                         screen, SCREEN_WIDTH, SCREEN_HEIGHT = reinit_pygame()
-                        # Recharger la police car pygame.quit() l'a invalidée
-                        font_path_config = config.get("clock_font_path", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf")
+                        # Reload the font because pygame.quit() invalidated it.
+                        font_path_config = config.get("clock_font_path", get_default_font_path())
                         clock_font_size_config = int(config.get("clock_font_size", 72))
-                        try:
-                            main_font_loaded = pygame.font.Font(font_path_config, clock_font_size_config)
-                        except Exception:
-                            main_font_loaded = pygame.font.SysFont("Arial", clock_font_size_config)
-                        # Relancer la musique si elle était active
+                        main_font_loaded = load_font(font_path_config, clock_font_size_config)
+                        # Restart the music if it was playing.
                         if _current_background_music:
                             play_background_music(_current_background_music)
                     else:
-                        # Cas général (PC de bureau)
-                        screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
+                        # General case (desktop computer).
+                        screen = pygame.display.set_mode(
+                            (SCREEN_WIDTH, SCREEN_HEIGHT),
+                            get_pygame_display_flags()
+                        )
                         pygame.mouse.set_visible(False)
                         
-                    # Afficher le bandeau de reprise après la lecture de la vidéo (avec symbole flèche circulaire unicode supportée)
+                    # Show the resume banner after video playback (with a supported Unicode refresh symbol).
                     if main_font_loaded:
                         draw_loading_banner(screen, "↻ Reprise du diaporama...", SCREEN_WIDTH, SCREEN_HEIGHT, main_font_loaded)
                         time.sleep(0.5)
                 else: # C'est une image
                     current_pil_image = None # Initialize to None to ensure it's always defined
+                    pan_zoom_plan = None
                     try:
+                        current_pil_image = load_slideshow_photo(
+                            screen, photo_path, SCREEN_WIDTH, SCREEN_HEIGHT, photo_loader)
+                        initial_image = None
+                        if current_pil_image is not None and config.get("pan_zoom_enabled", False):
+                            pan_zoom_plan = prepare_pan_zoom(current_pil_image, SCREEN_WIDTH, SCREEN_HEIGHT, config)
+                            base_image, start_offset, end_offset, start_zoom, end_zoom = pan_zoom_plan
+                            base_surface = pygame.image.fromstring(base_image.tobytes(), base_image.size, base_image.mode)
+                            initial_frame = render_pan_zoom_frame(base_surface, SCREEN_WIDTH, SCREEN_HEIGHT,
+                                                                  start_offset, end_offset, start_zoom, end_zoom, 0)
+                            initial_image = Image.frombytes("RGB", (SCREEN_WIDTH, SCREEN_HEIGHT),
+                                                            pygame.image.tostring(initial_frame, "RGB"))
                         # Perform transition if it's not the first photo and transition is enabled
-                        if previous_photo_surface is not None and transition_enabled and transition_duration > 0 and transition_type != "none": # Added transition_type check
-                            current_pil_image = perform_transition(screen, previous_photo_surface, photo_path, transition_duration, SCREEN_WIDTH, SCREEN_HEIGHT, main_font_loaded, config, transition_type)
-                            # Si la transition a échoué (ex: fichier non trouvé), on passe au suivant
+                        handle_slideshow_events(SCREEN_WIDTH)
+                        if current_pil_image is not None and not (next_photo_requested or previous_photo_requested) and previous_photo_surface is not None and transition_enabled and transition_duration > 0 and transition_type != "none":
+                            current_pil_image = perform_transition(screen, previous_photo_surface, photo_path, transition_duration, SCREEN_WIDTH, SCREEN_HEIGHT, main_font_loaded, config, transition_type, initial_image=initial_image, prepared_image=current_pil_image)
+                            # If the transition failed (e.g. file not found), move to the next item.
                             if current_pil_image is None:
-                                previous_photo_surface = None # Réinitialiser pour ne pas tenter de transitionner depuis une surface vide
+                                previous_photo_surface = None # Avoid transitioning from an empty surface.
                                 playlist_index += 1
                                 continue
-                        else:
-                            # For the first image or no transition, just load and blit it directly
-                            current_pil_image = Image.open(photo_path)
-                            if current_pil_image.mode != 'RGB': current_pil_image = current_pil_image.convert('RGB')
-                            # For the first image, we need to blit it directly before pan/zoom takes over
-                            # This blit is only for the initial display, not part of pan/zoom animation
-                            screen.blit(pygame.image.fromstring(current_pil_image.tobytes(), current_pil_image.size, current_pil_image.mode), (0,0)) # type: ignore
-                            draw_overlay(screen, SCREEN_WIDTH, SCREEN_HEIGHT, config, main_font_loaded, None)
-                            pygame.display.flip()
                     except Exception as e:
                         logger.info(f"🖼️ Error loading or transitioning to photo {photo_path}: {e}")
                         traceback.print_exc()
@@ -2277,13 +2242,15 @@ def start_slideshow():
                         playlist_index += 1
                         continue
 
-                    if current_pil_image: # Only proceed if image was successfully loaded
-                        display_photo_with_pan_zoom(screen, current_pil_image, SCREEN_WIDTH, SCREEN_HEIGHT, config, main_font_loaded, photo_path)
+                    if next_photo_requested or previous_photo_requested:
+                        previous_photo_surface = screen.copy()
+                    elif current_pil_image: # Only proceed if image was successfully loaded
+                        display_photo_with_pan_zoom(screen, current_pil_image, SCREEN_WIDTH, SCREEN_HEIGHT, config, main_font_loaded, photo_path, pan_zoom_plan=pan_zoom_plan)
                         previous_photo_surface = screen.copy()
                     else:
                         logger.info(f"🖼️ Skipping photo {photo_path} due to loading error.")
 
-                # --- Logique de navigation ---
+                # --- Navigation logic ---
                 if next_photo_requested:
                     playlist_index += 1
                 elif previous_photo_requested:
@@ -2291,32 +2258,33 @@ def start_slideshow():
                 else: # Comportement normal
                     playlist_index += 1
 
-                # Gérer le bouclage de la playlist
+                # Handle playlist looping.
                 if playlist_index >= len(playlist): playlist_index = 0
                 if playlist_index < 0: playlist_index = len(playlist) - 1
 
-            # --- Logique de fin de playlist personnalisée ---
+            # --- Custom playlist completion logic ---
             if is_custom_run:
-                logger.info(f"🖼️ Playlist personnalisée terminée. Retour au diaporama standard.")
+                logger.info("🖼️ Custom playlist finished. Returning to the standard slideshow.")
                 if pygame.mixer.get_init() and pygame.mixer.music.get_busy():
                     pygame.mixer.music.fadeout(2000)
                 _current_background_music = None
-                is_custom_run = False # Le prochain tour de boucle while True construira la playlist par défaut.
+                is_custom_run = False # The next while-loop iteration will build the default playlist.
                 update_status_file({"is_custom": False})
                 playlist = [] # Vider la playlist pour forcer la reconstruction.
     except KeyboardInterrupt:
-        logger.info(f"Arrêt manuel du diaporama.")
+        logger.info("Slideshow stopped manually.")
     except Exception as e:
         logger.info(f"FATAL ERROR IN SLIDESHOW: {e}")
         traceback.print_exc() # Print full traceback for any unhandled error
     finally:
+        photo_loader.shutdown(wait=False, cancel_futures=True)
         # --- MODIFICATION SIGALOU 30/01/2026 ---
-        # La gestion de l'alimentation de l'écran est maintenant centralisée dans le `slideshow_manager`.
-        # On retire l'appel ici pour éviter les doubles appels et les conditions de concurrence
-        # qui pouvaient empêcher la prise connectée de s'éteindre correctement.
+        # Display power is now managed centrally by `slideshow_manager`.
+        # Remove the call here to avoid duplicate calls and race conditions
+        # that could prevent the smart plug from turning off correctly.
         # from utils.display_manager import set_display_power
         # set_display_power(False)
-        # Nettoyer le fichier d'état à la sortie
+        # Clean up the status file on exit.
         if os.path.exists(CURRENT_PHOTO_FILE):
             os.remove(CURRENT_PHOTO_FILE)
         if os.path.exists(STATUS_FILE):

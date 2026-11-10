@@ -6,7 +6,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 PLAYLISTS_PATH = BASE_DIR / 'config' / 'playlists.json'
 
 def load_playlists():
-    """Charge la liste des playlists depuis le fichier JSON."""
+    """Load the playlist list from the JSON file."""
     if not PLAYLISTS_PATH.exists():
         return []
     try:
@@ -16,6 +16,6 @@ def load_playlists():
         return []
 
 def save_playlists(playlists_data):
-    """Sauvegarde la liste complète des playlists dans le fichier JSON."""
+    """Save the complete playlist list to the JSON file."""
     with open(PLAYLISTS_PATH, 'w', encoding='utf-8') as f:
         json.dump(playlists_data, f, indent=2)

@@ -5,19 +5,19 @@ import argparse
 import sys
 
 def generate_random_password(length=12):
-    """Génère un mot de passe aléatoire sécurisé et facile à taper."""
-    # Alphabet sans caractères ambigus (I, l, 1, O, 0) et sans ponctuation pour faciliter la saisie
+    """Generate a secure, easy-to-type random password."""
+    # Exclude ambiguous characters (I, l, 1, O, 0) and punctuation for easier typing.
     alphabet = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789"
     password = ''.join(secrets.choice(alphabet) for i in range(length))
     return password
 
 def create_credentials_file(output_path, username="admin"):
-    """Génère un nouveau mot de passe, le hache et crée le fichier credentials.json."""
+    """Generate a password, hash it, and create credentials.json."""
     password = generate_random_password()
-    flask_secret_key = secrets.token_hex(24) # Génère une clé sécurisée de 24 octets pour Flask
+    flask_secret_key = secrets.token_hex(24) # Generate a secure 24-byte key for Flask.
     
-    # Hacher le mot de passe en utilisant une méthode sécurisée.
-    # Werkzeug gère automatiquement le salage (salt).
+    # Hash the password using a secure method.
+    # Werkzeug handles salting automatically.
     password_hash = generate_password_hash(password)
     
     credentials = {
@@ -30,32 +30,32 @@ def create_credentials_file(output_path, username="admin"):
         with open(output_path, 'w') as f:
             json.dump(credentials, f, indent=2)
         
-        # Afficher les identifiants pour que l'utilisateur les note.
-        # C'est la seule fois où le mot de passe en clair sera affiché.
+        # Display the credentials so the user can record them.
+        # This is the only time the plaintext password is shown.
         print("\n" + "="*60, file=sys.stderr)
-        print("✅ Fichier d'identification sécurisé créé.", file=sys.stderr)
+        print("✅ Secure credentials file created.", file=sys.stderr)
         print("\n" + "-"*60, file=sys.stderr)
-        print("⚠️  NOTEZ CES IDENTIFIANTS, ILS NE SERONT PLUS AFFICHÉS  ⚠️", file=sys.stderr)
-        print(f"   Utilisateur : {username}", file=sys.stderr)
-        print(f"   Mot de passe: {password}", file=sys.stderr)
+        print("⚠️  SAVE THESE CREDENTIALS; THEY WILL NOT BE SHOWN AGAIN  ⚠️", file=sys.stderr)
+        print(f"   Username: {username}", file=sys.stderr)
+        print(f"   Password: {password}", file=sys.stderr)
         print("="*60 + "\n", file=sys.stderr)
 
     except Exception as e:
-        print(f"ERREUR: Impossible de créer le fichier d'identification à '{output_path}'.", file=sys.stderr)
-        print(f"Détails: {e}", file=sys.stderr)
+        print(f"ERROR: Unable to create credentials file at '{output_path}'.", file=sys.stderr)
+        print(f"Details: {e}", file=sys.stderr)
         sys.exit(1)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Crée un fichier credentials.json sécurisé avec un mot de passe aléatoire.")
+    parser = argparse.ArgumentParser(description="Create a secure credentials.json file with a random password.")
     parser.add_argument(
         '--output',
         required=True,
-        help="Chemin complet du fichier credentials.json à créer."
+        help="Full path of the credentials.json file to create."
     )
     parser.add_argument(
         '--username',
         default='admin',
-        help="Nom de l'utilisateur à créer (par défaut: admin)."
+        help="Username to create (default: admin)."
     )
     
     args = parser.parse_args()

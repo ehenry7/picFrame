@@ -1,30 +1,28 @@
-# Procédure de Mise à Jour des Traductions pour Pimmich
+# PictureFrame Translation Update Procedure
 
-Ce document décrit la procédure complète pour mettre à jour les fichiers de traduction de l'application Pimmich, en utilisant un script personnalisé et la bibliothèque `deep-translator`.
+This document describes how to update PictureFrame's translation files using
+Babel and the `deep-translator` library.
 
 ---
 
-## 1. Prérequis
+## 1. Prerequisites
 
-Avant de commencer, assurez-vous que les outils suivants sont installés dans votre environnement virtuel.
+Before you begin, make sure the following tools are installed in the global
+Python installation used by PictureFrame.
 
-### a. Activer l'environnement virtuel
+### Install the required tools
 
-Toutes les commandes doivent être lancées depuis le dossier racine du projet (`/home/pi/pimmich`) avec l'environnement virtuel activé :
+From the project root, install the required libraries (included in
+`requirements.txt`):
+
 ```bash
-source venv/bin/activate
+python -m pip install deep-translator polib
 ```
 
-### b. Installer les outils nécessaires
+### `babel.cfg` configuration file
 
-Si ce n'est pas déjà fait, installez les bibliothèques nécessaires (qui devraient être incluses dans `requirements.txt`) :
-```bash
-pip install deep-translator polib
-```
-
-### c. Fichier de configuration `babel.cfg`
-
-Assurez-vous que le fichier `babel.cfg` existe à la racine du projet avec le contenu suivant. Ce fichier indique à l'outil où trouver les textes à traduire.
+Make sure `babel.cfg` exists in the project root with the following content.
+This file tells Babel where to find translatable text.
 
 ```ini
 [python: **.py]
@@ -34,43 +32,52 @@ extensions=jinja2.ext.i18n
 
 ---
 
-## 2. Procédure de Mise à Jour
+## 2. Update procedure
 
-Le processus se déroule en 4 étapes principales.
+The process has four main steps.
 
-### Étape 1 : Extraction des textes à traduire
+### Step 1: Extract translatable text
 
-Cette commande scanne tous les fichiers `.py` et `.html` du projet, recherche les textes marqués pour la traduction (par exemple, `_('Mon texte')`), et crée/met à jour un fichier modèle `messages.pot`.
+This command scans the project's `.py` and `.html` files for text marked for
+translation (for example, `_('My text')`) and creates or updates the
+`messages.pot` template file.
 
 ```bash
 pybabel extract -F babel.cfg -o translations/messages.pot .
 ```
-**Note :** N'oubliez pas le `.` à la fin de la commande, qui signifie "analyser le dossier courant".
 
-### Étape 2 : Mise à jour des fichiers de langue
+**Note:** Do not omit the `.` at the end of the command; it tells Babel to scan
+the current directory.
 
-Cette commande compare le fichier modèle (`messages.pot`) avec les fichiers de traduction de chaque langue (`.po`) et y ajoute les nouveaux textes à traduire.
+### Step 2: Update language files
+
+This command compares the template (`messages.pot`) with each language's `.po`
+file and adds any new strings that need translation.
 
 ```bash
 pybabel update -i translations/messages.pot -d translations
 ```
 
-### Étape 3 : Traduction automatique
+### Step 3: Translate new strings
 
-C'est ici que notre script personnalisé `utils/translate_po.py` intervient. Il utilise une bibliothèque fiable pour traduire les textes manquants. Lancez les commandes suivantes pour chaque langue.
+English is the source language. The custom script `utils/translate_po.py`
+translates missing strings into French and Hebrew.
 
 ```bash
-# Traduire le fichier anglais
-python utils/translate_po.py translations/en/LC_MESSAGES/messages.po en
+# Translate the French catalog
+python utils/translate_po.py translations/fr/LC_MESSAGES/messages.po fr
 
-# Traduire le fichier espagnol
-python utils/translate_po.py translations/es/LC_MESSAGES/messages.po es
+# Translate the Hebrew catalog
+python utils/translate_po.py translations/he/LC_MESSAGES/messages.po he
 ```
-**Conseil :** Après cette étape, il est recommandé d'ouvrir les fichiers `.po` avec un éditeur comme Poedit pour relire rapidement les traductions automatiques et corriger d'éventuels contresens.
 
-### Étape 4 : Compilation des traductions
+**Tip:** After this step, review the `.po` files in an editor such as Poedit and
+correct any errors in the automatic translations.
 
-Cette dernière commande transforme les fichiers texte `.po` (lisibles par l'homme) en fichiers binaires optimisés `.mo` que l'application utilise pour afficher les traductions.
+### Step 4: Compile translations
+
+This final command converts the human-readable `.po` files into optimized
+binary `.mo` files, which the application uses to display translations.
 
 ```bash
 pybabel compile -d translations
@@ -78,12 +85,16 @@ pybabel compile -d translations
 
 ---
 
-Une fois ces étapes terminées, redémarrez l'application Pimmich pour que les nouvelles traductions soient prises en compte.
+After completing these steps, restart PictureFrame to apply the updated
+translations.
 
 ---
 
-## 3. Comment convertir ce document en PDF
+## 3. Convert this document to PDF
 
-*   **Avec VS Code :** Installez une extension comme "Markdown PDF" et faites un clic droit sur le fichier `.md` pour l'exporter.
-*   **En ligne :** Utilisez un site web comme md2pdf.netlify.app en y copiant-collant ce texte.
-*   **En ligne de commande :** Si vous avez `pandoc` d'installé, utilisez la commande : `pandoc procedure_traduction.md -o procedure.pdf`.
+* **VS Code:** Install an extension such as "Markdown PDF", then right-click
+  the `.md` file and export it.
+* **Online:** Use a site such as md2pdf.netlify.app by copying and pasting this
+  text.
+* **Command line:** If `pandoc` is installed, run:
+  `pandoc procedure_trad.md -o procedure_trad.pdf`.

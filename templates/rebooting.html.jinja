@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ get_locale() }}">
+<html lang="{{ get_locale() }}" dir="{{ 'rtl' if get_locale() == 'he' else 'ltr' }}">
 
 <head>
     <meta charset="UTF-8">
@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <title>Redémarrage en cours - Pimmich</title>
+    <title>Rebooting - PictureFrame</title>
     <style>
         * {
             margin: 0;
@@ -56,7 +56,7 @@
             margin-top: 10px;
         }
 
-        /* Spinner animé - ORIGINAL */
+        /* Animated spinner - ORIGINAL */
         .spinner {
             width: 60px;
             height: 60px;
@@ -77,7 +77,7 @@
             }
         }
 
-        /* Animation de pulsation pour le texte - ORIGINAL */
+        /* Text pulse animation - ORIGINAL */
         .pulse {
             animation: pulse 2s ease-in-out infinite;
         }
@@ -100,7 +100,7 @@
             margin-top: 30px;
         }
 
-        /* Progress bar à 50s */
+        /* Progress bar at 50 seconds */
         .progress-bar {
             width: 100%;
             height: 4px;
@@ -126,7 +126,7 @@
             }
         }
 
-        /* Compteur bien visible */
+        /* Highly visible counter */
         .countdown {
             font-size: 2.5em;
             font-weight: bold;
@@ -141,15 +141,15 @@
 
 <body>
     <div class="container">
-        <!-- Logo Pimmich - ORIGINAL -->
-        <img src="{{ url_for('static', filename='pimmich_logo.png') }}" alt="Logo Pimmich"
+        <!-- Logo PictureFrame - ORIGINAL -->
+        <img src="{{ url_for('static', filename='pictureframe_logo.svg') }}" alt="Logo PictureFrame"
             style="width: 160px; height: auto;">
 
-        <h1>Redémarrage en cours</h1>
+        <h1>Rebooting</h1>
 
         <div class="spinner"></div>
 
-        <!-- STATUS + COMPTEUR SÉPARÉS -->
+        <!-- STATUS + SEPARATE COUNTER -->
         <div id="status-container" class="space-y-3 mb-6">
             <div class="status-row">
                 <span>Serveur Web</span>
@@ -168,8 +168,8 @@
         </div>
 
         <p class="info">
-            Le système applique les changements.<br>
-            Cette page se rechargera automatiquement une fois le système prêt.
+            The system is applying changes.<br>
+            This page will reload automatically once the system is ready.
         </p>
     </div>
 
@@ -186,7 +186,7 @@
         let slideshowIsUp = false;
 
         window.addEventListener('DOMContentLoaded', () => {
-            // Si on ne passe pas d'old_instance, on déclenche le reboot (cas du bouton manuel)
+            // If old_instance is not passed, trigger a reboot (manual button case).
             if (!oldInstance) {
                 setTimeout(triggerReboot, 100);
             } else {
@@ -206,7 +206,7 @@
         }
 
         function startCountdownAndChecks() {
-            // Compteur de sécurité
+            // Safety counter.
             const countdownInterval = setInterval(() => {
                 remainingTime--;
                 if (remainingTime >= 0) {
@@ -216,14 +216,14 @@
                 }
             }, 1000);
 
-            // Boucle de vérification
+            // Verification loop.
             const checkInterval = setInterval(async () => {
                 try {
                     const response = await fetch('/api/ping', { cache: 'no-cache' });
                     if (response.ok) {
                         const data = await response.json();
                         
-                        // 1. Vérification du Serveur Web (Instance)
+                        // 1. Check the web server (instance).
                         if (!oldInstance || (data.instance && data.instance !== oldInstance)) {
                             iconServer.className = 'fas fa-check-circle text-green-500';
                             serverIsNew = true;
@@ -231,7 +231,7 @@
                             iconServer.className = 'fas fa-spinner fa-spin text-blue-500';
                         }
 
-                        // 2. Vérification du Diaporama
+                        // 2. Check the slideshow.
                         if (data.slideshow_running) {
                             iconSlideshow.className = 'fas fa-check-circle text-green-500';
                             slideshowIsUp = true;
@@ -240,17 +240,17 @@
                             slideshowIsUp = false;
                         }
 
-                        // Redirection finale quand tout est OK
+                        // Final redirect when everything is ready.
                         if (serverIsNew && slideshowIsUp) {
                             clearInterval(checkInterval);
                             clearInterval(countdownInterval);
                             countdownEl.textContent = '✅';
-                            document.querySelector('.info').innerHTML = "Tout est prêt !<br>Redirection en cours...";
+                            document.querySelector('.info').innerHTML = "Everything is ready!<br>Redirecting...";
                             setTimeout(() => { window.location.href = '/configure'; }, 1500);
                         }
                     }
                 } catch (e) {
-                    // Le serveur est hors-ligne pendant le reboot
+                    // The server is offline during the reboot.
                     iconServer.className = 'fas fa-circle text-red-500';
                     iconSlideshow.className = 'fas fa-circle text-red-500';
                 }
