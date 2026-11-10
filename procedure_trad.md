@@ -1,12 +1,12 @@
-# Procédure de Mise à Jour des Traductions pour Pimmich
+# Procédure de Mise à Jour des Traductions pour PictureFrame
 
-Ce document décrit la procédure complète pour mettre à jour les fichiers de traduction de l'application Pimmich, en utilisant un script personnalisé et la bibliothèque `deep-translator`.
+Ce document décrit la procédure complète pour mettre à jour les fichiers de traduction de l'application PictureFrame, en utilisant un script personnalisé et la bibliothèque `deep-translator`.
 
 ---
 
 ## 1. Prérequis
 
-Avant de commencer, assurez-vous que les outils suivants sont installés dans l'installation Python globale utilisée par Pimmich.
+Avant de commencer, assurez-vous que les outils suivants sont installés dans l'installation Python globale utilisée par PictureFrame.
 
 ### Installer les outils nécessaires
 
@@ -71,7 +71,7 @@ pybabel compile -d translations
 
 ---
 
-Une fois ces étapes terminées, redémarrez l'application Pimmich pour que les nouvelles traductions soient prises en compte.
+Une fois ces étapes terminées, redémarrez l'application PictureFrame pour que les nouvelles traductions soient prises en compte.
 
 ---
 

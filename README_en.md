@@ -1,12 +1,16 @@
-# 🖼️ Pimmich – Smart Connected Photo Frame
+# 🖼️ PictureFrame – Smart Connected Photo Frame
 
-Pimmich is a Python application designed to turn a Raspberry Pi into a smart and customizable digital photo frame. It can display photos from multiple sources, be controlled by voice, and much more.
+PictureFrame is a Python application designed to turn a Raspberry Pi into a smart and customizable digital photo frame. It can display photos from multiple sources and be controlled through its web interface.
 
-<img src="static/pimmich_logo.png" alt="Pimmich Logo" width="300">
+PictureFrame is a fork of [Pimmich](https://github.com/gotenash/pimmich).
+Legacy internal names (the startup script, status files, logs, NGINX site and
+EXIF metadata prefix) are retained for existing-installation compatibility.
+
+<img src="static/pictureframe_logo.svg" alt="PictureFrame Logo" width="300">
 
 <p align="center">
   <a href="https://ko-fi.com/pimmich">
-    <img src="https://img.shields.io/badge/Support%20on%20Ko--fi-F16061?logo=kofi&logoColor=white" alt="Support Pimmich on Ko-fi">
+    <img src="https://img.shields.io/badge/Support%20on%20Ko--fi-F16061?logo=kofi&logoColor=white" alt="Support the original Pimmich project on Ko-fi">
   </a>
 </p>
 
@@ -18,7 +22,6 @@ Pimmich is a Python application designed to turn a Raspberry Pi into a smart and
 - 🧰 Technologies Used
 - 🚀 Installation
 - 🔧 Configuration
-- 🗣️ Voice Control
 - ❓ Troubleshooting (FAQ)
 - 🛣️ Roadmap
   - June 2025
@@ -30,32 +33,32 @@ Pimmich is a Python application designed to turn a Raspberry Pi into a smart and
 
 ## ✨ Main Features
 
-Pimmich is packed with features to provide a complete and customizable experience:
+PictureFrame is packed with features to provide a complete and customizable experience:
 
 #### 🖼️ **Display & Slideshow**
-- **Multi-source:** Display photos from Immich, a network share (Samba/Windows), a USB drive, a smartphone, or via Telegram.
+- **Multi-source:** Display photos from Immich, a USB drive, or a smartphone.
+- **Manual Immich imports:** Use the Import from Immich button to refresh photos. No automatic background synchronization runs.
 - **Advanced Customization:** Set display duration, active hours, transitions (fade, slide, or Random to choose an effect for each photo change), and enable a "Pan & Zoom" motion effect.
+- **Active-hour schedules:** Weekend hours apply on Friday and Saturday; weekday hours apply Sunday through Thursday.
 - **Creative Filters:** Apply filters to your photos (Black & White, Sepia, Vintage) and unique effects like **Polaroid** or **Postcard**.
 - **Format Handling:** Smart support for portrait photos (blurred background) and videos (with sound and optional hardware acceleration).
 
 #### ⚙️ **Interface & Control**
 - **Comprehensive Web Interface:** A local configuration page, password-protected and organized into thematic groups and tabs for an intuitive navigation.
-- **Voice Control:** Control your frame with voice commands like *"Magic Frame, next photo"* or *"Magic Frame, play Vacation playlist"*.
 - **Content Management:**
     - **Playlists:** Create virtual albums, reorder photos with drag-and-drop, and launch themed slideshows with a dynamic title screen (photo jumble on a corkboard background).
     - **Favorites:** Mark your favorite photos to make them appear more often.
     - **Captions:** Add custom text to your photos and postcards.
 
 #### 🌐 **Connectivity & Interactions**
-- **Telegram:** Allow friends and family to send photos to the frame via a Telegram bot, with a secure and temporary invitation system.
 - **Wi-Fi & Network:** Configure Wi-Fi, scan for networks, and manage network interfaces directly from the interface.
 - **Smartphone Upload:** Import photos directly from your phone's browser.
 
 #### 🛠️ **Maintenance & Monitoring**
-- **Easy Updates:** Update Pimmich with a single click from the interface.
+- **Manual Updates:** Application code is updated manually outside the web interface; no remote self-update service is included.
 - **Backup & Restore:** Back up and restore your entire configuration.
 - **System Monitoring:** Track real-time temperature, CPU, RAM, and disk usage with history graphs.
-- **Detailed Logs:** Access logs for each service (web server, slideshow, voice control) for easy troubleshooting.
+- **Detailed Logs:** Access logs for each service (web server, slideshow) for easy troubleshooting.
 
 ---
 
@@ -65,27 +68,26 @@ Pimmich is packed with features to provide a complete and customizable experienc
 - **Frontend:** HTML, TailwindCSS, JavaScript
 - **Slideshow:** Pygame
 - **Image Processing:** Pillow
-- **Voice Control:** Picovoice Porcupine (wake word) & Vosk (recognition)
 - **Web Server:** NGINX (as a reverse proxy)
 
 ---
 
 ## 🚀 Installation
 
-There are two methods to install Pimmich.
+There are two methods to install PictureFrame.
 
 ### Method 1: Pre-configured Image (Recommended and easier)
 
 This method is ideal for a quick first-time installation.
 
 1.  **Download the current month's image**
-    Download the New Year version (v1.6.0) directly here: pimmich271225.img.xz or go to the Pimmich Releases page.
+    Download the New Year version (v1.6.0) directly here: pimmich271225.img.xz or go to the PictureFrame Releases page.
 
 2.  **Flash the image to an SD card**
     Use software like Raspberry Pi Imager or BalenaEtcher to write the image file you just downloaded to your microSD card.
 
 3.  **Start your Raspberry Pi**
-    Insert the SD card into the Raspberry Pi, connect the screen and power supply. Pimmich will start automatically.
+    Insert the SD card into the Raspberry Pi, connect the screen and power supply. PictureFrame will start automatically.
 
 ### Method 2: Manual Installation from Git Repository
 
@@ -115,6 +117,21 @@ sudo ./setup.sh
 
 This script installs system and Python dependencies, sets up the environment, and configures auto-start of the slideshow.
 
+### Switch between frame mode and the desktop
+
+After running setup, use either command from the project directory:
+
+```bash
+bash enable_auto_frame_start.sh   # Frame mode: console auto-login + Sway
+bash disable_auto_frame_start.sh  # Desktop mode: desktop auto-login
+```
+
+The scripts request sudo privileges and **reboot automatically** after successfully
+changing the boot mode. Save your work before running either script.
+Enabling requires the Sway auto-start configuration created by setup;
+disabling requires Raspberry Pi OS Desktop, not Lite. Neither script removes
+PictureFrame or changes its settings.
+
 ---
 
 ### 🔑 Get Your Immich API Token
@@ -125,7 +142,7 @@ This script installs system and Python dependencies, sets up the environment, an
 Click your profile icon (top-right), then choose **Account Settings**.
 
 3. Generate a new API key  
-In the **API Key** section, click **Generate new API Key** and give it a name (e.g., `PimmichFrame`).
+In the **API Key** section, click **Generate new API Key** and give it a name (e.g., `PictureFrame`).
 
 ⚠️ Once the token is shown, **copy it immediately** — you won’t be able to see it again. If lost, you’ll need to generate a new one.
 
@@ -133,7 +150,7 @@ In the **API Key** section, click **Generate new API Key** and give it a name (e
 
 ---
 
-### Connect to Pimmich
+### Connect to PictureFrame
 
 From a web browser on another device, access:
 
@@ -260,6 +277,13 @@ Small live previews and Preview/Favorites tiles also show a separate location
 line with available city/country names and a country flag emoji. Missing data
 is labeled **No location metadata**. This line is independent of the slideshow
 overlay settings; flag appearance depends on the browser/system emoji font.
+
+Touch or click the local slideshow to reveal Previous, Pause/Play and Next
+buttons for five seconds. Tap a visible button to operate it and extend the
+display time. The first tap reveals controls without changing the photo.
+Keyboard shortcuts also work: Left = Previous, Right = Next, Space = Pause/Play.
+They reveal or extend the controls. Navigation can interrupt a fade or photo
+loading; it does not wait for the display duration or transition to finish.
 
 The enlarged photo toolbar also provides:
 - **Filter strength** (0–100%), saved per photo for color/effect filters.

@@ -5,18 +5,8 @@
 #
 # These packages either won't compile on Windows or are meaningless without Pi hardware.
 
-# --- Fuzzy string matching (Levenshtein C extension — optional on Windows) ---
-python-Levenshtein
-
 # --- HEIC/HEIF photo support (iPhone photos) ---
 pillow-heif
-
-# --- Voice control (offline speech recognition) ---
-numpy
-vosk
-sounddevice
-pvporcupine
-num2words
 
 # --- GPIO hardware control (fan, physical button) ---
 # RPi.GPIO is typically installed via apt: sudo apt install python3-rpi.gpio

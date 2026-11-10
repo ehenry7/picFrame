@@ -18,8 +18,6 @@ def create_default_config():
         "display_height": 1080,
         "pan_zoom_factor": 1.15,
         "pan_zoom_start_factor": 1.0,
-        "immich_auto_update": False,
-        "immich_update_interval_hours": 24,
         "pan_zoom_enabled": False,
         "transition_enabled": True,
         "transition_type": "fade",
@@ -28,13 +26,6 @@ def create_default_config():
         "video_audio_enabled": False,
         "video_audio_output": "auto",
         "video_audio_volume": 100,
-        "smb_host": "",
-        "smb_share": "",
-        "smb_user": "",
-        "smb_password": "",
-        "smb_path": "/",
-        "smb_auto_update": False,
-        "smb_update_interval_hours": 24,
         "display_sources": ["immich"],
         "show_clock": True,
         "clock_format": "%H:%M",
@@ -71,16 +62,10 @@ def create_default_config():
         "wifi_country": "FR",
         "wifi_password": "",
         "timezone": "Europe/Paris",
-        "skip_initial_auto_import": False,
         "info_display_duration": 5,
         "screen_height_percent": 100,
         "favorite_boost_factor": 2,
         "video_hwdec_enabled": False,
-        "voice_control_enabled": False,
-        "voice_control_language": "fr",
-        "porcupine_access_key": "",
-        "voice_control_device_index": "",
-        "notification_sound_volume": 80,
         
         # --- NOUVELLES VARIABLES : Métadonnées photo ---
         "show_photo_date": False,
@@ -114,6 +99,21 @@ def create_default_config():
 _config_cache = None
 _last_config_load = 0
 
+def _without_retired_settings(config):
+    cleaned = {key: value for key, value in config.items()
+               if not key.startswith(("voice_control_", "porcupine_", "smb_", "telegram_"))
+               and key not in {"notification_sound_volume", "immich_auto_update",
+                               "immich_update_interval_hours", "skip_initial_auto_import"}}
+    if "display_sources" in cleaned:
+        cleaned["display_sources"] = [source for source in cleaned["display_sources"]
+                                     if source != "samba"]
+    if isinstance(cleaned.get("max_photos_to_download"), dict):
+        cleaned["max_photos_to_download"] = {
+            source: limit for source, limit in cleaned["max_photos_to_download"].items()
+            if source != "samba"
+        }
+    return cleaned
+
 def load_config():
     """Charge la configuration depuis le fichier et la fusionne avec les valeurs par défaut."""
     global _config_cache, _last_config_load
@@ -138,7 +138,7 @@ def load_config():
         # Cela garantit que les nouvelles clés de configuration sont ajoutées
         # sans écraser les réglages existants de l'utilisateur.
         merged_config = default_config.copy()
-        merged_config.update(user_config)
+        merged_config.update(_without_retired_settings(user_config))
         _config_cache = merged_config
         _last_config_load = time.time()
         return merged_config
@@ -154,6 +154,7 @@ def save_config(config):
     """Sauvegarde la configuration dans un fichier JSON."""
     global _config_cache, _last_config_load
     import time
+    config = _without_retired_settings(config)
     os.makedirs(os.path.dirname(CONFIG_PATH), exist_ok=True)
     with open(CONFIG_PATH, 'w', encoding='utf-8') as f:
         json.dump(config, f, indent=4, ensure_ascii=False)

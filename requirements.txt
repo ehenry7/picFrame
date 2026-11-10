@@ -2,7 +2,7 @@
 # Install with: pip install -r requirements.txt  (global Python, no venv)
 #
 # These packages install cleanly on both Windows and Linux.
-# Pi-specific packages (voice control, GPIO, HEIC) are in requirements-pi.txt.
+# Pi-specific packages (GPIO, HEIC) are in requirements-pi.txt.
 
 Flask==2.3.2
 requests==2.31.0
@@ -13,7 +13,5 @@ werkzeug
 Flask-Babel
 piexif
 qrcode[pil]
-thefuzz
 deep-translator
 polib
-smbprotocol

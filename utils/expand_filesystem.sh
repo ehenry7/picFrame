@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Ce script est conçu pour être exécuté par l'application web Pimmich.
+# Ce script est conçu pour être exécuté par l'application web PictureFrame.
 # Il utilise l'outil raspi-config pour étendre la partition racine afin
 # qu'elle utilise tout l'espace disponible sur la carte SD.
 

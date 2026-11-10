@@ -114,59 +114,14 @@ msgstr ""
 msgid "Erreur de connexion : %(error)s"
 msgstr ""
 
-#: app.py:1774 app.py:1882
-msgid "Import initial ignoré."
-msgstr ""
-
-#: app.py:1787 app.py:1895
-#, python-format
-msgid "Mise à jour auto. activée. Intervalle : %(hours)sh."
-msgstr ""
-
-#: app.py:1793
-msgid "Lancement du téléchargement..."
-msgstr ""
-
-#: app.py:1825 app.py:1915
-msgid "Préparation des photos..."
-msgstr ""
-
-#: app.py:1840 app.py:1938
-msgid "Mise à jour terminée. Redémarrage du diaporama..."
-msgstr ""
-
-#: app.py:1845 app.py:1943
-msgid "Dernière mise à jour réussie."
-msgstr ""
-
-#: app.py:1848 app.py:1946
-msgid "Mise à jour terminée avec avertissements/erreurs."
-msgstr ""
-
-#: app.py:1855
-msgid "Mise à jour automatique désactivée."
-msgstr ""
-
 #: app.py:1901
 msgid "Lancement de l'import..."
-msgstr ""
-
-#: app.py:1952
-msgid "Mise à jour automatique Samba désactivée."
 msgstr ""
 
 #: app.py:2230
 msgid ""
 "L'application web redémarre... La page sera inaccessible pendant quelques "
 "instants."
-msgstr ""
-
-#: app.py:2566
-msgid "Le service est arrêté."
-msgstr ""
-
-#: app.py:2575
-msgid "Démarrage du service..."
 msgstr ""
 
 #: app.py:2861
@@ -247,23 +202,6 @@ msgstr ""
 
 #: app.py:3206
 msgid "name_key"
-msgstr ""
-
-#: app.py:3682
-msgid "Paramètre 'enabled' manquant."
-msgstr ""
-
-#: app.py:3693
-msgid "Service de contrôle vocal activé."
-msgstr ""
-
-#: app.py:3696
-msgid "Service de contrôle vocal désactivé."
-msgstr ""
-
-#: app.py:3701
-#, python-format
-msgid "Erreur interne du serveur : %(error)s"
 msgstr ""
 
 #: local_slideshow.py:1029
@@ -379,20 +317,8 @@ msgstr ""
 msgid "Horloge & Infos"
 msgstr ""
 
-#: templates/configure.html.jinja:263
-msgid "Configurez le contrôle vocal du diaporama."
-msgstr ""
-
-#: templates/configure.html.jinja:264
-msgid "Vocal"
-msgstr ""
-
 #: templates/configure.html.jinja:266
 msgid "Métadonnées"
-msgstr ""
-
-#: templates/configure.html.jinja:273
-msgid "Configurez les sources de photos (Immich, Samba, USB...)."
 msgstr ""
 
 #: templates/configure.html.jinja:274
@@ -423,14 +349,6 @@ msgstr ""
 msgid "Favoris"
 msgstr ""
 
-#: templates/configure.html.jinja:291
-msgid "Configurez la réception de photos via le bot Telegram."
-msgstr ""
-
-#: templates/configure.html.jinja:292
-msgid "Telegram"
-msgstr ""
-
 #: templates/configure.html.jinja:294
 msgid "Validez ou rejetez les photos envoyées par les invités."
 msgstr ""
@@ -453,10 +371,6 @@ msgstr ""
 
 #: templates/configure.html.jinja:307
 msgid "Réseau"
-msgstr ""
-
-#: templates/configure.html.jinja:309
-msgid "Gérez les mises à jour, sauvegardes et contrôles système."
 msgstr ""
 
 #: templates/configure.html.jinja:310
@@ -505,20 +419,12 @@ msgid ""
 "(onglet Actions) pour adapter le contenu."
 msgstr ""
 
-#: templates/configure.html.jinja:347
-msgid "Horaires Semaine (Lun-Ven)"
-msgstr ""
-
 #: templates/configure.html.jinja:348 templates/configure.html.jinja:355
 msgid "Allumage :"
 msgstr ""
 
 #: templates/configure.html.jinja:350 templates/configure.html.jinja:357
 msgid "Extinction :"
-msgstr ""
-
-#: templates/configure.html.jinja:354
-msgid "Horaires Weekend (Sam-Dim)"
 msgstr ""
 
 #: templates/configure.html.jinja:364
@@ -669,13 +575,6 @@ msgstr ""
 
 #: templates/configure.html.jinja:497
 msgid "Gestion de l'alimentation (Prise Connectée)"
-msgstr ""
-
-#: templates/configure.html.jinja:499
-msgid ""
-"Si votre écran ne se met pas complètement en veille, vous pouvez utiliser "
-"une prise connectée (Wi-Fi) pour couper son alimentation. Pimmich enverra "
-"une simple requête HTTP aux URLs que vous spécifiez."
 msgstr ""
 
 #: templates/configure.html.jinja:500
@@ -995,30 +894,6 @@ msgstr ""
 msgid "Récupération aléatoire des images dans l'album (Immich)"
 msgstr ""
 
-#: templates/configure.html.jinja:893
-msgid "Mise à jour automatique (Immich)"
-msgstr ""
-
-#: templates/configure.html.jinja:896 templates/configure.html.jinja:989
-msgid "Activer la mise à jour automatique"
-msgstr ""
-
-#: templates/configure.html.jinja:898 templates/configure.html.jinja:991
-msgid "Intervalle de mise à jour (heures):"
-msgstr ""
-
-#: templates/configure.html.jinja:903 templates/configure.html.jinja:996
-msgid "État du service :"
-msgstr ""
-
-#: templates/configure.html.jinja:905 templates/configure.html.jinja:998
-msgid "Dernière mise à jour :"
-msgstr ""
-
-#: templates/configure.html.jinja:907 templates/configure.html.jinja:1000
-msgid "Prochaine mise à jour :"
-msgstr ""
-
 #: templates/configure.html.jinja:916
 msgid "Sources à afficher dans le diaporama"
 msgstr ""
@@ -1037,56 +912,12 @@ msgstr ""
 msgid "Photos USB"
 msgstr ""
 
-#: templates/configure.html.jinja:931
-msgid "Photos Samba"
-msgstr ""
-
 #: templates/configure.html.jinja:935
 msgid "Photos Smartphone"
 msgstr ""
 
-#: templates/configure.html.jinja:939
-msgid "Photos reçues par Telegram"
-msgstr ""
-
 #: templates/configure.html.jinja:943
 msgid "Photos des invités (validées)"
-msgstr ""
-
-#: templates/configure.html.jinja:948
-msgid "Configuration du partage Samba (Windows)"
-msgstr ""
-
-#: templates/configure.html.jinja:950
-msgid "Serveur :"
-msgstr ""
-
-#: templates/configure.html.jinja:952
-msgid "ex: 192.168.1.50 ou MON-NAS"
-msgstr ""
-
-#: templates/configure.html.jinja:954
-msgid "Nom du partage :"
-msgstr ""
-
-#: templates/configure.html.jinja:956
-msgid "ex: Photos"
-msgstr ""
-
-#: templates/configure.html.jinja:958
-msgid "Chemin dans le partage (optionnel) :"
-msgstr ""
-
-#: templates/configure.html.jinja:960
-msgid "ex: Famille/2024"
-msgstr ""
-
-#: templates/configure.html.jinja:962
-msgid "Nom d'utilisateur (optionnel) :"
-msgstr ""
-
-#: templates/configure.html.jinja:965
-msgid "Mot de passe (optionnel) :"
 msgstr ""
 
 #: templates/configure.html.jinja:972 templates/configure.html.jinja:1694
@@ -1095,65 +926,10 @@ msgstr ""
 msgid "Afficher/Cacher le mot de passe"
 msgstr ""
 
-#: templates/configure.html.jinja:980
-msgid ""
-"Tester la\n"
-"                            connexion"
-msgstr ""
-
-#: templates/configure.html.jinja:986
-msgid "Mise à jour automatique (Samba)"
-msgstr ""
-
-#: templates/configure.html.jinja:1008
-msgid "Options de démarrage"
-msgstr ""
-
-#: templates/configure.html.jinja:1012
-msgid "Ignorer le premier import automatique au démarrage"
-msgstr ""
-
-#: templates/configure.html.jinja:1014
-msgid ""
-"Si cette option est cochée, les mises à jour automatiques (Immich, Samba) ne"
-" se lanceront pas immédiatement après un redémarrage du cadre, mais "
-"attendront le prochain cycle programmé."
-msgstr ""
-
-#: templates/configure.html.jinja:1021
-msgid "Réception de photos par Telegram"
-msgstr ""
-
-#: templates/configure.html.jinja:1024
-msgid ""
-"Activez cette fonction pour permettre à des utilisateurs autorisés d'envoyer des photos\n"
-"                        directement sur le cadre via un bot Telegram. Les photos reçues seront ajoutées à la source\n"
-"                        \"Telegram\"."
-msgstr ""
-
-#: templates/configure.html.jinja:1028
-msgid ""
-"Pour créer un bot et obtenir un token, parlez à @BotFather sur Telegram. L'ID de\n"
-"                        l'administrateur est votre propre ID utilisateur Telegram (obtenu via @userinfobot par\n"
-"                        exemple)."
-msgstr ""
-
-#: templates/configure.html.jinja:1034
-msgid "Activer le bot de réception Telegram"
-msgstr ""
-
-#: templates/configure.html.jinja:1039
-msgid "Token du Bot Telegram :"
-msgstr ""
-
 #: templates/configure.html.jinja:1055
 msgid ""
 "ID de l'administrateur\n"
 "                            :"
-msgstr ""
-
-#: templates/configure.html.jinja:1059
-msgid "Votre ID numérique Telegram"
 msgstr ""
 
 #: templates/configure.html.jinja:1065
@@ -1166,12 +942,6 @@ msgstr ""
 
 #: templates/configure.html.jinja:1076
 msgid "Gestion des invitations pour les invités"
-msgstr ""
-
-#: templates/configure.html.jinja:1079
-msgid ""
-"Créez des codes d'invitation uniques pour permettre à vos amis et votre famille d'envoyer\n"
-"                        des photos au cadre. Ils devront envoyer ce code à votre bot Telegram pour être autorisés."
 msgstr ""
 
 #: templates/configure.html.jinja:1085
@@ -1204,16 +974,6 @@ msgstr ""
 
 #: templates/configure.html.jinja:1107
 msgid "Chargement des invitations..."
-msgstr ""
-
-#: templates/configure.html.jinja:1114
-msgid "Source Telegram"
-msgstr ""
-
-#: templates/configure.html.jinja:1116
-msgid ""
-"N'oubliez pas d'activer la source \"Telegram\" dans l'onglet\n"
-"                        \"Sources\" pour que les photos reçues apparaissent dans le diaporama."
 msgstr ""
 
 #: templates/configure.html.jinja:1122
@@ -1250,140 +1010,6 @@ msgstr ""
 
 #: templates/configure.html.jinja:1155
 msgid "Activer l'icône de nouvelle carte postale dans l'overlay"
-msgstr ""
-
-#: templates/configure.html.jinja:1164
-msgid "Contrôle Vocal"
-msgstr ""
-
-#: templates/configure.html.jinja:1167
-msgid "Contrôlez votre diaporama à la voix avec le mot-clé \"Cadre Magique\"."
-msgstr ""
-
-#: templates/configure.html.jinja:1171
-msgid "Étape Manuelle Requise :"
-msgstr ""
-
-#: templates/configure.html.jinja:1171
-msgid ""
-"Pour utiliser le mot-clé\n"
-"                            personnalisé \"Cadre Magique\", vous devez créer un modèle sur le site de Picovoice, le\n"
-"                            télécharger, et le placer dans le dossier `voice_models` sous le nom\n"
-"                            `cadre-magique_raspberry-pi.ppn`."
-msgstr ""
-
-#: templates/configure.html.jinja:1178
-msgid ""
-"Moteur\n"
-"                            de mot-clé"
-msgstr ""
-
-#: templates/configure.html.jinja:1183
-msgid "Picovoice Porcupine (Recommandé, nécessite une clé API)"
-msgstr ""
-
-#: templates/configure.html.jinja:1185
-msgid "Vosk (Totalement local, sans clé API, plus gourmand)"
-msgstr ""
-
-#: templates/configure.html.jinja:1187
-msgid ""
-"Choisissez 'Vosk' si vous ne souhaitez pas créer de\n"
-"                            compte Picovoice."
-msgstr ""
-
-#: templates/configure.html.jinja:1193
-msgid "Activer le contrôle vocal (action immédiate)"
-msgstr ""
-
-#: templates/configure.html.jinja:1197
-msgid ""
-"Langue\n"
-"                            du contrôle vocal"
-msgstr ""
-
-#: templates/configure.html.jinja:1202
-msgid "Français"
-msgstr ""
-
-#: templates/configure.html.jinja:1204
-msgid "Anglais"
-msgstr ""
-
-#: templates/configure.html.jinja:1206
-msgid ""
-"Le changement de langue nécessite un redémarrage du\n"
-"                            service vocal (désactiver puis réactiver le contrôle vocal)."
-msgstr ""
-
-#: templates/configure.html.jinja:1211
-msgid ""
-"Clé\n"
-"                            d'accès Picovoice Porcupine"
-msgstr ""
-
-#: templates/configure.html.jinja:1217
-msgid "Collez votre clé d'accès ici"
-msgstr ""
-
-#: templates/configure.html.jinja:1221
-msgid "Afficher/Cacher la clé d'accès"
-msgstr ""
-
-#: templates/configure.html.jinja:1226
-msgid ""
-"Obtenez votre clé via le compte gratuit (Free Tier)\n"
-"                            sur la"
-msgstr ""
-
-#: templates/configure.html.jinja:1233
-msgid "Périphérique d'entrée audio (Microphone)"
-msgstr ""
-
-#: templates/configure.html.jinja:1237 templates/configure.html.jinja:5358
-msgid "Périphérique par défaut"
-msgstr ""
-
-#: templates/configure.html.jinja:1242
-msgid "Actualiser la liste"
-msgstr ""
-
-#: templates/configure.html.jinja:1247
-msgid "État du service vocal :"
-msgstr ""
-
-#: templates/configure.html.jinja:1256
-msgid "Volume des Notifications Sonores"
-msgstr ""
-
-#: templates/configure.html.jinja:1259
-msgid ""
-"Règle le volume pour les sons de notification (confirmation du contrôle vocal, réception\n"
-"                        de carte postale, etc.)."
-msgstr ""
-
-#: templates/configure.html.jinja:1263
-msgid ""
-"Volume des notifications\n"
-"                            :"
-msgstr ""
-
-#: templates/configure.html.jinja:1276
-msgid "Diagnostic Audio"
-msgstr ""
-
-#: templates/configure.html.jinja:1279
-msgid ""
-"Si votre microphone n'apparaît pas dans la liste ci-dessus, utilisez cet outil pour\n"
-"                        vérifier si le système d'exploitation le détecte correctement."
-msgstr ""
-
-#: templates/configure.html.jinja:1284 templates/configure.html.jinja:2428
-msgid "Lancer le diagnostic"
-msgstr ""
-
-#: templates/configure.html.jinja:1287
-msgid "Résultats du diagnostic :"
 msgstr ""
 
 #: templates/configure.html.jinja:1299
@@ -1541,22 +1167,12 @@ msgstr ""
 msgid "Importer depuis Immich"
 msgstr ""
 
-#: templates/configure.html.jinja:1554
-msgid "Importer depuis Samba"
-msgstr ""
-
 #: templates/configure.html.jinja:1564
 msgid "Préparation en cours..."
 msgstr ""
 
 #: templates/configure.html.jinja:1565
 msgid "Photo en cours de préparation"
-msgstr ""
-
-#: templates/configure.html.jinja:1570
-msgid ""
-"L'import depuis Telegram se fait automatiquement à la\n"
-"                            réception des photos. Activez la source dans l'onglet \"Sources\" pour les voir."
 msgstr ""
 
 #: templates/configure.html.jinja:1578
@@ -1794,35 +1410,8 @@ msgstr ""
 msgid "Restaurer"
 msgstr ""
 
-#: templates/configure.html.jinja:1833
-msgid "Mise à jour de l'application"
-msgstr ""
-
-#: templates/configure.html.jinja:1835
-msgid ""
-"Cliquez sur le bouton pour rechercher et installer les\n"
-"                    dernières mises à jour de Pimmich depuis GitHub. L'application redémarrera automatiquement après la\n"
-"                    mise à jour."
-msgstr ""
-
-#: templates/configure.html.jinja:1840
-msgid ""
-"Lancer la mise à jour ? Vous allez être redirigé vers la page de suivi."
-msgstr ""
-
-#: templates/configure.html.jinja:1841
-msgid "Lancer la mise à jour"
-msgstr ""
-
 #: templates/configure.html.jinja:1847
 msgid "Système de Fichiers de la Carte SD"
-msgstr ""
-
-#: templates/configure.html.jinja:1849
-msgid ""
-"Si vous avez flashé Pimmich sur une carte SD plus grande que\n"
-"                    l'image, utilisez cette option pour étendre la partition et utiliser tout l'espace disponible. Un\n"
-"                    redémarrage du système sera nécessaire pour finaliser l'opération."
 msgstr ""
 
 #: templates/configure.html.jinja:1853
@@ -2214,10 +1803,6 @@ msgstr ""
 msgid "Êtes-vous sûr de vouloir supprimer cette invitation ?"
 msgstr ""
 
-#: templates/configure.html.jinja:2408 templates/configure.html.jinja:4414
-msgid "Erreur de connexion"
-msgstr ""
-
 #: templates/configure.html.jinja:2409
 msgid "Révoquer l'accès"
 msgstr ""
@@ -2274,14 +1859,6 @@ msgstr ""
 
 #: templates/configure.html.jinja:2425
 msgid "Ordre sauvegardé !"
-msgstr ""
-
-#: templates/configure.html.jinja:2429
-msgid "Diagnostic en cours..."
-msgstr ""
-
-#: templates/configure.html.jinja:2430
-msgid "Veuillez patienter..."
 msgstr ""
 
 #: templates/configure.html.jinja:2473
@@ -2532,38 +2109,6 @@ msgid ""
 "redémarrage. Voulez-vous continuer ?"
 msgstr ""
 
-#: templates/configure.html.jinja:5351
-msgid "Chargement des périphériques..."
-msgstr ""
-
-#: templates/configure.html.jinja:5361
-msgid "Aucun microphone trouvé."
-msgstr ""
-
-#: templates/configure.html.jinja:5375
-msgid "Erreur chargement"
-msgstr ""
-
-#: templates/configure.html.jinja:5381
-msgid "Erreur de communication avec le serveur"
-msgstr ""
-
-#: templates/configure.html.jinja:5392
-msgid "Statut inconnu"
-msgstr ""
-
-#: templates/configure.html.jinja:5417
-msgid "Activation en cours..."
-msgstr ""
-
-#: templates/configure.html.jinja:5417
-msgid "Désactivation en cours..."
-msgstr ""
-
-#: templates/configure.html.jinja:5459
-msgid "Erreur lors de la récupération des diagnostics."
-msgstr ""
-
 #: templates/login.html.jinja:7
 msgid "Connexion"
 msgstr ""
@@ -2578,70 +2123,6 @@ msgstr ""
 
 #: templates/login.html.jinja:86
 msgid "Envoyer des photos (Invité)"
-msgstr ""
-
-#: templates/update.html.jinja:8
-msgid "Mise à jour en cours"
-msgstr ""
-
-#: templates/update.html.jinja:22
-msgid "Mise à jour de Pimmich"
-msgstr ""
-
-#: templates/update.html.jinja:23
-msgid "Téléchargement et installation des fichiers..."
-msgstr ""
-
-#: templates/update.html.jinja:34
-msgid "Mise à jour du code (Git)"
-msgstr ""
-
-#: templates/update.html.jinja:38
-msgid "Dépendances Python (Pip)"
-msgstr ""
-
-#: templates/update.html.jinja:42 templates/update.html.jinja:128
-msgid "Redémarrage du système"
-msgstr ""
-
-#: templates/update.html.jinja:49
-msgid "Initialisation..."
-msgstr ""
-
-#: templates/update.html.jinja:52
-msgid "Ne coupez pas l'alimentation du Raspberry Pi."
-msgstr ""
-
-#: templates/update.html.jinja:107
-msgid "Échec de la mise à jour"
-msgstr ""
-
-#: templates/update.html.jinja:108
-msgid "Une erreur est survenue."
-msgstr ""
-
-#: templates/update.html.jinja:129
-msgid "Le cadre redémarre pour appliquer les changements..."
-msgstr ""
-
-#: templates/update.html.jinja:131
-msgid "Serveur hors-ligne. Attente du redémarrage..."
-msgstr ""
-
-#: templates/update.html.jinja:147
-msgid "Serveur web en ligne !"
-msgstr ""
-
-#: templates/update.html.jinja:152
-msgid "Diaporama prêt ! Redirection..."
-msgstr ""
-
-#: templates/update.html.jinja:152
-msgid "Système prêt (Mode veille planifié). Redirection..."
-msgstr ""
-
-#: templates/update.html.jinja:157
-msgid "Initialisation du diaporama..."
 msgstr ""
 
 #: templates/upload.html.jinja:7
@@ -2882,6 +2363,36 @@ msgstr "Enregistrer"
 msgid "Use original location"
 msgstr "Utiliser le lieu d’origine"
 
+#: templates/configure.html.jinja:273
+msgid "Configurez les sources de photos (Immich, USB...)."
+msgstr "Configurez les sources de photos (Immich, USB...)."
+
+#: templates/configure.html.jinja:309
+msgid "Gérez les sauvegardes et contrôles système."
+msgstr ""
+
+#: templates/configure.html.jinja:347
+msgid "Horaires Semaine (Dim-Jeu)"
+msgstr ""
+
+#: templates/configure.html.jinja:354
+msgid "Horaires Weekend (Ven-Sam)"
+msgstr ""
+
+#: templates/configure.html.jinja:499
+msgid ""
+"Si votre écran ne se met pas complètement en veille, vous pouvez utiliser "
+"une prise connectée (Wi-Fi) pour couper son alimentation. PictureFrame "
+"enverra une simple requête HTTP aux URLs que vous spécifiez."
+msgstr ""
+
+#: templates/configure.html.jinja:1849
+msgid ""
+"Si vous avez flashé PictureFrame sur une carte SD plus grande que\n"
+"                    l'image, utilisez cette option pour étendre la partition et utiliser tout l'espace disponible. Un\n"
+"                    redémarrage du système sera nécessaire pour finaliser l'opération."
+msgstr ""
+
 #~ msgid "Hauteur utile de l'écran (% affiché) :"
 #~ msgstr ""
 
@@ -2966,9 +2477,6 @@ msgstr "Utiliser le lieu d’origine"
 #~ "marée."
 #~ msgstr ""
 
-#~ msgid "Dernière mise à jour des données :"
-#~ msgstr ""
-
 #~ msgid ""
 #~ "La détection automatique du fuseau horaire a échoué lors de l'installation. "
 #~ "Le système est configuré sur <strong>UTC</strong>. L'heure affichée peut "
@@ -2989,39 +2497,7 @@ msgstr "Utiliser le lieu d’origine"
 #~ "seront mélangées entre les sources sélectionnées."
 #~ msgstr ""
 
-#~ msgid "Ignorer le premier import automatique au démarrage"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Si cette option est cochée, les mises à jour automatiques (Immich, Samba) ne"
-#~ " se lanceront pas immédiatement après un redémarrage du cadre, mais "
-#~ "attendront le prochain cycle programmé."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Activez cette fonction pour permettre à des utilisateurs autorisés d'envoyer"
-#~ " des photos directement sur le cadre via un bot Telegram. Les photos reçues "
-#~ "seront ajoutées à la source \"Telegram\"."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Pour créer un bot et obtenir un token, parlez à @BotFather sur Telegram. "
-#~ "L'ID de l'administrateur est votre propre ID utilisateur Telegram (obtenu "
-#~ "via @userinfobot par exemple)."
-#~ msgstr ""
-
 #~ msgid "ID de l'administrateur :"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Créez des codes d'invitation uniques pour permettre à vos amis et votre "
-#~ "famille d'envoyer des photos au cadre. Ils devront envoyer ce code à votre "
-#~ "bot Telegram pour être autorisés."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "N'oubliez pas d'activer la source \"Telegram\" dans l'onglet \"Sources\" "
-#~ "pour que les photos reçues apparaissent dans le diaporama."
 #~ msgstr ""
 
 #~ msgid ""
@@ -3032,40 +2508,7 @@ msgstr "Utiliser le lieu d’origine"
 #~ msgid "Durée du boost (jours) :"
 #~ msgstr ""
 
-#~ msgid ""
-#~ "Pour utiliser le mot-clé personnalisé \"Cadre Magique\", vous devez créer un"
-#~ " modèle sur le site de Picovoice, le télécharger, et le placer dans le "
-#~ "dossier `voice_models` sous le nom `cadre-magique_raspberry-pi.ppn`."
-#~ msgstr ""
-
-#~ msgid "Activer le contrôle vocal (action immédiate)"
-#~ msgstr ""
-
-#~ msgid "Langue du contrôle vocal"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Le changement de langue nécessite un redémarrage du service vocal "
-#~ "(désactiver puis réactiver le contrôle vocal)."
-#~ msgstr ""
-
-#~ msgid "Clé d'accès Picovoice Porcupine"
-#~ msgstr ""
-
-#~ msgid "Collez votre clé d'accès ici"
-#~ msgstr ""
-
 #~ msgid "Obtenez votre clé via le compte gratuit (Free Tier) sur la"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Si votre microphone n'apparaît pas dans la liste ci-dessus, utilisez cet "
-#~ "outil pour vérifier si le système d'exploitation le détecte correctement."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "L'import depuis Telegram se fait automatiquement à la réception des photos. "
-#~ "Activez la source dans l'onglet \"Sources\" pour les voir."
 #~ msgstr ""
 
 #~ msgid ""
@@ -3121,19 +2564,6 @@ msgstr "Utiliser le lieu d’origine"
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Cliquez sur le bouton pour rechercher et installer les dernières mises à "
-#~ "jour de Pimmich depuis GitHub. L'application redémarrera automatiquement "
-#~ "après la mise à jour."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Si vous avez flashé Pimmich sur une carte SD plus grande que l'image, "
-#~ "utilisez cette option pour étendre la partition et utiliser tout l'espace "
-#~ "disponible. Un redémarrage du système sera nécessaire pour finaliser "
-#~ "l'opération."
-#~ msgstr ""
-
-#~ msgid ""
 #~ "Cette opération est sûre et ne supprime aucune donnée. Elle prépare "
 #~ "simplement le système à s'étendre au prochain démarrage."
 #~ msgstr ""
@@ -3167,18 +2597,10 @@ msgstr "Utiliser le lieu d’origine"
 #~ "Voici toutes vos photos marquées comme favorites. Vous pouvez les gérer ici."
 #~ msgstr ""
 
-#~ msgid ""
-#~ "Mise à jour terminée. L'application va redémarrer. La page se rechargera "
-#~ "dans quelques instants..."
-#~ msgstr ""
-
 #~ msgid "Redémarrage en cours..."
 #~ msgstr ""
 
 #~ msgid "La page va se recharger automatiquement."
-#~ msgstr ""
-
-#~ msgid "Erreur de connexion au serveur pour la mise à jour."
 #~ msgstr ""
 
 #~ msgid "Erreur de communication"
@@ -3194,17 +2616,6 @@ msgstr "Utiliser le lieu d’origine"
 #~ msgstr ""
 
 #~ msgid "Heure de fin d'activité (HH:MM) :"
-#~ msgstr ""
-
-#~ msgid "Vérifier les mises à jour"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Êtes-vous sûr de vouloir lancer la mise à jour ? L'application sera "
-#~ "indisponible pendant le processus et redémarrera automatiquement."
-#~ msgstr ""
-
-#~ msgid "Mise à jour terminée. Redirection..."
 #~ msgstr ""
 
 #~ msgid "Usage:"
@@ -3249,12 +2660,6 @@ msgstr "Utiliser le lieu d’origine"
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Si votre écran ne se met pas complètement en veille, vous pouvez utiliser une prise\n"
-#~ "                        connectée (Wi-Fi) pour couper son alimentation. Pimmich enverra une simple requête HTTP aux URLs\n"
-#~ "                        que vous spécifiez."
-#~ msgstr ""
-
-#~ msgid ""
 #~ "Activer le contrôle par prise\n"
 #~ "                            connectée"
 #~ msgstr ""
@@ -3272,12 +2677,6 @@ msgstr "Utiliser le lieu d’origine"
 #~ msgid ""
 #~ "Photos des invités\n"
 #~ "                            (validées)"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Si cette option est cochée, les mises à jour\n"
-#~ "                        automatiques (Immich, Samba) ne se lanceront pas immédiatement après un redémarrage du cadre,\n"
-#~ "                        mais attendront le prochain cycle programmé."
 #~ msgstr ""
 
 #~ msgid ""
@@ -3534,58 +2933,10 @@ msgstr "Utiliser le lieu d’origine"
 #~ "                            en exécutant la commande :"
 #~ msgstr ""
 
-#~ msgid ""
-#~ "Ignorer le premier import\n"
-#~ "                            automatique au démarrage"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Pour créer un bot et obtenir un token, parlez à @BotFather sur Telegram. L'ID de\n"
-#~ "                        l'administrateur est votre propre ID utilisateur Telegram (obtenu via @userinfobot par\n"
-#~ "                        exemple)."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Pour utiliser le mot-clé\n"
-#~ "                            personnalisé \"Cadre Magique\", vous devez créer un modèle sur le site de Picovoice, le\n"
-#~ "                            télécharger, et le placer dans le dossier `voice_models` sous le nom\n"
-#~ "                            `cadre-magique_raspberry-pi.ppn`."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Activer le contrôle vocal\n"
-#~ "                            (action immédiate)"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Langue\n"
-#~ "                            du contrôle vocal"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Le changement de langue nécessite un redémarrage du\n"
-#~ "                            service vocal (désactiver puis réactiver le contrôle vocal)."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Clé\n"
-#~ "                            d'accès Picovoice Porcupine"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Obtenez votre clé via le compte gratuit (Free Tier)\n"
-#~ "                            sur la"
-#~ msgstr ""
-
 #~ msgid "Utilise les codes de formatage Python (ex: %%d/%%m/%%Y, %%B %%Y)."
 #~ msgstr ""
 
 #~ msgid "Afficher un fond semi-transparent derrière les métadonnées"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "L'import depuis Telegram se fait automatiquement à la\n"
-#~ "                            réception des photos. Activez la source dans l'onglet \"Sources\" pour les voir."
 #~ msgstr ""
 
 #~ msgid ""
@@ -3622,18 +2973,6 @@ msgstr "Utiliser le lieu d’origine"
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Cliquez sur le bouton pour rechercher et installer les\n"
-#~ "                    dernières mises à jour de Pimmich depuis GitHub. L'application redémarrera automatiquement après la\n"
-#~ "                    mise à jour."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Si vous avez flashé Pimmich sur une carte SD plus grande que\n"
-#~ "                    l'image, utilisez cette option pour étendre la partition et utiliser tout l'espace disponible. Un\n"
-#~ "                    redémarrage du système sera nécessaire pour finaliser l'opération."
-#~ msgstr ""
-
-#~ msgid ""
 #~ "Cette opération est sûre et ne supprime aucune donnée.\n"
 #~ "                        Elle prépare simplement le système à s'étendre au prochain démarrage."
 #~ msgstr ""
@@ -3662,11 +3001,6 @@ msgstr "Utiliser le lieu d’origine"
 #~ msgstr ""
 
 #~ msgid "URL de Statut (Optionnel) :"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Activer la mise à jour\n"
-#~ "                            automatique"
 #~ msgstr ""
 
 #~ msgid ""
@@ -3739,9 +3073,6 @@ msgstr "Utiliser le lieu d’origine"
 #~ "marée."
 #~ msgstr ""
 
-#~ msgid "Dernière mise à jour des données :"
-#~ msgstr ""
-
 #~ msgid ""
 #~ "La détection automatique du fuseau horaire a échoué lors de l'installation. "
 #~ "Le système est configuré sur <strong>UTC</strong>. L'heure affichée peut "
@@ -3762,30 +3093,7 @@ msgstr "Utiliser le lieu d’origine"
 #~ "seront mélangées entre les sources sélectionnées."
 #~ msgstr ""
 
-#~ msgid ""
-#~ "Activez cette fonction pour permettre à des utilisateurs autorisés d'envoyer"
-#~ " des photos directement sur le cadre via un bot Telegram. Les photos reçues "
-#~ "seront ajoutées à la source \"Telegram\"."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Pour créer un bot et obtenir un token, parlez à @BotFather sur Telegram. "
-#~ "L'ID de l'administrateur est votre propre ID utilisateur Telegram (obtenu "
-#~ "via @userinfobot par exemple)."
-#~ msgstr ""
-
 #~ msgid "ID de l'administrateur :"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Créez des codes d'invitation uniques pour permettre à vos amis et votre "
-#~ "famille d'envoyer des photos au cadre. Ils devront envoyer ce code à votre "
-#~ "bot Telegram pour être autorisés."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "N'oubliez pas d'activer la source \"Telegram\" dans l'onglet \"Sources\" "
-#~ "pour que les photos reçues apparaissent dans le diaporama."
 #~ msgstr ""
 
 #~ msgid ""
@@ -3796,34 +3104,7 @@ msgstr "Utiliser le lieu d’origine"
 #~ msgid "Durée du boost (jours) :"
 #~ msgstr ""
 
-#~ msgid ""
-#~ "Pour utiliser le mot-clé personnalisé \"Cadre Magique\", vous devez créer un"
-#~ " modèle sur le site de Picovoice, le télécharger, et le placer dans le "
-#~ "dossier `voice_models` sous le nom `cadre-magique_raspberry-pi.ppn`."
-#~ msgstr ""
-
-#~ msgid "Langue du contrôle vocal"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Le changement de langue nécessite un redémarrage du service vocal "
-#~ "(désactiver puis réactiver le contrôle vocal)."
-#~ msgstr ""
-
-#~ msgid "Clé d'accès Picovoice Porcupine"
-#~ msgstr ""
-
 #~ msgid "Obtenez votre clé via le compte gratuit (Free Tier) sur la"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Si votre microphone n'apparaît pas dans la liste ci-dessus, utilisez cet "
-#~ "outil pour vérifier si le système d'exploitation le détecte correctement."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "L'import depuis Telegram se fait automatiquement à la réception des photos. "
-#~ "Activez la source dans l'onglet \"Sources\" pour les voir."
 #~ msgstr ""
 
 #~ msgid ""
@@ -3879,19 +3160,6 @@ msgstr "Utiliser le lieu d’origine"
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Cliquez sur le bouton pour rechercher et installer les dernières mises à "
-#~ "jour de Pimmich depuis GitHub. L'application redémarrera automatiquement "
-#~ "après la mise à jour."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Si vous avez flashé Pimmich sur une carte SD plus grande que l'image, "
-#~ "utilisez cette option pour étendre la partition et utiliser tout l'espace "
-#~ "disponible. Un redémarrage du système sera nécessaire pour finaliser "
-#~ "l'opération."
-#~ msgstr ""
-
-#~ msgid ""
 #~ "Cette opération est sûre et ne supprime aucune donnée. Elle prépare "
 #~ "simplement le système à s'étendre au prochain démarrage."
 #~ msgstr ""
@@ -3925,18 +3193,10 @@ msgstr "Utiliser le lieu d’origine"
 #~ "Voici toutes vos photos marquées comme favorites. Vous pouvez les gérer ici."
 #~ msgstr ""
 
-#~ msgid ""
-#~ "Mise à jour terminée. L'application va redémarrer. La page se rechargera "
-#~ "dans quelques instants..."
-#~ msgstr ""
-
 #~ msgid "Redémarrage en cours..."
 #~ msgstr ""
 
 #~ msgid "La page va se recharger automatiquement."
-#~ msgstr ""
-
-#~ msgid "Erreur de connexion au serveur pour la mise à jour."
 #~ msgstr ""
 
 #~ msgid "Erreur de communication"
@@ -3952,17 +3212,6 @@ msgstr "Utiliser le lieu d’origine"
 #~ msgstr ""
 
 #~ msgid "Heure de fin d'activité (HH:MM) :"
-#~ msgstr ""
-
-#~ msgid "Vérifier les mises à jour"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Êtes-vous sûr de vouloir lancer la mise à jour ? L'application sera "
-#~ "indisponible pendant le processus et redémarrera automatiquement."
-#~ msgstr ""
-
-#~ msgid "Mise à jour terminée. Redirection..."
 #~ msgstr ""
 
 #~ msgid "Usage:"
@@ -4007,12 +3256,6 @@ msgstr "Utiliser le lieu d’origine"
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Si votre écran ne se met pas complètement en veille, vous pouvez utiliser une prise\n"
-#~ "                        connectée (Wi-Fi) pour couper son alimentation. Pimmich enverra une simple requête HTTP aux URLs\n"
-#~ "                        que vous spécifiez."
-#~ msgstr ""
-
-#~ msgid ""
 #~ "Temps d'attente pour que l'écran s'initialise\n"
 #~ "                                avant de forcer la résolution. Augmentez si la résolution est toujours incorrecte."
 #~ msgstr ""
@@ -4025,12 +3268,6 @@ msgstr "Utiliser le lieu d’origine"
 #~ msgid ""
 #~ "Photos des invités\n"
 #~ "                            (validées)"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Si cette option est cochée, les mises à jour\n"
-#~ "                        automatiques (Immich, Samba) ne se lanceront pas immédiatement après un redémarrage du cadre,\n"
-#~ "                        mais attendront le prochain cycle programmé."
 #~ msgstr ""
 
 #~ msgid ""
@@ -4248,16 +3485,6 @@ msgstr "Utiliser le lieu d’origine"
 #~ "                            votre clé d'accès ici"
 #~ msgstr ""
 
-#~ msgid ""
-#~ "Ignorer le premier import\n"
-#~ "                            automatique au démarrage"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Activer le contrôle vocal\n"
-#~ "                            (action immédiate)"
-#~ msgstr ""
-
 #~ msgid "État de la prise : Inconnu"
 #~ msgstr ""
 
@@ -4274,11 +3501,6 @@ msgstr "Utiliser le lieu d’origine"
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Activer la mise à jour\n"
-#~ "                            automatique"
-#~ msgstr ""
-
-#~ msgid ""
 #~ "Afficher la localisation\n"
 #~ "                            (ville/pays)"
 #~ msgstr ""
@@ -4286,4 +3508,23 @@ msgstr "Utiliser le lieu d’origine"
 #~ msgid ""
 #~ "Approuvez ou rejetez les photos envoyées. Les photos approuvées seront "
 #~ "ajoutées à la source \"Invités\"."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Si vous avez flashé PictureFrame sur une carte SD plus grande que l'image, "
+#~ "utilisez cette option pour étendre la partition et utiliser tout l'espace "
+#~ "disponible. Un redémarrage du système sera nécessaire pour finaliser "
+#~ "l'opération."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Si votre écran ne se met pas complètement en veille, vous pouvez utiliser une prise\n"
+#~ "                        connectée (Wi-Fi) pour couper son alimentation. PictureFrame enverra une simple requête HTTP aux URLs\n"
+#~ "                        que vous spécifiez."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Si vous avez flashé PictureFrame sur une carte SD plus grande que\n"
+#~ "                    l'image, utilisez cette option pour étendre la partition et utiliser tout l'espace disponible. Un\n"
+#~ "                    redémarrage du système sera nécessaire pour finaliser l'opération."
 #~ msgstr ""

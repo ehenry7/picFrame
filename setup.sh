@@ -5,12 +5,7 @@ sudo apt update
 
 
 echo "=== [2/12] Installation des dépendances ==="
-# Remplacement de libatlas-base-dev (obsolète sur Debian 12+) par libopenblas-dev pour la compilation de numpy.
-if ! sudo apt install -y sway xterm python3 python3-venv python3-pip libjpeg-dev libopenjp2-7-dev libtiff-dev libopenblas-dev ffmpeg git cifs-utils smbclient network-manager jq mpv gettext portaudio19-dev unzip libheif-dev; then
-    echo "L'installation avec portaudio19-dev a échoué. Tentative avec libportaudio-dev..."
-    # Fallback pour les futures versions de Debian/Raspberry Pi OS où le paquet pourrait être renommé
-    sudo apt install -y sway xterm python3 python3-venv python3-pip libjpeg-dev libopenjp2-7-dev libtiff-dev libopenblas-dev ffmpeg git cifs-utils smbclient network-manager jq mpv gettext libportaudio-dev unzip libheif-dev
-fi
+sudo apt install -y sway xterm python3 python3-venv python3-pip libjpeg-dev libopenjp2-7-dev libtiff-dev ffmpeg git network-manager jq mpv gettext libheif-dev
 
 echo "=== [2.5/12] Configuration de la langue française (locale fr_FR) ==="
 if [ -f "/etc/locale.gen" ]; then
@@ -84,7 +79,7 @@ if [ -f /etc/nginx/sites-enabled/default ]; then
     echo "⛔ Fichier de config par défaut supprimé"
 fi
 
-# Créer une nouvelle config pour Pimmich
+# Créer une nouvelle config pour PictureFrame
 sudo tee /etc/nginx/sites-available/pimmich > /dev/null <<'EOL'
 server {
     listen 80;
@@ -110,7 +105,7 @@ EOL
 # Activer la nouvelle config
 if [ ! -f /etc/nginx/sites-enabled/pimmich ]; then
     sudo ln -s /etc/nginx/sites-available/pimmich /etc/nginx/sites-enabled/
-    echo "✅ Configuration Pimmich activée dans NGINX"
+    echo "✅ Configuration PictureFrame activée dans NGINX"
 fi
 
 # Redémarrer NGINX
@@ -137,12 +132,6 @@ if ! pip install --default-timeout=1000 --retries=10 "qrcode[pil]"; then
     exit 1
 fi
 
-echo "Mise à jour de la bibliothèque pour le bot Telegram..."
-if ! pip install --default-timeout=1000 --retries=10 --upgrade python-telegram-bot; then
-    echo "❌ Échec de la mise à jour de python-telegram-bot !"
-    exit 1
-fi
-
 # Détecter le modèle du Raspberry Pi
 PI_MODEL=""
 if [ -f /proc/device-tree/model ]; then
@@ -165,21 +154,7 @@ fi
 ARCH=$(uname -m)
 if [[ "$ARCH" == "armv6l" || "$PI_MODEL" == "1" || "$PI_MODEL" == "2" ]]; then
     echo "⚠️ Raspberry Pi 1/2/Zero ou architecture armv6l détectée."
-    echo "⚠️ Le contrôle vocal (Vosk/Porcupine) n'est pas supporté ou est trop gourmand sur cette carte."
-    echo "⚠️ Les dépendances vocales ne seront pas installées."
-    
-    # On installe tout de même le son de notification par défaut
-    echo "=== [NOUVEAU] Téléchargement du son de notification vocale ==="
-    SOUNDS_DIR="static/sounds"
-    NOTIFICATION_SOUND="$SOUNDS_DIR/ding.wav"
-    if [ ! -f "$NOTIFICATION_SOUND" ]; then
-        echo "Son de notification non trouvé. Téléchargement..."
-        mkdir -p "$SOUNDS_DIR"
-        wget -q -O "$NOTIFICATION_SOUND" "https://github.com/actions/sounds/raw/main/sounds/notification.wav"
-        echo "✅ Son de notification installé."
-    else
-        echo "✅ Le son de notification est déjà présent."
-    fi
+    echo "⚠️ Le support HEIC/HEIF optionnel ne sera pas installé."
 else
     echo "Installation de pillow-heif pour le support des photos HEIC (iPhone)..."
     if ! pip install pillow-heif; then
@@ -188,78 +163,6 @@ else
         echo "✅ pillow-heif installé avec succès."
     fi
 
-    echo "Installation des bibliothèques pour le contrôle vocal..."
-    if ! pip install vosk sounddevice numpy thefuzz python-Levenshtein pygame num2words; then
-        echo "❌ Échec de l'installation des bibliothèques de contrôle vocal !"
-        exit 1
-    fi
-
-    echo "Réinstallation forcée de pvporcupine pour inclure les modèles de langue..."
-    if ! pip install --force-reinstall --no-cache-dir pvporcupine; then
-        echo "❌ Échec de l'installation de pvporcupine !"
-        exit 1
-    fi
-    echo "Vérification manuelle et téléchargement du modèle de langue français si manquant..."
-
-    SITE_PACKAGES_DIR=$(python3 -c "import site; print(site.getsitepackages()[0])")
-    FR_MODEL_PATH="$SITE_PACKAGES_DIR/pvporcupine/lib/common/porcupine_params_fr.pv"
-
-    if [ ! -f "$FR_MODEL_PATH" ]; then
-        echo "⚠️ Le modèle de langue français est manquant. Tentative de téléchargement manuel..."
-        FR_MODEL_URL="https://github.com/Picovoice/porcupine/raw/master/lib/common/porcupine_params_fr.pv"
-        DEST_DIR=$(dirname "$FR_MODEL_PATH")
-        mkdir -p "$DEST_DIR"
-        if ! wget -q -O "$FR_MODEL_PATH" "$FR_MODEL_URL"; then
-            echo "❌ ERREUR: Le téléchargement manuel du modèle de langue a échoué. Le contrôle vocal ne fonctionnera pas."
-        else
-            echo "✅ Modèle de langue français téléchargé et installé manuellement."
-        fi
-    else
-        echo "✅ Le modèle de langue français est déjà présent."
-    fi
-
-    echo "=== [NOUVEAU] Téléchargement du son de notification vocale ==="
-    SOUNDS_DIR="static/sounds"
-    NOTIFICATION_SOUND="$SOUNDS_DIR/ding.wav"
-    if [ ! -f "$NOTIFICATION_SOUND" ]; then
-        echo "Son de notification non trouvé. Téléchargement..."
-        mkdir -p "$SOUNDS_DIR"
-        wget -q -O "$NOTIFICATION_SOUND" "https://github.com/actions/sounds/raw/main/sounds/notification.wav"
-        echo "✅ Son de notification installé."
-    else
-        echo "✅ Le son de notification est déjà présent."
-    fi
-
-    echo "=== [NOUVEAU] Téléchargement du modèle de reconnaissance vocale (Vosk) ==="
-    MODELS_DIR="models"
-    VOSK_MODEL_DIR="$MODELS_DIR/vosk-model-small-fr-0.22"
-    VOSK_ZIP_FILE="$MODELS_DIR/vosk-model-fr.zip"
-
-    if [ ! -d "$VOSK_MODEL_DIR" ]; then
-        echo "Le modèle Vosk n'est pas trouvé. Téléchargement..."
-        mkdir -p "$MODELS_DIR"
-        wget -q --show-progress -O "$VOSK_ZIP_FILE" "https://alphacephei.com/vosk/models/vosk-model-small-fr-0.22.zip"
-        unzip -o "$VOSK_ZIP_FILE" -d "$MODELS_DIR"
-        rm "$VOSK_ZIP_FILE"
-        echo "✅ Modèle Vosk français installé."
-    else
-        echo "✅ Le modèle Vosk français est déjà présent."
-    fi
-
-    echo "=== [NOUVEAU] Téléchargement du modèle de reconnaissance vocale Anglais (Vosk) ==="
-    VOSK_MODEL_EN_DIR="$MODELS_DIR/vosk-model-small-en-us-0.15"
-    VOSK_ZIP_EN_FILE="$MODELS_DIR/vosk-model-en.zip"
-
-    if [ ! -d "$VOSK_MODEL_EN_DIR" ]; then
-        echo "Le modèle Vosk Anglais n'est pas trouvé. Téléchargement..."
-        mkdir -p "$MODELS_DIR"
-        wget -q --show-progress -O "$VOSK_ZIP_EN_FILE" "https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip"
-        unzip -o "$VOSK_ZIP_EN_FILE" -d "$MODELS_DIR"
-        rm "$VOSK_ZIP_EN_FILE"
-        echo "✅ Modèle Vosk Anglais installé."
-    else
-        echo "✅ Le modèle Vosk Anglais est déjà présent."
-    fi
 fi
 
 echo "=== [7/12] Création de l'arborescence des dossiers nécessaires ==="
@@ -315,7 +218,7 @@ else
     echo "✅ Sway déjà configuré pour se lancer automatiquement"
 fi
 
-echo "=== [11/12] Configuration du lancement automatique de Pimmich dans Sway ==="
+echo "=== [11/12] Configuration du lancement automatique de PictureFrame dans Sway ==="
 SWAY_CONFIG_DIR="$USER_HOME/.config/sway"
 SWAY_CONFIG_FILE="$SWAY_CONFIG_DIR/config"
 mkdir -p "$SWAY_CONFIG_DIR"
@@ -342,4 +245,4 @@ if ! grep -q 'app_id="mpv"' "$SWAY_CONFIG_FILE" 2>/dev/null; then
 fi
 
 echo "=== [12/12] Installation terminée ==="
-echo "✅ Installation terminée. Redémarrez pour lancer automatiquement Sway + Pimmich."
+echo "✅ Installation terminée. Redémarrez pour lancer automatiquement Sway + PictureFrame."

@@ -1,8 +1,8 @@
-# AGENTS.md — Pimmich
+# AGENTS.md — PictureFrame
 
 ## Project Goal
 
-**Pimmich** is a Python application that turns a Raspberry Pi into a smart, connected digital photo frame. It displays photos from multiple sources (Immich, Samba shares, USB drives, smartphones), supports voice control, and provides a comprehensive web-based configuration interface.
+**PictureFrame** is a Python application that turns a Raspberry Pi into a smart, connected digital photo frame. It displays photos from multiple sources (Immich, USB drives, smartphones) and provides a comprehensive web-based configuration interface.
 
 **Development / Deployment target for this fork:**
 - **Development environment:** Windows (local coding, testing, and debugging).
@@ -14,18 +14,15 @@
 
 ## Architecture Overview
 
-Pimmich is a multi-process application with three main runtime components, plus several background worker threads:
+PictureFrame is a multi-process application with two main runtime components, plus several background worker threads:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │  Sway (Wayland compositor) — auto-starts on boot        │
 │  └─ start_pimmich.sh (supervisor loop, exit 42 restart) │
 │     ├─ app.py            (Flask web server, port 7090)   │
-│     │   ├─ Immich update worker (daemon thread)          │
-│     │   ├─ Samba update worker (daemon thread)           │
 │     │   └─ Slideshow scheduler worker (daemon thread)    │
 │     ├─ local_slideshow.py  (Pygame fullscreen slideshow) │
-│     └─ voice_control.py    (Porcupine + Vosk voice cmd)  │
 │                                                           │
 │  NGINX reverse proxy (:80 → :7090)                       │
 └─────────────────────────────────────────────────────────┘
@@ -33,8 +30,7 @@ Pimmich is a multi-process application with three main runtime components, plus 
 
 ### Process Communication
 - **Flask ↔ Slideshow:** via OS signals (`SIGUSR1` = next, `SIGUSR2` = previous, `SIGRTMIN` = pause toggle) and status files in `/tmp/` (`pimmich_slideshow_status.json`, `pimmich_current_photo.txt`, `pimmich_custom_playlist.json`).
-- **Flask ↔ Voice Control:** via HTTP API calls to `http://127.0.0.1:7090/api/*` from `voice_control.py`.
-- **PID files:** `/tmp/pimmich_slideshow.pid`, `/tmp/pimmich_voice_control.pid`, `/tmp/pimmich_app.lock`.
+- **PID files:** `/tmp/pimmich_slideshow.pid`, `/tmp/pimmich_app.lock`.
 
 ---
 
@@ -44,7 +40,6 @@ Pimmich is a multi-process application with three main runtime components, plus 
 pimmich/
 ├── app.py                    # Flask web application (3,780 lines) — main entry point
 ├── local_slideshow.py        # Pygame-based fullscreen slideshow engine (2,330 lines)
-├── voice_control.py          # Voice control via Porcupine (wake word) + Vosk (recognition) (578 lines)
 ├── platform_utils.py         # OS-aware paths, platform detection, and hardware helpers — THIS FORK
 ├── text_drawer.py            # Empty stub (text drawing moved to utils/text_drawer.py)
 ├── requirements.txt          # Cross-platform Python dependencies (Windows + Linux)
@@ -63,7 +58,6 @@ pimmich/
 │   ├── download_album.py     # Downloads photos from Immich API (album or random mode)
 │   ├── exif.py               # EXIF rotation angle + photo date extraction
 │   ├── image_filters.py      # Image filters (grayscale, sepia, vintage, polaroid, postcard)
-│   ├── import_samba.py       # Samba/SMB photo synchronization
 │   ├── import_usb_photos.py  # USB drive photo import (auto-mount/unmount)
 │   ├── metadata_utils.py     # Photo metadata cache (date, location from Immich EXIF)
 │   ├── network_manager.py    # Network interface status/control via nmcli
@@ -72,7 +66,6 @@ pimmich/
 │   ├── slideshow_manager.py  # Slideshow process lifecycle (start/stop/restart via PID files)
 │   ├── text_drawer.py        # Pygame text rendering with outline
 │   ├── translate_po.py       # Auto-translate .po files via Google Translate
-│   ├── voice_control_manager.py # Voice control process lifecycle (start/stop via PID files)
 │   └── wifi_manager.py       # Wi-Fi configuration via nmcli + raspi-config
 │
 ├── templates/                # Jinja2 HTML templates
@@ -80,7 +73,6 @@ pimmich/
 │   ├── login.html.jinja      # Login page
 │   ├── rebooting.html.jinja  # Reboot waiting screen
 │   ├── slideshow.html.jinja  # Slideshow web view
-│   ├── update.html.jinja     # Update progress page
 │   └── upload.html.jinja     # Smartphone photo upload page
 │
 ├── static/                   # Static assets
@@ -90,7 +82,7 @@ pimmich/
 │   ├── fonts/                # Caveat-Regular.ttf (handwriting font for polaroid/postcard)
 │   ├── icons/                # UI icons (pause, envelope, thumbtack, postal)
 │   ├── music/                # Background music MP3 files
-│   ├── sounds/               # Voice command feedback sounds (WAV)
+│   ├── sounds/               # Notification sound asset (WAV)
 │   ├── stamps/               # Postcard stamp images
 │   ├── weather_icons/        # OpenWeatherMap-style weather icons
 │   └── *.png                 # Logos and background images
@@ -99,7 +91,6 @@ pimmich/
 │   ├── messages.pot          # Translation template
 │   └── {en,fr,he}/LC_MESSAGES/        # Compiled .mo + source .po per language
 │
-├── voice_models/             # Picovoice Porcupine wake word model (.ppn for Raspberry Pi)
 │
 ├── config/                   # Runtime configuration (gitignored)
 │   ├── config.json           # Main configuration file
@@ -110,11 +101,9 @@ pimmich/
 │
 ├── setup.sh                  # Installation script (apt packages, venv, NGINX, Sway, sudoers)
 ├── start_pimmich.sh          # Supervisor script (launched by Sway, restarts app on crash)
-├── update_script.sh          # Self-updating script (git pull + pip install, runs from /tmp)
 ├── README.md / README_en.md  # Project documentation (French + English)
 ├── FAQ.md / FAQ_en.md        # FAQ (French + English)
 ├── procedure_trad.md / .pdf  # Translation procedure guide
-├── wakeword_pimmich.ipynb    # Jupyter notebook for training custom Porcupine wake word
 ├── LICENSE                   # License file
 ├── .gitignore                # Ignores config/, static/prepared/, static/photos/, cache/, venv/, logs/ (venv entry is legacy — this fork uses global Python)
 └── .gitattributes            # Forces LF line endings on .sh files
@@ -134,15 +123,13 @@ The central web server providing all configuration, photo management, and system
 - **i18n:** Flask-Babel with locale auto-detection. Supports en, fr, and he; Hebrew pages use right-to-left document direction.
 - **Config management:** `load_config()` / `save_config()` via `utils/config_manager.py` with a 2-second cache and default-merge strategy.
 - **Background workers (daemon threads):**
-  - `immich_update_worker` — periodic Immich album sync (configurable interval).
-  - `samba_update_worker` — periodic Samba share sync.
   - `schedule_worker` — manages active hours (starts/stops slideshow based on configured time window).
 
 **Major route groups (70+ routes):**
 | Group | Routes | Purpose |
 |-------|--------|---------|
-| Pages | `/`, `/login`, `/logout`, `/configure`, `/slideshow`, `/upload`, `/update`, `/rebooting` | Web UI pages |
-| Import | `/import-usb`, `/import-immich`, `/import-samba`, `/import-smartphone`, `/prepare-photos` | Photo import pipelines (streaming responses) |
+| Pages | `/`, `/login`, `/logout`, `/configure`, `/slideshow`, `/upload`, `/rebooting` | Web UI pages |
+| Import | `/import-usb`, `/import-immich`, `/import-smartphone`, `/prepare-photos` | Photo import pipelines (streaming responses) |
 | Slideshow API | `/api/slideshow/next`, `/previous`, `/toggle_pause`, `/status`, `/restart_standard`, `/set_duration` | Slideshow control via signals |
 | Display | `/api/display/power`, `/api/get_available_resolutions`, `/api/set_resolution` | Screen power + resolution |
 | Sources | `/api/sources/play/<name>`, `/api/sources/toggle` | Display source management |
@@ -150,8 +137,7 @@ The central web server providing all configuration, photo management, and system
 | Photo ops | `/delete_photo/<path>`, `/api/apply_filter`, `/api/set_photo_filter`, `/api/toggle_favorite`, `/api/set_polaroid_text`, `/api/set_image_text` | Per-photo operations |
 | System | `/shutdown`, `/reboot`, `/api/system/shutdown`, `/restart_app`, `/api/ping`, `/api/system_info`, `/api/cpu_temperature` | System control + monitoring |
 | Network | `/save_wifi_settings`, `/api/wifi_status`, `/scan_wifi`, `/api/interface_status/<name>`, `/api/set_interface_state` | Network/Wi-Fi management |
-| Voice | `/api/voice_control/status`, `/api/toggle_voice_control`, `/api/audio_devices`, `/api/audio_diagnostics` | Voice control management |
-| Maintenance | `/api/backup_settings`, `/api/restore_settings`, `/api/list_logs`, `/api/clear_logs`, `/api/update_app`, `/api/expand_filesystem` | Backup, logs, updates |
+| Maintenance | `/api/backup_settings`, `/api/restore_settings`, `/api/list_logs`, `/api/clear_logs`, `/api/expand_filesystem` | Backup, logs, filesystem |
 | Tides/Weather | `/test-weather-api`, `/test-stormglass-api`, `/api/force_tide_update`, `/api/tide_info` | Weather + tide data |
 
 ### 2. `local_slideshow.py` — Pygame Slideshow Engine
@@ -181,24 +167,13 @@ A fullscreen Pygame application that displays photos with transitions, overlays,
 - `get_weather_and_forecast()` — fetches weather from OpenWeatherMap API.
 - `get_tides()` — fetches tide data from Stormglass API.
 
-### 3. `voice_control.py` — Voice Control
-
-Offline voice control using Picovoice Porcupine (wake word detection) and Vosk (speech recognition).
-
-- **Wake word:** "Cadre Magique" (French) / custom English wake word, using a `.ppn` model file.
-- **Commands (fr + en):** next/previous photo, pause/play, shutdown, sleep/wake, show postcards, return to main slideshow, play playlist <name>, set duration <N> seconds, enable/disable source <name>.
-- **Feedback sounds:** Plays WAV files from `static/sounds/` for each command.
-- **API communication:** Sends HTTP POST/GET to `http://127.0.0.1:7090/api/*`.
-- **Fuzzy matching:** Uses `thefuzz` + `python-Levenshtein` for playlist name matching.
-- **Number parsing:** Uses `num2words` for spoken number → integer conversion.
-
-### 4. `utils/` — Utility Modules
+### 3. `utils/` — Utility Modules
 
 #### `config_manager.py`
 - Single source of truth for default configuration (`create_default_config()`).
 - `load_config()` — loads from `config/config.json`, merges with defaults, 2-second cache.
 - `save_config()` — writes JSON with indent=4, UTF-8, updates cache.
-- **~80 configuration keys** covering: display, Immich, Samba, clock, date, weather, tides, smart plug, Wi-Fi, timezone, voice control, photo metadata, video, audio, playlists, favorites, anniversary boost.
+- **Configuration keys** covering: display, Immich, clock, date, weather, tides, smart plug, Wi-Fi, timezone, photo metadata, video, audio, playlists, favorites, anniversary boost.
 
 #### `prepare_all_photos.py`
 - Photo/video preparation pipeline.
@@ -236,7 +211,6 @@ Offline voice control using Picovoice Porcupine (wake word detection) and Vosk (
 - Smart plug support: HTTP commands to configurable URLs, with reboot for HDMI stability on power-on.
 
 #### Other utilities
-- `import_samba.py` — SMB sync with mtime comparison, smart cleanup.
 - `import_usb_photos.py` — USB detection via `lsblk`, auto-mount/unmount, recursive image scan.
 - `network_manager.py` — interface status/control via `ip` and `nmcli`.
 - `wifi_manager.py` — Wi-Fi config via `raspi-config` (country) + `nmcli` (connect).
@@ -259,15 +233,13 @@ Configuration is stored in `config/config.json` (gitignored). The full default s
 | Display | `display_duration`, `display_width`, `display_height`, `screen_height_percent`, `active_start`, `active_end` | Slideshow timing + screen |
 | Transitions | `transition_enabled`, `transition_type`, `transition_duration`, `transition_fps` | Photo transition effects |
 | Pan & Zoom | `pan_zoom_enabled`, `pan_zoom_factor` | Ken Burns effect |
-| Immich | `immich_url`, `immich_token`, `album_name`, `immich_auto_update`, `immich_update_interval_hours` | Immich server connection |
-| Samba | `smb_host`, `smb_share`, `smb_user`, `smb_password`, `smb_path`, `smb_auto_update` | SMB share connection |
+| Immich | `immich_url`, `immich_token`, `album_name` | Immich server connection for manual imports |
 | Video | `video_audio_enabled`, `video_audio_output`, `video_audio_volume`, `video_hwdec_enabled` | Video playback settings |
 | Clock/Date | `show_clock`, `clock_format`, `clock_color`, `clock_position`, `show_date`, `date_format` | On-screen clock + date |
 | Weather | `show_weather`, `weather_api_key`, `weather_city`, `weather_units` | OpenWeatherMap integration |
 | Tides | `show_tides`, `tide_latitude`, `tide_longitude`, `stormglass_api_key` | Stormglass tide data |
 | Photo metadata | `show_photo_date`, `show_photo_location`, `show_country_flag`, `photo_metadata_*` | On-screen photo info |
 | Smart plug | `smart_plug_enabled`, `smart_plug_on_url`, `smart_plug_off_url`, `smart_plug_on_delay` | HTTP-controlled power plug |
-| Voice control | `voice_control_enabled`, `voice_control_language`, `porcupine_access_key`, `notification_sound_volume` | Voice control settings |
 | Sources | `display_sources` (list), `max_photos_to_download` (dict) | Active photo sources + limits |
 | System | `timezone`, `level_log`, `favorite_boost_factor`, `anniversary_boost_enabled` | Misc system settings |
 
@@ -289,25 +261,17 @@ Dependencies are split into two files for cross-platform development (see "Devel
 | Flask-Babel | Internationalization |
 | piexif | EXIF metadata read/write |
 | qrcode[pil] | QR code generation |
-| thefuzz | Fuzzy string matching (playlist names) |
 | deep-translator | Auto-translation of .po files |
 | polib | .po file parsing |
 
 ### `requirements-pi.txt` — Linux / Raspberry Pi only
 | Package | Purpose |
 |---------|---------|
-| smbprotocol | Samba/SMB share access |
-| python-Levenshtein | Levenshtein distance for thefuzz (C extension) |
 | pillow-heif | HEIC/HEIF photo support (iPhone photos) |
-| vosk | Offline speech recognition |
-| sounddevice | Audio capture for voice control |
-| pvporcupine | Wake word detection (Picovoice) |
-| num2words | Number-to-word conversion (voice commands) |
 | RPi.GPIO | GPIO hardware control (fan, button) |
-| numpy | Numerical operations (voice control) |
 
 ### System packages (installed by `setup.sh`)
-`sway`, `xterm`, `python3`, `python3-venv`, `python3-pip`, `libjpeg-dev`, `libopenjp2-7-dev`, `libtiff-dev`, `libopenblas-dev`, `ffmpeg`, `git`, `cifs-utils`, `smbclient`, `network-manager`, `jq`, `mpv`, `gettext`, `portaudio19-dev`, `unzip`, `libheif-dev`, `nginx`, `python3-rpi.gpio`
+`sway`, `xterm`, `python3`, `python3-venv`, `python3-pip`, `libjpeg-dev`, `libopenjp2-7-dev`, `libtiff-dev`, `ffmpeg`, `git`, `network-manager`, `jq`, `mpv`, `gettext`, `libheif-dev`, `nginx`, `python3-rpi.gpio`
 
 ---
 
@@ -315,12 +279,12 @@ Dependencies are split into two files for cross-platform development (see "Devel
 
 - **Windows:** Install cross-platform deps with `pip install -r requirements.txt` (global Python, no venv). Start Flask with `python app.py`.
 - **Raspberry Pi:** Install both files: `pip install -r requirements.txt && pip install -r requirements-pi.txt` (add `--break-system-packages` on Debian 12+).
-- No automated test suite or test/lint configuration is currently present.
+- Run regression tests with `python -m unittest discover -s tests -p 'test_*.py' -q`.
 - To update translations:
   - `pybabel extract -F babel.cfg -o translations/messages.pot .`
   - `pybabel update -i translations/messages.pot -d translations`
   - `pybabel compile -d translations`
-- Deployment scripts (`setup.sh`, `start_pimmich.sh`, `update_script.sh`) still reference `venv` — these need updating to use global Python (remove venv creation/activation lines, install deps globally).
+- Deployment scripts (`setup.sh`, `start_pimmich.sh`) still reference `venv` — these need updating to use global Python (remove venv creation/activation lines, install deps globally).
 
 ---
 
@@ -338,30 +302,29 @@ sudo ./setup.sh
 
 `setup.sh` performs 12 steps:
 1. `apt update`
-2. Install system dependencies (with fallback for portaudio package name)
+2. Install system dependencies
 3. Configure French locale
 4. Disable Wi-Fi power saving + install RPi.GPIO
 5. Auto-detect timezone via IP geolocation
 6. Install + configure NGINX (reverse proxy :80 → :7090)
-7. Create Python venv + install pip dependencies + voice models (Vosk FR/EN) — **this fork: install into global Python instead**
+7. Create Python venv + install pip dependencies — **this fork: install into global Python instead**
 8. Create directory structure (logs, cache, static/photos, config, etc.)
 9. Generate credentials.json with random password + configure sudoers NOPASSWD
 10. Set boot to console mode with auto-login
 11. Configure Sway auto-start in `.bash_profile`
-12. Configure Pimmich auto-start in Sway config + mpv window rules
+12. Configure PictureFrame auto-start in Sway config + mpv window rules
 
 ### Startup Flow
 1. Pi boots → console auto-login → `.bash_profile` → `exec sway`
 2. Sway starts → `exec_always start_pimmich.sh`
 3. `start_pimmich.sh` → runs `python3 -u app.py` directly (no venv activation — **this fork uses global Python**)
-4. `app.py` → starts Flask on :7090, launches background workers, optionally starts voice control in a background thread
+4. `app.py` → starts Flask on :7090, launches background workers
 5. Flask starts the slideshow process via `slideshow_manager.start_slideshow()`
 6. NGINX proxies :80 → :7090 for clean URL access. Existing installations must update the installed NGINX upstream and reload NGINX.
 
 ### Updating
-- Via web interface: "Update" button calls `update_script.sh`
-- Script copies itself to `/tmp` (survives git reset), backs up config, does `git fetch --all && git reset --hard origin/main`, restores config, runs `pip install` (**global, not venv — this fork**), reloads Sway config.
-- App exits with code 42 → `start_pimmich.sh` supervisor loop restarts it.
+- Remote self-update routes, UI and scripts are not included. Update code manually outside the app after stopping it and backing up configuration; preserve local changes.
+- Manual photo-source imports remain available; no automatic Immich synchronization worker runs. Exit code 42 is retained for the separate app-restart action, not remote updates.
 
 ---
 
@@ -419,24 +382,23 @@ Develop and debug the Flask application on Windows or Linux, then validate Raspb
 - `utils/prepare_all_photos.py` — `/proc/device-tree/model`, cancel flag path
 - `utils/config_manager.py` — font path defaults
 - `utils/display_message.py` — sway socket, `os.getuid()`
-- `voice_control.py` — `/tmp/` debug wav path
 
 ### 2. Path Management with `pathlib`
 
 - **Never hardcode** `/tmp/`, `/home/pi/`, `/boot/firmware/`, or `/usr/share/fonts/` in new code.
 - Use `platform_utils.get_temp_dir()`, `get_pid_file()`, `get_status_file()`, `get_credentials_path()`, `get_default_font_path()`, or `Path(__file__).resolve().parent` for project-relative paths.
 - Existing hardcoded paths in `config_manager.py` defaults (font paths) should use `platform_utils.get_default_font_path()` at runtime.
-- Consider a `.env` file (gitignored) for environment-specific overrides (Immich URL/token, Samba creds, port). Use `python-dotenv` if environment variable loading is needed.
+- Consider a `.env` file (gitignored) for environment-specific overrides (Immich URL/token, port). Use `python-dotenv` if environment variable loading is needed.
 
 ### 3. Dependency Management (Dual Requirements Files)
 
 Dependencies are split into two files:
 
 **`requirements.txt`** — Cross-platform core (installs on Windows + Linux):
-- Flask, requests, Pillow, pygame, psutil, werkzeug, Flask-Babel, piexif, qrcode, thefuzz, deep-translator, polib, smbprotocol
+- Flask, requests, Pillow, pygame, psutil, werkzeug, Flask-Babel, piexif, qrcode, deep-translator, polib
 
 **`requirements-pi.txt`** — Linux/Pi only (do NOT install on Windows):
-- numpy, python-Levenshtein, pillow-heif, vosk, sounddevice, pvporcupine, num2words, RPi.GPIO
+- pillow-heif, RPi.GPIO
 
 **Install on Windows (global Python, no venv):**
 ```bash
@@ -456,13 +418,13 @@ pip install -r requirements-pi.txt
 - Develop and debug Flask routes, Pillow image processing, EXIF handling, Immich API calls, template rendering, playlist logic.
 - Run Flask: `python -u app.py` (starts on port 7090). Open `http://127.0.0.1:7090` and look for the `HTTP server READY` log.
 - Pygame runs in **windowed mode** (1280×720) via `platform_utils.get_pygame_display_flags()` — not fullscreen.
-- Pi-specific hardware operations are unavailable; they must not be reported as successful. Voice/GPIO features require their platform dependencies and hardware.
+- Pi-specific hardware operations are unavailable; they must not be reported as successful. GPIO features require their platform dependencies and hardware.
 - The web UI is fully functional for configuration, playlist management, photo metadata, and system monitoring (except real hardware actions).
 
 **Raspberry Pi 4 (hardware testing via SSH):**
 - Commit and push from Windows → pull on Pi (or use VS Code Remote-SSH directly).
 - On Pi: `git pull && python3 -u app.py` (or restart via `start_pimmich.sh`).
-- Test real hardware: HDMI standby, touchscreen/GPIO button, voice control, USB import, Wi-Fi management, CPU temperature, fan control, video playback with hardware acceleration.
+- Test real hardware: HDMI standby, touchscreen/GPIO button, USB import, Wi-Fi management, CPU temperature, fan control, video playback with hardware acceleration.
 - Pygame runs in `FULLSCREEN | NOFRAME` kiosk mode.
 
 ### 5. What Works on Windows vs. Pi
@@ -479,10 +441,8 @@ pip install -r requirements-pi.txt
 | System reboot/shutdown | ❌ Unavailable | ✅ sudo |
 | CPU temperature | ❌ None | ✅ /sys/class/thermal |
 | GPIO (fan, button) | ❌ None | ✅ RPi.GPIO |
-| Voice control | ❌ None | ✅ Porcupine + Vosk |
 | USB import | ❌ Unavailable | ✅ lsblk + mount |
 | Wi-Fi management | ❌ Unavailable | ✅ nmcli + raspi-config |
-| Samba import | ✅ Available with SMB access | ✅ smbprotocol |
 | HEIC/HEIF photos | ❌ No pillow-heif | ✅ pillow-heif |
 | Video playback | ⚠️ ffmpeg if installed | ✅ mpv + hwdec |
 | NGINX reverse proxy | ❌ Not needed | ✅ :80 → :7090 |
@@ -490,7 +450,6 @@ pip install -r requirements-pi.txt
 ### 6. Cross-Platform Considerations
 - Shell scripts (`.sh`) use LF line endings (enforced by `.gitattributes`).
 - The codebase uses French comments throughout — this is the original author's language.
-- `smbprotocol` is in the cross-platform requirements because Samba modules are imported by the Flask application at startup. Voice dependencies, including `numpy`, remain Pi-specific.
 
 ---
 
@@ -520,14 +479,13 @@ pip install -r requirements-pi.txt
   - 📥 = download_album.py
 - **Level:** Configurable via `level_log` in config.json (default: "INFO").
 - **Werkzeug logs:** Cleaned and reformatted by `CleanWerkzeugFormatter`.
-- **Voice control logs:** Separate files: `logs/voice_control_stdout.log`, `logs/voice_control_stderr.log`.
 
 ---
 
 ## Photo Pipeline
 
 ```
-Source (Immich/Samba/USB/Smartphone)
+Source (Immich/USB/Smartphone)
   → static/photos/{source}/          (raw downloaded photos)
   → prepare_all_photos.py            (resize, EXIF rotate, blur bg, polaroid, postcard)
   → static/prepared/{source}/        (display-ready images)
@@ -552,15 +510,15 @@ Source (Immich/Samba/USB/Smartphone)
 
 1. **Generator-based streaming:** Import/prepare/download functions are Python generators that yield progress dicts. Flask routes use `stream_with_context` to stream these as Server-Sent Events for real-time progress bars.
 
-2. **PID file management:** Each long-running process (slideshow, voice control, app) uses a PID file in `/tmp/` for lifecycle management. Zombie processes are cleaned up before starting new instances.
+2. **PID file management:** Each long-running process (slideshow, app) uses a PID file in `/tmp/` for lifecycle management. Zombie processes are cleaned up before starting new instances.
 
 3. **Config merge strategy:** User config is merged with defaults on load, ensuring new keys are added without losing existing settings. 2-second cache prevents excessive file reads.
 
 4. **EXIF as metadata channel:** Content bounding boxes are stored in EXIF UserComment (`pimmich_bbox:x,y,w,h`) for Polaroid text placement. Immich EXIF metadata is cached to `cache/immich_description_map.json`.
 
-5. **Process isolation:** Flask, slideshow, and voice control run as separate OS processes, communicating via signals, HTTP, and status files — not shared memory.
+5. **Process isolation:** Flask and slideshow run as separate OS processes, communicating via signals, HTTP, and status files — not shared memory.
 
-6. **Graceful degradation:** Voice control is skipped on Pi 1/2/Zero. HEIC support is optional (pillow-heif). Hardware video encoders are auto-detected. Smart plug is optional. All features degrade gracefully when unavailable.
+6. **Graceful degradation:** HEIC support is optional (pillow-heif). Hardware video encoders are auto-detected. Smart plug is optional. All features degrade gracefully when unavailable.
 
 ---
 

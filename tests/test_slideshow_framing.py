@@ -26,7 +26,7 @@ class SlideshowFramingTests(unittest.TestCase):
         source = Path(__file__).resolve().parents[1] / "local_slideshow.py"
         tree = ast.parse(source.read_text(encoding="utf-8"))
         names = {"fit_photo_to_screen", "prepare_pan_zoom", "render_pan_zoom_frame", "perform_transition",
-                 "display_photo_with_pan_zoom"}
+                 "display_photo_with_pan_zoom", "read_slideshow_photo"}
         functions = [node for node in tree.body if isinstance(node, ast.FunctionDef)
                      and node.name in names]
         self.assertEqual(len(functions), len(names))
@@ -35,6 +35,7 @@ class SlideshowFramingTests(unittest.TestCase):
             "time": time, "traceback": traceback, "logger": Mock(),
             "get_pi_model": lambda: 4, "get_photo_metadata": lambda _: {},
             "draw_overlay": lambda *args: None,
+            "draw_pause_icon": lambda *args: None,
             "handle_slideshow_events": lambda *args: None,
             "paused": False, "next_photo_requested": False,
             "previous_photo_requested": False,

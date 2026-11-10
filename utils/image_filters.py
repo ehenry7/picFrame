@@ -249,7 +249,7 @@ def apply_filter_to_image(image_path_str, filter_name, strength=None, caption=""
     from utils.photo_edits import filter_strength, validate_strength
     strength = filter_strength(image_path) if strength is None else validate_strength(strength)
     
-    # Détermine le chemin de la sauvegarde. Ex: static/prepared/samba/img.jpg -> static/.backups/samba/img.jpg
+    # Détermine le chemin de la sauvegarde. Ex: static/prepared/usb/img.jpg -> static/.backups/usb/img.jpg
     try:
         prepared_index = image_path.parts.index('prepared')
         backup_base_path = Path(*image_path.parts[:prepared_index]) / '.backups'

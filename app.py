@@ -55,7 +55,6 @@ from werkzeug.security import check_password_hash
 import secrets
 import signal
 import traceback
-import smbclient
 
 logging.getLogger(__name__).info("Startup: loading photo download and slideshow managers")
 from utils.download_album import download_and_extract_album
@@ -72,12 +71,9 @@ logging.getLogger(__name__).info("Startup: loading photo preparation and import 
 from utils.prepare_all_photos import prepare_all_photos_with_progress
 from utils.import_usb_photos import import_usb_photos  # Déplacé dans utils
 from utils.metadata_utils import get_photo_metadata, format_photo_metadata, format_preview_location
-from utils.import_samba import import_samba_photos
 from utils.photo_import import PHOTO_EXTENSIONS, photo_digest, stream_digest
 from utils.photo_crop import original_photo, oriented_image, validate_crop, load_crops, save_crops, CROP_LOCK
 from utils.image_filters import apply_filter_to_image, add_text_to_polaroid, add_text_to_image, create_polaroid_effect
-logging.getLogger(__name__).info("Startup: loading voice control manager")
-from utils.voice_control_manager import start_voice_control, stop_voice_control, is_voice_control_running
 import secrets
 from platform_utils import (
     IS_LINUX,
@@ -281,37 +277,10 @@ PREPARED_DIR = BASE_DIR / "static" / "prepared"
 
 # Dictionnaire central pour les fichiers de log
 LOG_FILES_MAP = {
-    "app": {"path": "logs/pimmich.log", "name_key": "Pimmich (Serveur Web & Supervisor)"},
-    "voice_control_stdout": {"path": "logs/voice_control_stdout.log", "name_key": "voice_control.py (Contrôle Vocal - Sortie Standard)"},
-    "voice_control_stderr": {"path": "logs/voice_control_stderr.log", "name_key": "voice_control.py (Contrôle Vocal - Erreurs)"},
+    "app": {"path": "logs/pimmich.log", "name_key": "PictureFrame (Serveur Web & Supervisor)"},
 }
 
-class WorkerStatus:
-    def __init__(self):
-        self.lock = threading.Lock()
-        self.last_run = None
-        self.next_run = None
-        self.status_message = "Initialisation..."
 
-    def update_status(self, last_run=None, next_run=None, message=None):
-        with self.lock:
-            if last_run:
-                self.last_run = last_run.isoformat()
-            if next_run:
-                self.next_run = next_run.isoformat()
-            if message:
-                self.status_message = message
-
-    def get_status(self):
-        with self.lock:
-            return {
-                "last_run": self.last_run,
-                "next_run": self.next_run,
-                "status_message": self.status_message
-            }
-
-immich_status_manager = WorkerStatus()
-samba_status_manager = WorkerStatus()
 
 # Historique pour le graphique de température CPU (conserve les 60 dernières mesures)
 cpu_temp_history = collections.deque(maxlen=60)
@@ -800,22 +769,21 @@ def configure():
             'transition_duration', # Added transition_duration
             'transition_fps', # Added transition_fps
             'pan_zoom_factor', 'pan_zoom_start_factor', 'favorite_boost_factor',
-            'immich_update_interval_hours', 'date_format', 
+            'date_format',
             'weather_api_key', 'weather_city', 'weather_units', 'weather_update_interval_minutes', 'anniversary_boost_factor',
             'smart_plug_on_url', 'smart_plug_off_url', 'smart_plug_on_delay', 'smart_plug_status_url',
-            'smb_host', 'smb_share', 'smb_path', 'smb_user', 'smb_password', 'video_audio_output', 'video_audio_volume', 
-            'screen_orientation', 'smb_update_interval_hours'
+            'video_audio_output', 'video_audio_volume',
+            'screen_orientation'
             # New fields
-            , 'wifi_ssid', 'wifi_password', 'info_display_duration','voice_control_language',
-            'voice_control_engine', 'skip_initial_auto_import',
-            'tide_latitude', 'tide_longitude', 'stormglass_api_key', 'tide_offset_x', 'tide_offset_y', 'notification_sound_volume'
+            , 'wifi_ssid', 'wifi_password', 'info_display_duration',
+            'tide_latitude', 'tide_longitude', 'stormglass_api_key', 'tide_offset_x', 'tide_offset_y'
             , 'button_pin',
             'timezone'
         ]:
             if key in request.form:
                 value = request.form.get(key)
                 # Gérer les champs numériques
-                if key in ['display_duration', 'clock_offset_x', 'clock_offset_y', 'clock_font_size', 'weather_update_interval_minutes', 'immich_update_interval_hours', 'smb_update_interval_hours', 'display_width', 'display_height', 'info_display_duration', 'tide_offset_x', 'tide_offset_y', 'video_audio_volume', 'favorite_boost_factor',
+                if key in ['display_duration', 'clock_offset_x', 'clock_offset_y', 'clock_font_size', 'weather_update_interval_minutes', 'display_width', 'display_height', 'info_display_duration', 'tide_offset_x', 'tide_offset_y', 'video_audio_volume', 'favorite_boost_factor',
                            'button_pin', 'smart_plug_on_delay', 'anniversary_boost_factor']: # Integer fields
                     try:
                         config[key] = int(value)
@@ -913,9 +881,7 @@ def configure():
         config["anniversary_boost_enabled"] = 'anniversary_boost_enabled' in request.form
         # Traitement des checkboxes
         config["show_clock"] = 'show_clock' in request.form
-        config["immich_auto_update"] = 'immich_auto_update' in request.form
         config["random_content_in_album"] = "random_content_in_album" in request.form
-        config["smb_auto_update"] = 'smb_auto_update' in request.form
 
         config["show_date"] = 'show_date' in request.form
         config["show_weather"] = 'show_weather' in request.form
@@ -925,15 +891,6 @@ def configure():
         config["show_photo_location"] = 'show_photo_location' in request.form
         config["show_country_flag"] = 'show_country_flag' in request.form
         config["photo_metadata_background_enabled"] = 'photo_metadata_background_enabled' in request.form
-        # La gestion de l'activation/désactivation du contrôle vocal se fait maintenant via une API dédiée
-        # mais il faut aussi sauvegarder son état ici pour la persistance au redémarrage.
-        config['voice_control_enabled'] = 'voice_control_enabled' in request.form
-        # pour éviter les conflits avec le bouton "Enregistrer".
-        if 'porcupine_access_key' in request.form:
-            config['porcupine_access_key'] = request.form['porcupine_access_key']
-        if 'voice_control_device_index' in request.form:
-            config['voice_control_device_index'] = request.form['voice_control_device_index']
-
         save_config(config)
         restart_slideshow_process() # Redémarre uniquement le processus du diaporama
         flash(_("Configuration enregistrée. Le diaporama a été relancé pour appliquer les changements."), "success")
@@ -1035,46 +992,6 @@ def import_immich():
 
     return Response(generate(), mimetype='text/event-stream', headers={"Cache-Control": "no-cache", "Connection": "keep-alive"})
 
-@app.route("/import-samba")
-@login_required
-def import_samba():
-    # Nettoyer le drapeau d'annulation avant de commencer
-    cancel_flag = CANCEL_FLAG_PATH
-    if cancel_flag.exists(): cancel_flag.unlink()
-
-    config = load_config()
-    @stream_with_context
-    def generate():
-        import queue
-        import threading
-        
-        q = queue.Queue()
-        
-        def run_import():
-            try:
-                for update in import_samba_photos(config):
-                    q.put(update)
-                q.put(None)
-            except Exception as e:
-                q.put({"type": "error", "message": f"Erreur critique : {str(e)}"})
-                q.put(None)
-
-        t = threading.Thread(target=run_import)
-        t.daemon = True
-        t.start()
-
-        while True:
-            try:
-                update = q.get(timeout=10)
-                if update is None:
-                    break
-                yield f"data: {json.dumps(update, ensure_ascii=False)}\n\n"
-                if update.get("type") == "error":
-                    break
-            except queue.Empty:
-                yield ": keep-alive\n\n"
-
-    return Response(generate(), mimetype='text/event-stream', headers={"Cache-Control": "no-cache", "Connection": "keep-alive"})
 
 @app.route("/import-smartphone", methods=['POST'])
 @login_required
@@ -1177,52 +1094,6 @@ def import_smartphone():
 
     return Response(generate(), mimetype='text/event-stream', headers={"Cache-Control": "no-cache", "Connection": "keep-alive"})
 
-@app.route('/test-samba', methods=['POST'])
-@login_required
-def test_samba_connection():
-    """Teste la connexion à un partage Samba sans importer de fichiers."""
-
-    data = request.get_json()
-    server = data.get("smb_host")
-    share = data.get("smb_share")
-    path_in_share = data.get("smb_path", "").strip("/")
-    user = data.get("smb_user")
-    password = data.get("smb_password")
-    
-    if not all([server, share]):
-        return jsonify({"success": False, "message": "Le serveur et le nom du partage sont requis."})
-    
-    # Construction robuste du chemin UNC pour éviter les problèmes de slashs finaux.
-    if path_in_share:
-        full_samba_path = f"//{server}/{share}/{path_in_share}"
-    else:
-        full_samba_path = f"//{server}/{share}"
-    
-    try:
-        # Utiliser listdir en passant les identifiants directement.
-        # Cela évite d'utiliser register/unregister_session qui peuvent manquer dans d'anciennes versions.
-        files = smbclient.listdir(
-            full_samba_path,
-            username=user,
-            password=password,
-            connection_timeout=15
-        )
-        return jsonify({"success": True, "message": f"Connexion réussie ! {len(files)} élément(s) trouvé(s) dans le dossier."})
-
-    except SMBException as e:
-        # Fournir un message plus utile pour les erreurs communes
-        if "STATUS_LOGON_FAILURE" in str(e):
-            return jsonify({"success": False, "message": "Échec de l'authentification. Vérifiez l'utilisateur et le mot de passe."})
-        elif "STATUS_BAD_NETWORK_NAME" in str(e):
-            return jsonify({"success": False, "message": f"Le nom du partage '{share}' est introuvable sur le serveur."})
-        elif "STATUS_OBJECT_NAME_NOT_FOUND" in str(e) or "STATUS_OBJECT_PATH_NOT_FOUND" in str(e):
-            # Erreur spécifique si le sous-dossier n'existe pas
-            return jsonify({"success": False, "message": f"Le chemin '{path_in_share}' est introuvable dans le partage."})
-        elif "STATUS_HOST_UNREACHABLE" in str(e) or "timed out" in str(e):
-             return jsonify({"success": False, "message": f"Impossible de joindre le serveur '{server}'. Vérifiez l'adresse et le pare-feu."})
-        return jsonify({"success": False, "message": f"Erreur Samba : {e}"})
-    except Exception as e:
-        return jsonify({"success": False, "message": f"Erreur inattendue : {e}"})
 
 @app.route('/prepare-photos')
 @login_required
@@ -1266,7 +1137,7 @@ def prepare_photos():
                         except Exception as e:
                             logger.info(f"[App] Avertissement: Impossible de charger le cache de description Immich: {e}")
 
-                # 2. Charger les légendes manuelles de Pimmich
+                # 2. Charger les légendes manuelles de PictureFrame
                 manual_captions = load_text_states()
 
                 # 3. Fusionner, en donnant la priorité aux légendes manuelles
@@ -1456,17 +1327,7 @@ def force_tide_update():
         return jsonify({"success": False, "message": f"Erreur inattendue : {e}"})
 
 
-@app.route('/immich_update_status')
-@login_required
-def immich_update_status():
-    """Retourne l'état actuel du worker de mise à jour Immich."""
-    return jsonify(immich_status_manager.get_status())
 
-@app.route('/samba_update_status')
-@login_required
-def samba_update_status():
-    """Retourne l'état actuel du worker de mise à jour Samba."""
-    return jsonify(samba_status_manager.get_status())
 
 # --- Téléchargement Immich et Préparation photos ---
 
@@ -1486,10 +1347,8 @@ def download_photos():
     return redirect(url_for("configure"))
 
 
-# --- Worker de mise à jour automatique ---
+# --- Planification du diaporama ---
 
-_immich_first_run_skipped = False
-_samba_first_run_skipped = False
 
 def schedule_worker():
     """
@@ -1525,7 +1384,7 @@ def schedule_worker():
         
         # Calcul des heures actives selon le jour (Semaine vs Weekend)
         now = datetime.now()
-        is_weekend = now.weekday() >= 5 # 5=Samedi, 6=Dimanche
+        is_weekend = now.weekday() in (4, 5)
         
         if is_weekend:
             start_str = config.get("active_start_weekend", config.get("active_start", "07:00"))
@@ -1552,7 +1411,7 @@ def schedule_worker():
             config = load_config()
             
             now = datetime.now()
-            is_weekend = now.weekday() >= 5
+            is_weekend = now.weekday() in (4, 5)
             
             if is_weekend:
                 start_str = config.get("active_start_weekend", config.get("active_start", "07:00"))
@@ -1616,207 +1475,7 @@ def schedule_worker():
         # Attendre 60 secondes avant la prochaine vérification
         time.sleep(60)
 
-def immich_update_worker():
-    """
-    Thread en arrière-plan qui vérifie et met à jour l'album Immich périodiquement.
-    """
-    logger.debug("🖼️🔄 Démarrage du worker de mise à jour automatique Immich")
-    while True:
-        config = load_config()
-        is_enabled = config.get("immich_auto_update", False)
-        interval_hours = config.get("immich_update_interval_hours", 24)
-        skip_initial = config.get("skip_initial_auto_import", False) # New config option
 
-        global _immich_first_run_skipped
-        if not _immich_first_run_skipped and skip_initial:
-            logger.debug("🖼️🔄 Import initial skipped as per configuration.")
-            with app.app_context():
-                immich_status_manager.update_status(message=_("Import initial ignoré."))
-            _immich_first_run_skipped = True
-            # Calculate next run and sleep, then continue to next iteration
-            sleep_seconds = (interval_hours * 3600) if is_enabled else (15 * 60)
-            next_run_time = datetime.now() + timedelta(seconds=sleep_seconds)
-            immich_status_manager.update_status(next_run=next_run_time)
-            if is_enabled:
-                immich_status_manager.update_status(message="En attente...")
-            time.sleep(sleep_seconds)
-            continue # Skip the rest of this iteration
-        
-        if is_enabled:
-            with app.app_context():
-                status_msg = _("Mise à jour auto. activée. Intervalle : %(hours)sh.", hours=interval_hours)
-                logger.info(f"🖼️🔄  {status_msg}")
-                immich_status_manager.update_status(message=status_msg)
-            
-            try:
-                with app.app_context():
-                    immich_status_manager.update_status(message=_("Lancement du téléchargement..."))
-                logger.info("🖼️🔄 Lancement du téléchargement et de la préparation...")
-                
-                # Étape 1: Téléchargement
-                download_success = False
-                description_map = {} # Initialiser un mappage vide
-                for update in download_and_extract_album(config):
-                    # NOUVEAU: Afficher les messages de progression du worker dans les logs pour le débogage
-                    if update.get("message"):
-                        logger.info(f"🖼️🔄  {update.get('message')}")
-
-                    if update.get("type") == "error":
-                        logger.error(f"🖼️🔄❌ Erreur lors du téléchargement : {update.get('message')}")
-                        immich_status_manager.update_status(message=f"Erreur téléchargement: {update.get('message')}")
-                    immich_status_manager.update_status(message=update.get('message', '')) # Update status with download message
-                    if update.get("type") == "done":
-                        download_success = True
-                        description_map = update.get("description_map", {}) # Récupérer le mappage
-
-                # Étape 2: Préparation et redémarrage du diaporama
-                if download_success:
-                    # Fusionner les descriptions d'Immich et celles de l'interface Pimmich
-                    manual_captions = load_text_states()
-                    final_description_map = description_map.copy()
-                    # Les légendes manuelles (clés "source/fichier.jpg") écrasent celles d'Immich (clés "fichier.jpg")
-                    for path, caption in manual_captions.items():
-                        path_obj = Path(path)
-                        if path_obj.parts and path_obj.parts[0] == "immich":
-                            filename = path_obj.name
-                            final_description_map[filename] = caption
-
-                    with app.app_context():
-                        immich_status_manager.update_status(message=_("Préparation des photos..."))
-                    screen_width = config.get("display_width", 1920) # Utiliser la résolution configurée
-                    screen_height = config.get("display_height", 1080) # Utiliser la résolution configurée
-                    prep_successful = False
-                    for update in prepare_all_photos_with_progress(screen_width=screen_width, screen_height=screen_height, source_type="immich", description_map=final_description_map):
-                        immich_status_manager.update_status(message=update.get('message', '')) # Update status with preparation message
-                        if update.get("type") == "error":
-                            logger.error(f"🖼️🔄❌ Erreur lors de la préparation : {update.get('message')}")
-                            immich_status_manager.update_status(message=f"Erreur préparation: {update.get('message')}")
-                            break # Sortir de la boucle de préparation
-                        if update.get("type") == "done":
-                            prep_successful = True
-                    
-                    if prep_successful:
-                        with app.app_context():
-                            immich_status_manager.update_status(message=_("Mise à jour terminée. Redémarrage du diaporama..."))
-                        print("🖼️🔄✅ Mise à jour terminée avec succès. Redémarrage du diaporama.")
-                        if is_slideshow_running():
-                            restart_slideshow_for_update()
-                        with app.app_context():
-                            immich_status_manager.update_status(last_run=datetime.now(), message=_("Dernière mise à jour réussie."))
-                    else:
-                        with app.app_context():
-                            immich_status_manager.update_status(message=_("Mise à jour terminée avec avertissements/erreurs."))
-
-            except Exception as e:
-                logger.error(f"🖼️🔄❌ Erreur critique dans le worker : {e}", exc_info=True)
-                immich_status_manager.update_status(message=f"Erreur critique : {e}")
-
-        else:
-            status_msg = _("Mise à jour automatique désactivée.")
-            logger.info(f"🖼️🔄❌ {status_msg}")
-            immich_status_manager.update_status(message=status_msg)
-        
-        # Attendre avant la prochaine vérification
-        sleep_seconds = (interval_hours * 3600) if is_enabled else (15 * 60)
-        next_run_time = datetime.now() + timedelta(seconds=sleep_seconds)
-        immich_status_manager.update_status(next_run=next_run_time) # Update next_run regardless of enabled state
-        if is_enabled: # Only set message to "En attente..." if it's enabled
-            immich_status_manager.update_status(message="En attente...")
-        time.sleep(sleep_seconds)
-
-def samba_update_worker():
-    """
-    Thread en arrière-plan qui vérifie et met à jour le partage Samba périodiquement.
-    """
-    print("Démarrage du worker de mise à jour automatique Samba")
-    while True:
-        config = load_config()
-        is_enabled = config.get("smb_auto_update", False)
-        interval_hours = config.get("smb_update_interval_hours", 24)
-        skip_initial = config.get("skip_initial_auto_import", False) # New config option
-
-        global _samba_first_run_skipped
-        if not _samba_first_run_skipped and skip_initial:
-            print("[Auto-Update Samba] Import initial skipped as per configuration.")
-            with app.app_context():
-                samba_status_manager.update_status(message=_("Import initial ignoré."))
-            _samba_first_run_skipped = True
-            # Calculate next run and sleep, then continue to next iteration
-            sleep_seconds = (interval_hours * 3600) if is_enabled else (15 * 60)
-            next_run_time = datetime.now() + timedelta(seconds=sleep_seconds)
-            samba_status_manager.update_status(next_run=next_run_time)
-            if is_enabled:
-                samba_status_manager.update_status(message="En attente...")
-            time.sleep(sleep_seconds)
-            continue # Skip the rest of this iteration
-        
-        if is_enabled:
-            with app.app_context():
-                status_msg = _("Mise à jour auto. activée. Intervalle : %(hours)sh.", hours=interval_hours)
-                logger.info(f"[Auto-Update Samba] {status_msg}")
-                samba_status_manager.update_status(message=status_msg)
-            
-            try:
-                with app.app_context():
-                    samba_status_manager.update_status(message=_("Lancement de l'import..."))
-                print("[Auto-Update Samba] Lancement de l'import et de la préparation...")
-                
-                import_success = False
-                for update in import_samba_photos(config):
-                    if update.get("type") == "error":
-                        logger.info(f"[Auto-Update Samba] Erreur lors de l'import : {update.get('message')}")
-                        samba_status_manager.update_status(message=f"Erreur import: {update.get('message')}")
-                    samba_status_manager.update_status(message=update.get('message', '')) # Update status with import message
-                    if update.get("type") == "done":
-                        import_success = True
-
-                if import_success:
-                    with app.app_context():
-                        samba_status_manager.update_status(message=_("Préparation des photos..."))
-                    # Charger les légendes manuelles pour Samba
-                    manual_captions = load_text_states()
-                    final_description_map = {}
-                    for path, caption in manual_captions.items():
-                        path_obj = Path(path)
-                        if path_obj.parts and path_obj.parts[0] == "samba":
-                            filename = path_obj.name
-                            final_description_map[filename] = caption
-
-                    screen_width = config.get("display_width", 1920) # Utiliser la résolution configurée
-                    screen_height = config.get("display_height", 1080) # Utiliser la résolution configurée
-                    prep_successful = False
-                    for update in prepare_all_photos_with_progress(screen_width, screen_height, "samba", description_map=final_description_map):
-                        samba_status_manager.update_status(message=update.get('message', '')) # Update status with preparation message
-                        if update.get("type") == "error":
-                            samba_status_manager.update_status(message=f"Erreur préparation: {update.get('message')}")
-                            break
-                        if update.get("type") == "done":
-                            prep_successful = True
-                    
-                    if prep_successful:
-                        with app.app_context():
-                            samba_status_manager.update_status(message=_("Mise à jour terminée. Redémarrage du diaporama..."))
-                        print("[Auto-Update Samba] Mise à jour terminée. Redémarrage du diaporama.")
-                        if is_slideshow_running():
-                            restart_slideshow_for_update()
-                        with app.app_context():
-                            samba_status_manager.update_status(last_run=datetime.now(), message=_("Dernière mise à jour réussie."))
-                    else:
-                        with app.app_context():
-                            samba_status_manager.update_status(message=_("Mise à jour terminée avec avertissements/erreurs."))
-            except Exception as e:
-                logger.error(f"[Auto-Update Samba] Erreur critique dans le worker : {e}", exc_info=True)
-                samba_status_manager.update_status(message=f"Erreur critique : {e}")
-        else:
-            with app.app_context():
-                samba_status_manager.update_status(message=_("Mise à jour automatique Samba désactivée."))
-        
-        sleep_seconds = (interval_hours * 3600) if is_enabled else (15 * 60)
-        next_run_time = datetime.now() + timedelta(seconds=sleep_seconds)
-        samba_status_manager.update_status(next_run=next_run_time) # Update next_run regardless of enabled state
-        if is_enabled: # Only set message to "En attente..." if it's enabled
-            samba_status_manager.update_status(message="En attente...")
-        time.sleep(sleep_seconds)
 
 # --- Import depuis Clé USB ---
 
@@ -1985,11 +1644,6 @@ def system_reboot():
     
     return render_template('rebooting.html.jinja')
 
-@app.route('/update', methods=['GET'])
-@login_required
-def update_view():
-    """Affiche la page dédiée au processus de mise à jour."""
-    return render_template('update.html.jinja')
 
 @app.route('/rebooting', methods=['GET'])
 def rebooting():
@@ -2025,7 +1679,7 @@ def ping():
     # Calcul de la plage d'activité pour informer la page d'update
     config = load_config()
     now = datetime.now()
-    is_weekend = now.weekday() >= 5
+    is_weekend = now.weekday() in (4, 5)
     if is_weekend:
         start_str = config.get("active_start_weekend", config.get("active_start", "07:00"))
         end_str = config.get("active_end_weekend", config.get("active_end", "23:00"))
@@ -2092,7 +1746,7 @@ def cancel_import():
 
 @app.route('/api/playlists/play', methods=['POST'])
 def play_playlist():
-    # Sécurité : n'accepter que les requêtes venant de la machine elle-même (contrôle vocal) ou d'un utilisateur connecté
+    # Sécurité : n'accepter que les requêtes venant de la machine elle-même ou d'un utilisateur connecté
     if not session.get('logged_in') and request.remote_addr != '127.0.0.1':
         return jsonify({"success": False, "message": "Accès non autorisé."}), 403
 
@@ -2377,69 +2031,11 @@ def reorder_playlist(playlist_id):
         return jsonify({"success": False, "message": "Erreur interne du serveur."}), 500
 
 
-@app.route('/api/audio_devices', methods=['GET'])
-@login_required
-def get_audio_devices():
-    """Retourne la liste des périphériques d'entrée audio."""
-    try:
-        # L'importation peut échouer si les dépendances C (comme portaudio) sont manquantes
-        import sounddevice as sd
-        devices = sd.query_devices()
-        input_devices = [
-            {"index": i, "name": d['name'], "hostapi": sd.query_hostapis(d['hostapi'])['name']}
-            for i, d in enumerate(devices) if d['max_input_channels'] > 0
-        ]
-        return jsonify({"success": True, "devices": input_devices})
-    except Exception as e:
-        # Renvoyer une erreur JSON claire au lieu de planter ou de renvoyer une liste vide.
-        # Cela permet au frontend d'afficher un message d'erreur utile.
-        error_message = f"Erreur API Audio: {type(e).__name__} - {e}"
-        logger.info(f"[ERROR] in get_audio_devices: {error_message}") # Log pour le débogage côté serveur
-        return jsonify({"success": False, "message": error_message, "devices": []})
-
-@app.route('/api/voice_control/status', methods=['GET'])
-@login_required
-def get_voice_control_status():
-    status_file = 'logs/voice_control_status.json'
-    if not is_voice_control_running():
-        return jsonify({"status": "stopped", "message": _("Le service est arrêté.")})
-    
-    if os.path.exists(status_file):
-        try:
-            with open(status_file, 'r') as f:
-                return jsonify(json.load(f))
-        except Exception as e:
-            return jsonify({"status": "unknown", "message": f"Erreur lecture statut: {e}"})
-    else:
-        return jsonify({"status": "starting", "message": _("Démarrage du service...")})
 
 
-@app.route('/api/audio_diagnostics', methods=['GET'])
-@login_required
-def get_audio_diagnostics():
-    """Exécute des commandes de diagnostic audio et retourne le résultat."""
-    diagnostics = {}
-    try:
-        # Commande lsusb pour lister les périphériques USB
-        lsusb_result = subprocess.run(
-            ['lsusb'], capture_output=True, text=True, check=False, timeout=5
-        )
-        diagnostics['lsusb'] = lsusb_result.stdout.strip() if lsusb_result.returncode == 0 else f"Erreur (code {lsusb_result.returncode}):\n{lsusb_result.stderr.strip()}"
-    except (FileNotFoundError, subprocess.TimeoutExpired) as e:
-        diagnostics['lsusb'] = f"Erreur lors de l'exécution de 'lsusb': {e}"
 
-    try:
-        # Commande arecord -l pour lister les périphériques de capture audio
-        arecord_result = subprocess.run(
-            ['arecord', '-l'], capture_output=True, text=True, check=False, timeout=5
-        )
-        diagnostics['arecord'] = arecord_result.stdout.strip() if arecord_result.returncode == 0 else f"Erreur (code {arecord_result.returncode}):\n{arecord_result.stderr.strip()}"
-    except (FileNotFoundError, subprocess.TimeoutExpired) as e:
-        diagnostics['arecord'] = f"Erreur lors de l'exécution de 'arecord -l': {e}"
 
-    return jsonify({"success": True, "diagnostics": diagnostics})
-
-# --- NOUVELLES ROUTES POUR LE CONTRÔLE VOCAL AVANCÉ ---
+# --- System and slideshow control APIs ---
 
 @app.route('/api/system/shutdown', methods=['POST'])
 def system_shutdown():
@@ -2918,7 +2514,7 @@ def set_interface_state_api():
 def backup_settings_api():
     """Permet de télécharger le fichier de configuration actuel."""
     try:
-        backup_name = f'pimmich_backup_{datetime.now().strftime("%Y-%m-%d")}.json'
+        backup_name = f'PictureFrame_backup_{datetime.now().strftime("%Y-%m-%d")}.json'
         return send_from_directory('config', 'config.json', as_attachment=True, download_name=backup_name)
     except FileNotFoundError:
         flash(_("Le fichier de configuration n'a pas été trouvé."), "danger")
@@ -3044,7 +2640,7 @@ def list_logs():
     """Retourne la liste des fichiers de log qui existent réellement."""
     available_logs = []
     # Itérer dans un ordre défini pour une interface utilisateur cohérente
-    log_order = ["app", "voice_control_stdout", "voice_control_stderr"]
+    log_order = ["app"]
     for key in log_order:
         info = LOG_FILES_MAP.get(key)
         if info and os.path.exists(info["path"]):
@@ -3099,72 +2695,6 @@ def clear_logs_api():
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
-@app.route('/api/update_app', methods=['GET'])
-@login_required
-def update_app():
-    """
-    Met à jour l'application depuis GitHub et la redémarre.
-    Utilise Server-Sent Events pour donner un feedback en direct.
-    """
-    @stream_with_context
-    def generate():
-        def stream_event(data):
-            """Formate les données en événement Server-Sent Event (SSE)."""
-            return f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
-
-        update_script_path = Path(app.root_path) / 'update_script.sh'
-
-        if not update_script_path.exists():
-            yield stream_event({"type": "error", "message": "Le script de mise à jour 'update_script.sh' est introuvable."})
-            return
-
-        try:
-            os.chmod(update_script_path, 0o755)
-        except OSError as e:
-            yield stream_event({"type": "error", "message": f"Impossible de rendre le script de mise à jour exécutable : {e}"})
-            return
-
-        yield stream_event({"type": "info", "percent": 5, "message": "Lancement du script de mise à jour..."})
-
-        process = subprocess.Popen(
-            ['/bin/bash', str(update_script_path)],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            bufsize=1,
-            universal_newlines=True,
-            encoding='utf-8'
-        )
-
-        for line in iter(process.stdout.readline, ''):
-            line = line.strip()
-            if not line: continue
-
-            if line.startswith("STEP:PULL:"):
-                yield stream_event({"type": "info", "percent": 25, "message": line.replace("STEP:PULL:", "").strip()})
-            elif line.startswith("STEP:PIP:"):
-                yield stream_event({"type": "info", "percent": 75, "message": line.replace("STEP:PIP:", "").strip()})
-            elif line.startswith("STEP:RESTART:"):
-                yield stream_event({"type": "info", "percent": 95, "message": line.replace("STEP:RESTART:", "").strip()})
-            else:
-                yield stream_event({"type": "info", "message": line})
-
-        process.stdout.close()
-        return_code = process.wait()
-
-        if return_code == 0:
-            yield stream_event({"stage": "RESTART", "percent": 100, "message": "Mise à jour terminée. Redémarrage du système en cours..."})
-            def restart_server():
-                time.sleep(10)
-                print("[Update] Redémarrage du système suite à la mise à jour...")
-                subprocess.run(['sudo', '-n', 'reboot'], check=False)
-            
-            restart_thread = threading.Thread(target=restart_server)
-            restart_thread.start()
-        else:
-            yield stream_event({"type": "error", "message": f"La mise à jour a échoué. Le script a retourné le code d'erreur {return_code}."})
-
-    return Response(generate(), mimetype='text/event-stream', headers={"Cache-Control": "no-cache", "Connection": "keep-alive"})
 
 @app.route('/api/expand_filesystem', methods=['POST'])
 @login_required
@@ -3599,34 +3129,6 @@ def scan_wifi():
     except Exception as e:
         return jsonify({"success": False, "message": f"Erreur inattendue : {str(e)}"}), 500
 
-@app.route('/api/voice_control/toggle', methods=['POST'])
-@login_required
-def toggle_voice_control():
-    """Active ou désactive le service de contrôle vocal."""
-    data = request.get_json()
-    enabled = data.get('enabled')
-
-    if enabled is None:
-        return jsonify({"success": False, "message": _("Paramètre 'enabled' manquant.")}), 400
-
-    try:
-        # Mettre à jour la configuration
-        config = load_config()
-        config['voice_control_enabled'] = enabled
-        save_config(config)
-
-        # Démarrer ou arrêter le service
-        if enabled:
-            start_voice_control()
-            message = _("Service de contrôle vocal activé.")
-        else:
-            stop_voice_control()
-            message = _("Service de contrôle vocal désactivé.")
-        
-        return jsonify({"success": True, "message": message})
-    except Exception as e:
-        logger.error(f"Erreur lors du basculement du contrôle vocal : {e}", exc_info=True)
-        return jsonify({"success": False, "message": _("Erreur interne du serveur : %(error)s", error=str(e))}), 500
 
 def migrate_guest_folders():
     """Migre les anciens dossiers 'guests' et 'invites' vers 'invités'."""
@@ -3723,20 +3225,10 @@ def main():
     logger.info("Startup: guest folder migration complete")
 
     for name, target in (
-        ("immich-sync", immich_update_worker),
-        ("samba-sync", samba_update_worker),
         ("slideshow-scheduler", schedule_worker),
     ):
         logger.info("Startup: starting worker %s", name)
         threading.Thread(name=name, target=run_worker, args=(target,), daemon=True).start()
-
-    config = load_config()
-    if config.get('voice_control_enabled'):
-        logger.info("Startup: starting voice control in background")
-        threading.Thread(name="voice-startup", target=run_worker,
-                         args=(start_voice_control,), daemon=True).start()
-    else:
-        logger.info("Startup: voice control disabled")
 
     logger.info("Startup: binding HTTP server to 0.0.0.0:7090; local URL http://127.0.0.1:7090")
     threading.Thread(name="http-readiness", target=log_server_readiness, daemon=True).start()

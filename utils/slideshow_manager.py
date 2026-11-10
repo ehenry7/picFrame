@@ -213,7 +213,7 @@ def stop_slideshow():
 def restart_slideshow_for_update():
     """
     Redémarre le diaporama après une mise à jour de contenu, sans éteindre l'écran.
-    C'est la fonction à utiliser par les workers de mise à jour automatique.
+    Utilisée après les imports et les modifications de photos.
     """
     logger.info("📟 Redémarrage du diaporama pour mise à jour de contenu")
 

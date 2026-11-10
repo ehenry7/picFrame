@@ -52,7 +52,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>{{ _('Configuration') }} - Pimmich</title>
+    <title>{{ _('Configuration') }} - PictureFrame</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
@@ -249,7 +249,7 @@
                 </a>
             </div>
 
-            <img src="{{ url_for('static', filename='pimmich_logo.png') }}" alt="Logo Pimmich" class="h-16">
+            <img src="{{ url_for('static', filename='pictureframe_logo.svg') }}" alt="Logo PictureFrame" class="h-16">
 
             <div id="live-preview-container" class="cadre-bois p-4 flex flex-col items-center">
                 <p id="live-preview-status" class="text-gray-500 italic hidden">{{ _("Le diaporama est arrêté.") }}</p>
@@ -310,9 +310,6 @@
                 <button class="tablink inline-flex items-center" onclick="openTab(event, 'tab-heure')"
                     title="{{ _('Configurez l\'affichage de l\'heure, la météo et les marées.') }}"><i
                         class="fas fa-clock fa-fw mr-2"></i>{{ _('Horloge & Infos') }}</button>
-                <button class="tablink inline-flex items-center" onclick="openTab(event, 'tab-vocal')"
-                    title="{{ _('Configurez le contrôle vocal du diaporama.') }}"><i
-                        class="fas fa-microphone-alt fa-fw mr-2"></i>{{ _('Vocal') }}</button>
                 <button class="tablink inline-flex items-center" onclick="openTab(event, 'tab-metadata')"><i
                         class="fas fa-info-circle fa-fw mr-2"></i>{{ _('Métadonnées') }}</button>
             </div>
@@ -321,7 +318,7 @@
         <div id="group-contenu" class="sub-nav-group hidden">
             <div class="tabs flex overflow-x-auto pb-2">
                 <button class="tablink inline-flex items-center" onclick="openTab(event, 'tab-sources')"
-                    title="{{ _('Configurez les sources de photos (Immich, Samba, USB...).') }}"><i
+                    title="{{ _('Configurez les sources de photos (Immich, USB...).') }}"><i
                         class="fas fa-folder-open fa-fw mr-2"></i>{{ _('Sources') }}</button>
                 <button class="tablink inline-flex items-center" onclick="openTab(event, 'tab-apercu')"
                     title="{{ _('Visualisez et gérez toutes les photos prêtes pour le diaporama.') }}"><i
@@ -354,7 +351,7 @@
                     title="{{ _('Gérez les paramètres Wi-Fi et réseau.') }}"><i class="fas fa-wifi fa-fw mr-2"></i>{{
                     _('Réseau') }}</button>
                 <button class="tablink inline-flex items-center" onclick="openTab(event, 'tab-maintenance')"
-                    title="{{ _('Gérez les mises à jour, sauvegardes et contrôles système.') }}"><i
+                    title="{{ _('Gérez les sauvegardes et contrôles système.') }}"><i
                         class="fas fa-tools fa-fw mr-2"></i>{{ _('Maintenance') }}</button>
                 <button class="tablink inline-flex items-center" onclick="openTab(event, 'tab-stats')"
                     title="{{ _('Consultez les statistiques d\'utilisation du système.') }}"><i
@@ -392,14 +389,14 @@
 
                     <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="p-3 bg-gray-50 rounded border">
-                            <h4 class="font-semibold text-sm mb-2"><i class="fas fa-calendar-day mr-2"></i>{{ _("Horaires Semaine (Lun-Ven)") }}</h4>
+                            <h4 class="font-semibold text-sm mb-2"><i class="fas fa-calendar-day mr-2"></i>{{ _("Horaires Semaine (Dim-Jeu)") }}</h4>
                             <label for="active_start_weekday" class="block text-xs text-gray-600 mb-1">{{ _("Allumage :") }}</label>
                             <input type="time" id="active_start_weekday" name="active_start_weekday" value="{{ config.get('active_start_weekday', config.get('active_start', '07:00')) }}" class="w-full mb-2">
                             <label for="active_end_weekday" class="block text-xs text-gray-600 mb-1">{{ _("Extinction :") }}</label>
                             <input type="time" id="active_end_weekday" name="active_end_weekday" value="{{ config.get('active_end_weekday', config.get('active_end', '22:00')) }}" class="w-full">
                         </div>
                         <div class="p-3 bg-gray-50 rounded border">
-                            <h4 class="font-semibold text-sm mb-2"><i class="fas fa-calendar-plus mr-2"></i>{{ _("Horaires Weekend (Sam-Dim)") }}</h4>
+                            <h4 class="font-semibold text-sm mb-2"><i class="fas fa-calendar-plus mr-2"></i>{{ _("Horaires Weekend (Ven-Sam)") }}</h4>
                             <label for="active_start_weekend" class="block text-xs text-gray-600 mb-1">{{ _("Allumage :") }}</label>
                             <input type="time" id="active_start_weekend" name="active_start_weekend" value="{{ config.get('active_start_weekend', config.get('active_start', '07:00')) }}" class="w-full mb-2">
                             <label for="active_end_weekend" class="block text-xs text-gray-600 mb-1">{{ _("Extinction :") }}</label>
@@ -551,7 +548,7 @@
                     <legend>
                         <h3><i class="fas fa-plug mr-2"></i>{{ _("Gestion de l'alimentation (Prise Connectée)") }}</h3>
                     </legend>
-                    <p class="text-sm text-gray-600 mb-3">{{ _("Si votre écran ne se met pas complètement en veille, vous pouvez utiliser une prise connectée (Wi-Fi) pour couper son alimentation. Pimmich enverra une simple requête HTTP aux URLs que vous spécifiez.") }}<br>
+                    <p class="text-sm text-gray-600 mb-3">{{ _("Si votre écran ne se met pas complètement en veille, vous pouvez utiliser une prise connectée (Wi-Fi) pour couper son alimentation. PictureFrame enverra une simple requête HTTP aux URLs que vous spécifiez.") }}<br>
                     <strong>{{ _("Exemples d'URLs :") }}</strong>
                     <ul class="list-disc list-inside text-xs text-gray-500 mt-1">
                         <li><strong>Tasmota:</strong> `http://IP_PRISE/cm?cmnd=Power%20On`</li>
@@ -945,26 +942,6 @@
                             {{ _("Récupération aléatoire des images dans l\'album (Immich)") }}
                         </label>
                     </div>
-                    <hr class="my-4">
-                    <h5 class="text-lg font-semibold mt-2">{{ _("Mise à jour automatique (Immich)") }}</h5>
-                    <div class="form-check form-switch my-3">
-                        <input class="form-check-input" type="checkbox" id="immich_auto_update" name="immich_auto_update" {% if config.get('immich_auto_update') %}checked{% endif %}>
-                        <label class="form-check-label ml-2" for="immich_auto_update">{{ _("Activer la mise à jour automatique") }}</label>
-                    </div>
-                    <label for="immich_update_interval_hours">{{ _("Intervalle de mise à jour (heures):") }}</label>
-                    <input type="number" id="immich_update_interval_hours" name="immich_update_interval_hours"
-                        value="{{ config.get('immich_update_interval_hours', 24) }}" min="1">
-
-                    <div id="immich-worker-status-container" class="mt-4 p-3 bg-gray-100 rounded-lg border">
-                        <p><strong>{{ _("État du service :") }}</strong> <span id="immich-worker-status-message"
-                                class="font-mono">...</span></p>
-                        <p><strong>{{ _("Dernière mise à jour :") }}</strong> <span id="immich-last-update-time"
-                                class="font-mono">...</span></p>
-                        <p><strong>{{ _("Prochaine mise à jour :") }}</strong> <span id="immich-next-update-time"
-                                class="font-mono">...</span></p>
-                    </div>
-
-
                 </fieldset>
 
                 <fieldset class="mt-4">
@@ -983,221 +960,12 @@
                         <label class="form-check-label ml-2" for="display_source_usb">{{ _("Photos USB") }}</label>
                     </div>
                     <div class="form-check form-switch my-2">
-                        <input class="form-check-input" type="checkbox" id="display_source_samba" name="display_sources" value="samba" {% if 'samba' in config.display_sources %}checked{% endif %}>
-                        <label class="form-check-label ml-2" for="display_source_samba">{{ _("Photos Samba") }}</label>
-                    </div>
-                    <div class="form-check form-switch my-2">
                         <input class="form-check-input" type="checkbox" id="display_source_smartphone" name="display_sources" value="smartphone" {% if 'smartphone' in config.display_sources %}checked{% endif %}>
                         <label class="form-check-label ml-2" for="display_source_smartphone">{{ _("Photos Smartphone") }}</label>
                     </div>
                     <div class="form-check form-switch my-2">
                         <input class="form-check-input" type="checkbox" id="display_source_invites" name="display_sources" value="invités" {% if 'invités' in config.display_sources %}checked{% endif %}>
                         <label class="form-check-label ml-2" for="display_source_invites">{{ _('Photos des invités (validées)') }}</label>
-                    </div>
-                </fieldset>
-                <fieldset class="mt-4">
-                    <legend>
-                        <h3>{{ _("Configuration du partage Samba (Windows)") }}</h3>
-                    </legend>
-                    <label for="smb_host">{{ _("Serveur :") }}</label>
-                    <input type="text" id="smb_host" name="smb_host" value="{{ config.get('smb_host', '') }}"
-                        placeholder="{{ _('ex: 192.168.1.50 ou MON-NAS') }}">
-
-                    <label for="smb_share">{{ _("Nom du partage :") }}</label>
-                    <input type="text" id="smb_share" name="smb_share" value="{{ config.get('smb_share', '') }}"
-                        placeholder="{{ _('ex: Photos') }}">
-
-                    <label for="smb_path">{{ _("Chemin dans le partage (optionnel) :") }}</label>
-                    <input type="text" id="smb_path" name="smb_path" value="{{ config.get('smb_path', '') }}"
-                        placeholder="{{ _('ex: Famille/2024') }}">
-
-                    <label for="smb_user">{{ _("Nom d'utilisateur (optionnel) :") }}</label>
-                    <input type="text" id="smb_user" name="smb_user" value="{{ config.get('smb_user', '') }}">
-
-                    <label for="smb_password">{{ _("Mot de passe (optionnel) :") }}</label>
-                    <div class="relative mt-1">
-                        <input type="password" id="smb_password" name="smb_password"
-                            value="{{ config.get('smb_password', '') }}" class="block w-full rounded-md border-gray-300 shadow-sm pr-10">
-                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
-                            <button type="button"
-                                class="toggle-password-btn text-gray-500 hover:bg-gray-200 rounded-md transition-colors w-auto p-2 flex items-center justify-center mt-0 bg-transparent border-none font-normal"
-                                data-target="smb_password" title="{{ _('Afficher/Cacher le mot de passe') }}">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="mt-4">
-                        <button type="button" id="samba-test-btn"
-                            class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">{{ _("Tester la
-                            connexion") }}</button>
-                        <span id="samba-test-status" class="ml-4 font-medium"></span>
-                    </div>
-
-                    <hr class="my-4">
-                    <h5 class="text-lg font-semibold mt-2">{{ _("Mise à jour automatique (Samba)") }}</h5>
-                    <div class="form-check form-switch my-3">
-                        <input class="form-check-input" type="checkbox" id="smb_auto_update" name="smb_auto_update" {% if config.get('smb_auto_update') %}checked{% endif %}>
-                        <label class="form-check-label ml-2" for="smb_auto_update">{{ _("Activer la mise à jour automatique") }}</label>
-                    </div>
-                    <label for="smb_update_interval_hours">{{ _("Intervalle de mise à jour (heures):") }}</label>
-                    <input type="number" id="smb_update_interval_hours" name="smb_update_interval_hours"
-                        value="{{ config.get('smb_update_interval_hours', 24) }}" min="1">
-
-                    <div id="samba-worker-status-container" class="mt-4 p-3 bg-gray-100 rounded-lg border">
-                        <p><strong>{{ _("État du service :") }}</strong> <span id="samba-worker-status-message"
-                                class="font-mono">...</span></p>
-                        <p><strong>{{ _("Dernière mise à jour :") }}</strong> <span id="samba-last-update-time"
-                                class="font-mono">...</span></p>
-                        <p><strong>{{ _("Prochaine mise à jour :") }}</strong> <span id="samba-next-update-time"
-                                class="font-mono">...</span></p>
-                    </div>
-
-                </fieldset>
-
-                <fieldset class="mt-4">
-                    <legend>
-                        <h3>{{ _("Options de démarrage") }}</h3>
-                    </legend>
-                    <div class="form-check form-switch my-3">
-                        <input class="form-check-input" type="checkbox" id="skip_initial_auto_import" name="skip_initial_auto_import" {% if config.get('skip_initial_auto_import', False) %}checked{% endif %}>
-                        <label class="form-check-label ml-2" for="skip_initial_auto_import">{{ _("Ignorer le premier import automatique au démarrage") }}</label>
-                    </div>
-                    <p class="text-sm text-gray-600 mt-2">{{ _("Si cette option est cochée, les mises à jour automatiques (Immich, Samba) ne se lanceront pas immédiatement après un redémarrage du cadre, mais attendront le prochain cycle programmé.") }}</p>
-                </fieldset>
-            </div>
-
-            <div id="tab-vocal" class="tabcontent">
-                <fieldset>
-                    <legend>
-                        <h3><i class="fas fa-microphone-alt mr-2"></i>{{ _("Contrôle Vocal") }}</h3>
-                    </legend>
-                    <p class="text-sm text-gray-600 mb-3">
-                        {{ _('Contrôlez votre diaporama à la voix avec le mot-clé "Cadre Magique".') }}
-                    </p>
-
-                    <div class="p-4 border-l-4 border-blue-400 bg-blue-50 text-blue-700 mb-4">
-                        <p><strong>{{ _("Étape Manuelle Requise :") }}</strong> {{ _('Pour utiliser le mot-clé
-                            personnalisé "Cadre Magique", vous devez créer un modèle sur le site de Picovoice, le
-                            télécharger, et le placer dans le dossier `voice_models` sous le nom
-                            `cadre-magique_raspberry-pi.ppn`.') }}</p>
-                    </div>
-
-                    <div class="mt-4">
-                        <label for="voice_control_engine" class="block text-sm font-medium text-gray-700">{{ _("Moteur
-                            de mot-clé") }}</label>
-                        <select id="voice_control_engine" name="voice_control_engine"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                            <option value="porcupine" {% if config.get('voice_control_engine', 'porcupine'
-                                )=='porcupine' %}selected{% endif %}>{{ _("Picovoice Porcupine (Recommandé, nécessite une clé API)") }}</option>
-                            <option value="vosk" {% if config.get('voice_control_engine', 'porcupine' )=='vosk'
-                                %}selected{% endif %}>{{ _("Vosk (Totalement local, sans clé API, plus gourmand)") }}</option>
-                        </select>
-                        <p class="text-xs text-gray-500 mt-1">{{ _("Choisissez 'Vosk' si vous ne souhaitez pas créer de
-                            compte Picovoice.") }}</p>
-                    </div>
-
-                    <div class="form-check form-switch my-3">
-                        <input class="form-check-input" type="checkbox" id="voice_control_enabled" name="voice_control_enabled" {% if config.get('voice_control_enabled') %}checked{% endif %}>
-                        <label class="form-check-label ml-2" for="voice_control_enabled">{{ _("Activer le contrôle vocal (action immédiate)") }}</label>
-                    </div>
-
-                    <div class="mt-4">
-                        <label for="voice_control_language" class="block text-sm font-medium text-gray-700">{{ _("Langue
-                            du contrôle vocal") }}</label>
-                        <select id="voice_control_language" name="voice_control_language"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                            <option value="fr" {% if config.get('voice_control_language', 'fr' )=='fr' %}selected{%
-                                endif %}>{{ _('Français') }}</option>
-                            <option value="en" {% if config.get('voice_control_language', 'fr' )=='en' %}selected{%
-                                endif %}>{{ _('Anglais') }}</option>
-                        </select>
-                        <p class="text-xs text-gray-500 mt-1">{{ _("Le changement de langue nécessite un redémarrage du
-                            service vocal (désactiver puis réactiver le contrôle vocal).") }}</p>
-                    </div>
-
-                    <div class="mt-4">
-                        <label for="porcupine_access_key" class="block text-sm font-medium text-gray-700">{{ _("Clé
-                            d'accès Picovoice Porcupine") }}</label>
-                        <div class="relative mt-1">
-                            <input type="password" id="porcupine_access_key" name="porcupine_access_key"
-                                value="{{ config.get('porcupine_access_key', '') }}"
-                                class="block w-full rounded-md border-gray-300 shadow-sm pr-10"
-                                placeholder="{{ _('Collez votre clé d\'accès ici') }}">
-                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
-                                <button type="button"
-                                    class="toggle-password-btn text-gray-500 hover:bg-gray-200 rounded-md transition-colors w-auto p-2 flex items-center justify-center mt-0 bg-transparent border-none font-normal"
-                                    data-target="porcupine_access_key" title="{{ _('Afficher/Cacher la clé d\'accès') }}">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <p class="text-xs text-gray-500 mt-1">{{ _("Obtenez votre clé via le compte gratuit (Free Tier)
-                            sur la") }} <a href="https://console.picovoice.ai/" target="_blank"
-                                class="text-blue-600 hover:underline">Picovoice Console</a>.</p>
-                    </div>
-
-                    <div class="mt-4">
-                        <label for="voice_control_device_index" class="block text-sm font-medium text-gray-700">{{
-                            _("Périphérique d'entrée audio (Microphone)") }}</label>
-                        <div class="flex items-center gap-2">
-                            <select id="voice_control_device_index" name="voice_control_device_index"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                                <option value="">{{ _("Périphérique par défaut") }}</option>
-                                <!-- Les options seront chargées par JavaScript -->
-                            </select>
-                            <button type="button" id="refresh-audio-devices-btn"
-                                class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded text-sm"
-                                title="{{ _('Actualiser la liste') }}"><i class="fas fa-sync-alt"></i></button>
-                        </div>
-                    </div>
-
-                    <div id="voice-control-status-container" class="mt-6 p-3 bg-gray-100 rounded-lg border">
-                        <p><strong>{{ _("État du service vocal :") }}</strong>
-                            <span id="voice-control-status-message" class="font-mono">...</span>
-                        </p>
-                    </div>
-
-                </fieldset>
-
-                <fieldset class="mt-6">
-                    <legend>
-                        <h3><i class="fas fa-volume-up mr-2"></i>{{ _("Volume des Notifications Sonores") }}</h3>
-                    </legend>
-                    <p class="text-sm text-gray-600 mb-3">
-                        {{ _("Règle le volume pour les sons de notification (confirmation du contrôle vocal, réception
-                        de carte postale, etc.).") }}
-                    </p>
-                    <div id="notification-volume-selector" style="display: flex; align-items: center; margin-top: 8px;">
-                        <label for="notification_sound_volume" style="min-width: 200px;">{{ _("Volume des notifications
-                            :") }}</label>
-                        <input type="range" id="notification_volume_slider" min="0" max="100"
-                            value="{{ config.get('notification_sound_volume', 80) }}" class="w-1/2">
-                        <input type="number" id="notification_sound_volume" name="notification_sound_volume" min="0"
-                            max="100" value="{{ config.get('notification_sound_volume', 80) }}"
-                            class="w-16 ml-2 text-center">
-                        <span class="ml-1">%</span>
-                    </div>
-                </fieldset>
-
-                <fieldset class="mt-6">
-                    <legend>
-                        <h3><i class="fas fa-stethoscope mr-2"></i>{{ _("Diagnostic Audio") }}</h3>
-                    </legend>
-                    <p class="text-sm text-gray-600 mb-3">
-                        {{ _("Si votre microphone n'apparaît pas dans la liste ci-dessus, utilisez cet outil pour
-                        vérifier si le système d'exploitation le détecte correctement.") }}
-                    </p>
-                    <button type="button" id="run-audio-diagnostics-btn"
-                        class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded inline-flex items-center">
-                        <i class="fas fa-play-circle mr-2"></i>{{ _("Lancer le diagnostic") }}
-                    </button>
-                    <div id="audio-diagnostics-results-container" class="hidden mt-4">
-                        <h4 class="font-semibold text-gray-800 mb-2">{{ _("Résultats du diagnostic :") }}</h4>
-                        <div class="bg-gray-800 rounded-lg overflow-auto" style="max-height: 300px;">
-                            <pre id="audio-diagnostics-results" class="text-white p-4 text-xs"
-                                style="white-space: pre-wrap; word-break: break-all;"></pre>
-                        </div>
                     </div>
                 </fieldset>
             </div>
@@ -1458,15 +1226,6 @@
                         <div id="immich-progress-bar" class="progress-bar"></div>
                     </div>
                     <div id="immich-import-status" class="status-messages"></div>
-
-                    <button id="samba-import-btn"
-                        class="import-button bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                        <i class="fas fa-network-wired"></i> {{ _("Importer depuis Samba") }}
-                    </button>
-                    <div id="samba-progress-container" class="progress-container hidden">
-                        <div id="samba-progress-bar" class="progress-bar"></div>
-                    </div>
-                    <div id="samba-import-status" class="status-messages"></div>
 
                     <!-- NOUVEAU: Conteneur pour l'aperçu de la préparation -->
                     <div id="preparation-preview-container"
@@ -1735,25 +1494,13 @@
                 </div>
             </fieldset>
 
-            <fieldset class="mt-6">
-                <legend>
-                    <h3>{{ _("Mise à jour de l'application") }}</h3>
-                </legend>
-                <p class="text-sm text-gray-600 mb-3">{{ _("Cliquez sur le bouton pour rechercher et installer les
-                    dernières mises à jour de Pimmich depuis GitHub. L'application redémarrera automatiquement après la
-                    mise à jour.") }}</p>
-                <a href="/update" 
-                   class="system-button bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded inline-flex items-center"
-                   onclick="return confirm('{{ _('Lancer la mise à jour ? Vous allez être redirigé vers la page de suivi.') }}')">
-                    <i class="fas fa-cloud-download-alt mr-2"></i>{{ _("Lancer la mise à jour") }}
-                </a>
-            </fieldset>
+
 
             <fieldset class="mt-6">
                 <legend>
                     <h3>{{ _("Système de Fichiers de la Carte SD") }}</h3>
                 </legend>
-                <p class="text-sm text-gray-600 mb-3">{{ _("Si vous avez flashé Pimmich sur une carte SD plus grande que
+                <p class="text-sm text-gray-600 mb-3">{{ _("Si vous avez flashé PictureFrame sur une carte SD plus grande que
                     l'image, utilisez cette option pour étendre la partition et utiliser tout l'espace disponible. Un
                     redémarrage du système sera nécessaire pour finaliser l'opération.") }}</p>
                 <div class="p-4 border-l-4 border-blue-400 bg-blue-50 text-blue-700 mb-4">
@@ -2524,9 +2271,6 @@
             i18n.orderSaved = "{{ _('Ordre sauvegardé !') }}";
 
             // NOUVEAU: Traductions pour le diagnostic audio
-            i18n.runDiagnostics = "{{ _('Lancer le diagnostic') }}";
-            i18n.diagnosticsInProgress = "{{ _('Diagnostic en cours...') }}";
-            i18n.pleaseWait = "{{ _('Veuillez patienter...') }}";
 
             // --- GESTION DE L'AFFICHAGE DES MOTS DE PASSE ---
             document.querySelectorAll('.toggle-password-btn').forEach(button => {
@@ -3016,10 +2760,6 @@
                     renderPlaylists();
                 }
 
-                if (tabId === 'tab-vocal') {
-                    loadAudioDevices();
-                    fetchVoiceControlStatus();
-                }
             }
 
             let availableMusicFiles = []; 
@@ -3233,14 +2973,6 @@
             if (volumeSlider && volumeNumber) {
                 volumeSlider.addEventListener('input', () => { volumeNumber.value = volumeSlider.value; });
                 volumeNumber.addEventListener('input', () => { volumeSlider.value = volumeNumber.value; });
-            }
-
-            // Lier le slider et le champ numérique pour le volume des notifications
-            const notificationVolumeSlider = document.getElementById('notification_volume_slider');
-            const notificationVolumeNumber = document.getElementById('notification_sound_volume');
-            if (notificationVolumeSlider && notificationVolumeNumber) {
-                notificationVolumeSlider.addEventListener('input', () => { notificationVolumeNumber.value = notificationVolumeSlider.value; });
-                notificationVolumeNumber.addEventListener('input', () => { notificationVolumeSlider.value = notificationVolumeSlider.value; });
             }
 
             // --- Password validation ---
@@ -3630,7 +3362,7 @@
                     }
                 });
 
-                // ----- NOUVELLE GESTION DES IMPORTS (USB, IMMICH, SAMBA) -----
+                // ----- NOUVELLE GESTION DES IMPORTS (USB, IMMICH) -----
                 function handleImportProcess(source) {
                     const btn = document.getElementById(`${source}-import-btn`);
                     const progressBar = document.getElementById(`${source}-progress-bar`);
@@ -3745,52 +3477,6 @@
 
                 document.getElementById("usb-import-btn").addEventListener("click", () => handleImportProcess('usb'));
                 document.getElementById("immich-import-btn").addEventListener("click", () => handleImportProcess('immich'));
-                document.getElementById("samba-import-btn").addEventListener("click", () => handleImportProcess('samba'));
-
-                // ----- TEST SAMBA CONNECTION -----
-                document.getElementById("samba-test-btn").addEventListener("click", async () => {
-                    const btn = document.getElementById("samba-test-btn");
-                    const statusSpan = document.getElementById("samba-test-status");
-
-                    // Get values from the form
-                    const host = document.getElementById("smb_host").value;
-                    const share = document.getElementById("smb_share").value;
-                    const path = document.getElementById("smb_path").value;
-                    const user = document.getElementById("smb_user").value;
-                    const password = document.getElementById("smb_password").value;
-
-                    // Provide immediate feedback
-                    statusSpan.textContent = "{{ _('Test en cours...') }}";
-                    statusSpan.className = "ml-4 font-medium text-blue-600";
-                    btn.disabled = true;
-
-                    try {
-                        const response = await fetch('/test-samba', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                smb_host: host,
-                                smb_share: share,
-                                smb_path: path,
-                                smb_user: user,
-                                smb_password: password
-                            }),
-                        });
-
-                        const result = await response.json();
-
-                        statusSpan.textContent = result.message;
-                        statusSpan.className = result.success ? "ml-4 font-medium text-green-600" : "ml-4 font-medium text-red-600";
-
-                    } catch (error) {
-                        statusSpan.textContent = "{{ _('Erreur de communication avec le serveur.') }}";
-                        statusSpan.className = "ml-4 font-medium text-red-600";
-                    } finally {
-                        btn.disabled = false;
-                    }
-                });
 
                 // ----- TEST WEATHER API -----
                 const testWeatherBtn = document.getElementById("testWeatherApiKeyBtn");
@@ -4129,37 +3815,6 @@
 
         <script>
             document.addEventListener("DOMContentLoaded", () => {
-                // Fonction pour formater les dates ISO en format lisible
-                function formatDateTime(isoString) {
-                    if (!isoString) return "N/A";
-                    const date = new Date(isoString);
-                    // Options pour un format français lisible
-                    const options = {
-                        year: 'numeric', month: 'short', day: 'numeric',
-                        hour: '2-digit', minute: '2-digit', second: '2-digit',
-                        hour12: false // Format 24h
-                    };
-                    return date.toLocaleString('fr-FR', options);
-                }
-
-                // Fonction générique pour récupérer et afficher le statut d'un worker
-                async function fetchWorkerStatus(workerName, statusManagerId, lastRunId, nextRunId) {
-                    try {
-                        const response = await fetch(`/${workerName}_update_status`);
-                        const data = await response.json();
-
-                        document.getElementById(statusManagerId).textContent = data.status_message;
-                        document.getElementById(lastRunId).textContent = formatDateTime(data.last_run);
-                        document.getElementById(nextRunId).textContent = formatDateTime(data.next_run);
-
-                    } catch (error) {
-                        console.error(`Erreur lors de la récupération du statut ${workerName}:`, error);
-                        document.getElementById(statusManagerId).textContent = "{{ _('Erreur de connexion') }}";
-                        document.getElementById(lastRunId).textContent = "N/A";
-                        document.getElementById(nextRunId).textContent = "N/A";
-                    }
-                }
-
                 // --- Gestion de la résolution ---
                 const resolutionSelector = document.getElementById('resolution-selector');
                 const applyResolutionBtn = document.getElementById('apply-resolution-btn');
@@ -4351,15 +4006,6 @@
                     }
                 }
 
-                // Mise à jour initiale au chargement de la page
-                fetchWorkerStatus("immich", "immich-worker-status-message", "immich-last-update-time", "immich-next-update-time");
-                fetchWorkerStatus("samba", "samba-worker-status-message", "samba-last-update-time", "samba-next-update-time");
-
-                // Mise à jour périodique toutes les 5 secondes
-                setInterval(() => {
-                    fetchWorkerStatus("immich", "immich-worker-status-message", "immich-last-update-time", "immich-next-update-time");
-                    fetchWorkerStatus("samba", "samba-worker-status-message", "samba-last-update-time", "samba-next-update-time");
-                }, 5000); // 5000 ms = 5 secondes
                 fetchAndPopulateResolutions(); // Charger les résolutions au démarrage
                 setInterval(updateSlideshowControlsState, 5000); // Mettre à jour l'état des boutons
                 updateSlideshowControlsState(); // Appel initial
@@ -5057,7 +4703,7 @@
 
                     const btn = document.getElementById("expand-fs-btn");
                     const statusDiv = document.getElementById("expand-fs-status");
-                    const allActionButtons = document.querySelectorAll('.import-button, .system-button, #update-app-btn, #samba-test-btn, #testWeatherApiKeyBtn, #scan-wifi-btn, #toggle-eth0-btn, #clear-logs-btn, #expand-fs-btn');
+                    const allActionButtons = document.querySelectorAll('.import-button, .system-button, #testWeatherApiKeyBtn, #scan-wifi-btn, #toggle-eth0-btn, #clear-logs-btn, #expand-fs-btn');
 
                     statusDiv.innerHTML = ""; // Clear previous messages
 
@@ -5106,131 +4752,6 @@
                 });
             });
 
-            // --- Contrôle Vocal ---
-            async function loadAudioDevices() {
-                console.log("Chargement des périphériques audio...");
-                const select = document.getElementById('voice_control_device_index');
-                if (!select) return;
-
-                const currentValue = "{{ config.get('voice_control_device_index', '') }}";
-                select.innerHTML = `<option value="">{{ _("Chargement des périphériques...") }}</option>`;
-
-                try {
-                    const response = await fetch('/api/audio_devices');
-                    const data = await response.json();
-                    console.log("Périphériques reçus:", data);
-
-                    select.innerHTML = `<option value="">{{ _("Périphérique par défaut") }}</option>`;
-                    if (data.success) {
-                        if (data.devices.length === 0) {
-                            select.innerHTML = `<option value="">{{ _("Aucun microphone trouvé.") }}</option>`;
-                        } else {
-                            data.devices.forEach(device => {
-                                const option = document.createElement('option');
-                                option.value = device.index;
-                                option.textContent = `[${device.index}] ${device.name} (${device.hostapi})`;
-                                if (String(device.index) === currentValue) {
-                                    option.selected = true;
-                                }
-                                select.appendChild(option);
-                            });
-                        }
-                    } else {
-                        // Afficher le message d'erreur spécifique renvoyé par le serveur
-                        const errorMessage = data.message || "{{ _('Erreur chargement') }}";
-                        select.innerHTML = `<option value="">${errorMessage}</option>`;
-                        console.error("Erreur API Audio:", errorMessage);
-                    }
-                } catch (error) {
-                    // Ce bloc est pour les erreurs réseau (ex: serveur non joignable)
-                    select.innerHTML = `<option value="">{{ _("Erreur de communication avec le serveur") }}</option>`;
-                }
-            }
-
-            async function fetchVoiceControlStatus() {
-                const statusSpan = document.getElementById('voice-control-status-message');
-                if (!statusSpan) return;
-
-                try {
-                    const response = await fetch('/api/voice_control/status');
-                    const data = await response.json();
-                    statusSpan.textContent = data.message || "{{ _('Statut inconnu') }}";
-                    if (data.status === 'running' || data.status === 'listening') {
-                        statusSpan.className = 'font-mono text-green-600';
-                    } else if (data.status === 'error') {
-                        statusSpan.className = 'font-mono text-red-600';
-                    } else {
-                        statusSpan.className = 'font-mono text-gray-500';
-                    }
-                } catch (error) {
-                    statusSpan.textContent = i18n.connectionError;
-                    statusSpan.className = 'font-mono text-red-600';
-                }
-            }
-
-            document.getElementById('refresh-audio-devices-btn')?.addEventListener('click', loadAudioDevices);
-            setInterval(fetchVoiceControlStatus, 5000);
-
-            // --- NOUVEAU: Gestion du toggle pour le contrôle vocal ---
-            const voiceControlToggle = document.getElementById('voice_control_enabled');
-            if (voiceControlToggle) {
-                voiceControlToggle.addEventListener('change', async (event) => {
-                    const isEnabled = event.target.checked;
-
-                    // Afficher un retour visuel immédiat
-                    const statusSpan = document.getElementById('voice-control-status-message');
-                    statusSpan.textContent = isEnabled ? "{{ _('Activation en cours...') }}" : "{{ _('Désactivation en cours...') }}";
-                    statusSpan.className = 'font-mono text-blue-600';
-
-                    try {
-                        const response = await fetch('/api/voice_control/toggle', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ enabled: isEnabled })
-                        });
-                        const result = await response.json();
-                        showToast(result.message); // Affiche la notification globale
-                        fetchVoiceControlStatus(); // Met à jour le statut immédiatement
-                    } catch (error) {
-                        showToast(i18n.commErrorServer, 5000);
-                        fetchVoiceControlStatus(); // Met à jour le statut pour refléter l'échec
-                    }
-                });
-            }
-
-            // --- Diagnostic Audio ---
-            const runDiagnosticsBtn = document.getElementById('run-audio-diagnostics-btn');
-            const diagnosticsContainer = document.getElementById('audio-diagnostics-results-container');
-            const diagnosticsPre = document.getElementById('audio-diagnostics-results');
-
-            if (runDiagnosticsBtn) {
-                runDiagnosticsBtn.addEventListener('click', async () => {
-                    runDiagnosticsBtn.disabled = true; // Correction: le bouton doit être désactivé
-                    runDiagnosticsBtn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i>${i18n.diagnosticsInProgress}`;
-                    diagnosticsContainer.classList.remove('hidden');
-                    diagnosticsPre.textContent = i18n.pleaseWait;
-
-                    try {
-                        const response = await fetch('/api/audio_diagnostics');
-                        const data = await response.json();
-
-                        if (data.success) {
-                            let output = "--- lsusb (Périphériques USB) ---\n";
-                            output += data.diagnostics.lsusb || 'N/A';
-                            output += "\n\n--- arecord -l (Périphériques de capture audio) ---\n";
-                            output += data.diagnostics.arecord || 'N/A';
-                            diagnosticsPre.textContent = output;
-                        } else {
-                            diagnosticsPre.textContent = "{{ _('Erreur lors de la récupération des diagnostics.') }}";
-                        }
-                    } catch (error) {
-                        diagnosticsPre.textContent = i18n.commErrorServer;
-                    } finally {
-                        runDiagnosticsBtn.disabled = false; // Correction: le bouton doit être réactivé
-                        runDiagnosticsBtn.innerHTML = `<i class="fas fa-play-circle mr-2"></i>${i18n.runDiagnostics}`;
-                    }
-                });
-            }
         </script>
 </body>
 </html>

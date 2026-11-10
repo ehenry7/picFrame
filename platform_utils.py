@@ -1,5 +1,5 @@
 """
-platform_utils.py — OS-aware hardware abstraction for Pimmich.
+platform_utils.py — OS-aware hardware abstraction for PictureFrame.
 
 This module provides shared paths, platform detection, and platform-specific
 operations. Hardware operations that are unavailable on the current platform
@@ -59,7 +59,7 @@ def get_pid_file(name: str) -> Path:
     """Return a PID file path in the temp directory.
 
     Args:
-        name: e.g. 'pimmich_slideshow', 'pimmich_voice_control', 'pimmich_app'
+        name: e.g. 'pimmich_slideshow', 'pimmich_app'
     """
     return get_temp_dir() / f"{name}.pid"
 

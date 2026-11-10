@@ -15,6 +15,7 @@ import collections
 import math
 import queue
 import threading
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 import json
 import qrcode
@@ -159,12 +160,14 @@ def update_status_file(new_fields):
         logger.info(f"Erreur écriture fichier statut : {e}")
 
 def signal_handler_next(signum, frame):
-    global next_photo_requested
+    global next_photo_requested, previous_photo_requested
     next_photo_requested = True
+    previous_photo_requested = False
 
 def signal_handler_previous(signum, frame):
-    global previous_photo_requested
+    global next_photo_requested, previous_photo_requested
     previous_photo_requested = True
+    next_photo_requested = False
 
 def signal_handler_pause_toggle(signum, frame):
     global paused
@@ -176,15 +179,15 @@ def handle_platform_commands():
     global next_photo_requested, previous_photo_requested
     for command in consume_slideshow_commands():
         if command == "next":
-            next_photo_requested = True
+            signal_handler_next(None, None)
         elif command == "previous":
-            previous_photo_requested = True
+            signal_handler_previous(None, None)
         elif command == "toggle_pause":
             signal_handler_pause_toggle(None, None)
 
 # NOUVELLE FONCTION POUR GERER LES EVENEMENTS (QUIT, TACTILE)
 def handle_slideshow_events(screen_width):
-    """Gère les événements Pygame comme QUIT et les clics de souris pour le contrôle tactile."""
+    """Handle window, keyboard and touch controls."""
     global paused, next_photo_requested, previous_photo_requested
     if not IS_LINUX:
         handle_platform_commands()
@@ -192,21 +195,36 @@ def handle_slideshow_events(screen_width):
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
+        elif event.type == pygame.KEYDOWN:
+            from utils import slideshow_controls
+            if event.key in (pygame.K_LEFT, pygame.K_RIGHT, pygame.K_SPACE):
+                slideshow_controls.reveal()
+                if event.key == pygame.K_LEFT:
+                    signal_handler_previous(None, None)
+                elif event.key == pygame.K_RIGHT:
+                    signal_handler_next(None, None)
+                elif not getattr(event, "repeat", False):
+                    signal_handler_pause_toggle(None, None)
         # --- NOUVEAU : Gestion des clics pour le contrôle tactile ---
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            # On ne gère que le clic gauche (bouton 1), qui correspond à un appui sur l'écran tactile
-            if event.button == 1:
-                pos = pygame.mouse.get_pos()
-                if pos[0] < screen_width / 3:
-                    logger.info("📸 Zone gauche de l'écran touchée -> Photo précédente")
-                    previous_photo_requested = True
-                elif pos[0] > screen_width * 2 / 3:
-                    logger.info("📸 Zone droite de l'écran touchée -> Photo suivante")
-                    next_photo_requested = True
-                else:
-                    logger.info("📸 Zone centrale de l'écran touchée -> Pause/Reprise")
-                    paused = not paused
-                    update_status_file({"paused": paused})
+        elif event.type in (pygame.MOUSEBUTTONDOWN, pygame.FINGERDOWN):
+            from utils import slideshow_controls
+            surface = pygame.display.get_surface()
+            if surface is None:
+                continue
+            height = surface.get_height()
+            if event.type == pygame.FINGERDOWN:
+                pos = (event.x * screen_width, event.y * height)
+            elif event.button == 1 and not getattr(event, "touch", False):
+                pos = event.pos
+            else:
+                continue
+            action = slideshow_controls.click(pos, screen_width, height)
+            if action == "previous":
+                signal_handler_previous(None, None)
+            elif action == "next":
+                signal_handler_next(None, None)
+            elif action == "pause":
+                signal_handler_pause_toggle(None, None)
 
 def play_background_music(filename):
     """Charge et joue une musique de fond en boucle."""
@@ -363,8 +381,39 @@ def render_pan_zoom_frame(base_surface, screen_width, screen_height, start_offse
     return scaled.subsurface((x, y, screen_width, screen_height))
 
 
+def read_slideshow_photo(photo_path, screen_width, screen_height):
+    with Image.open(photo_path) as image:
+        return fit_photo_to_screen(image, screen_width, screen_height)
+
+
+def load_slideshow_photo(screen, photo_path, screen_width, screen_height, loader):
+    """Keep processing navigation while the worker decodes and resizes a photo."""
+    future = loader.submit(read_slideshow_photo, photo_path, screen_width, screen_height)
+    background = screen.copy()
+    clock = pygame.time.Clock()
+    try:
+        while True:
+            handle_slideshow_events(screen_width)
+            if next_photo_requested or previous_photo_requested:
+                return None
+            if future.done():
+                return future.result()
+            screen.blit(background, (0, 0))
+            draw_pause_icon(screen, screen_width, screen_height)
+            pygame.display.flip()
+            clock.tick(60)
+    finally:
+        if not future.cancel() and (next_photo_requested or previous_photo_requested):
+            def report_discarded_load(completed):
+                error = completed.exception()
+                if error is not None:
+                    logger.error("Skipped photo failed to load: %s", photo_path,
+                                 exc_info=(type(error), error, error.__traceback__))
+            future.add_done_callback(report_discarded_load)
+
+
 # New function to perform a transition between two images
-def perform_transition(screen, old_image_surface, new_image_path, duration, screen_width, screen_height, main_font, config, transition_type, initial_image=None):
+def perform_transition(screen, old_image_surface, new_image_path, duration, screen_width, screen_height, main_font, config, transition_type, initial_image=None, prepared_image=None):
     if transition_type == "random":
         transition_type = random.choice(("fade", "slide_left", "slide_right", "slide_up", "slide_down"))
     clock = pygame.time.Clock()
@@ -381,11 +430,11 @@ def perform_transition(screen, old_image_surface, new_image_path, duration, scre
 
     # Load and prepare new image
     try:
-        new_pil_image = Image.open(new_image_path)
+        new_pil_image = (prepared_image if prepared_image is not None
+                         else read_slideshow_photo(new_image_path, screen_width, screen_height))
     except (FileNotFoundError, Image.UnidentifiedImageError) as e:
         logger.info(f"[Transition] ERREUR: Impossible de charger l'image '{new_image_path}': {e}")
         return None # Retourner None pour signaler l'échec
-    new_pil_image = fit_photo_to_screen(new_pil_image, screen_width, screen_height)
     transition_image = initial_image if initial_image is not None else new_pil_image
     new_surface_scaled = pygame.image.fromstring(
         transition_image.tobytes(), transition_image.size, transition_image.mode
@@ -406,7 +455,11 @@ def perform_transition(screen, old_image_surface, new_image_path, duration, scre
         new_surface_small = pygame.transform.scale(new_surface_scaled, (small_width, small_height)).convert()
         temp_surface_small = pygame.Surface((small_width, small_height)).convert()
 
-    for i in range(num_frames + 1):
+    i = 0
+    while i <= num_frames:
+        handle_slideshow_events(screen_width)
+        if next_photo_requested or previous_photo_requested:
+            return new_pil_image
         progress = i / num_frames # 0.0 to 1.0
 
         if transition_type == "fade":
@@ -444,13 +497,17 @@ def perform_transition(screen, old_image_surface, new_image_path, duration, scre
         
         # Draw overlay during transition
         screen.blit(overlay_surface, (0, 0))
+        draw_pause_icon(screen, screen_width, screen_height)
 
         pygame.display.flip()
         clock.tick(fps)
+        if not paused:
+            i += 1
 
     # Ensure the new image is fully blitted at the end of the transition
     screen.blit(new_surface_scaled, (0, 0))
     draw_overlay(screen, screen_width, screen_height, config, main_font, photo_metadata)
+    draw_pause_icon(screen, screen_width, screen_height)
     pygame.display.flip()
 
     return new_pil_image
@@ -459,7 +516,7 @@ def perform_transition(screen, old_image_surface, new_image_path, duration, scre
 def is_within_active_hours(config):
     now = datetime.now()
     try:
-        if now.weekday() >= 5:
+        if now.weekday() in (4, 5):
             start = config.get("active_start_weekend", config.get("active_start", "07:00"))
             end = config.get("active_end_weekend", config.get("active_end", "22:00"))
         else:
@@ -726,14 +783,8 @@ def load_icon(icon_name, size, is_weather_icon=True):
     return None
 
 def draw_pause_icon(screen, screen_width, screen_height):
-    """Affiche une icône de pause en bas au centre de l'écran."""
-    icon_size = 50 # Taille de l'icône de pause réduite
-    # On utilise load_icon qui gère le cache et le chemin static/icons
-    pause_icon = load_icon("pause", icon_size, is_weather_icon=False)
-    if pause_icon:
-        # Positionnée en bas au centre avec une marge de 40 pixels (10 + 30) du bord
-        rect = pause_icon.get_rect(centerx=screen_width // 2, bottom=screen_height - 40)
-        screen.blit(pause_icon, rect)
+    from utils import slideshow_controls
+    slideshow_controls.draw(screen, screen_width, screen_height, paused)
 
 def get_path_to_display(photo_path_obj, source, filter_states):
     """
@@ -1379,6 +1430,11 @@ def display_title_slide(screen, screen_width, screen_height, title, duration, co
     start_sleep = time.time()
     while time.time() - start_sleep < duration:
         handle_slideshow_events(screen_width)
+        if next_photo_requested or previous_photo_requested:
+            return
+        screen.blit(temp_surface, (0, 0))
+        draw_pause_icon(screen, screen_width, screen_height)
+        pygame.display.flip()
         time.sleep(0.1)
 
 # Fonction pour afficher une image et l'heure                        
@@ -1403,9 +1459,9 @@ def display_photo_with_pan_zoom(screen, pil_image, screen_width, screen_height, 
         handle_slideshow_events(screen_width)
         if next_photo_requested or previous_photo_requested: return
 
-        ticks = pygame.time.get_ticks()
-        if (ticks // 500) % 2 == 0:
-            draw_pause_icon(screen, screen_width, screen_height)
+        screen.blit(pygame_image_base, (0, 0))
+        draw_overlay(screen, screen_width, screen_height, config, main_font, photo_metadata)
+        draw_pause_icon(screen, screen_width, screen_height)
 
         pygame.display.flip()
         time.sleep(0.1) # Évite de surcharger le CPU pendant la pause
@@ -1420,6 +1476,7 @@ def display_photo_with_pan_zoom(screen, pil_image, screen_width, screen_height, 
             # Affichage statique : blit une fois et attendre la durée
             screen.blit(pygame_image_base, (0, 0))
             draw_overlay(screen, screen_width, screen_height, config, main_font, photo_metadata)
+            draw_pause_icon(screen, screen_width, screen_height)
             pygame.display.flip()
             # Boucle d'attente pour rester réactif aux signaux
             start_sleep = time.time()
@@ -1427,6 +1484,10 @@ def display_photo_with_pan_zoom(screen, pil_image, screen_width, screen_height, 
                 handle_slideshow_events(screen_width)
 
                 if next_photo_requested or previous_photo_requested: return
+                screen.blit(pygame_image_base, (0, 0))
+                draw_overlay(screen, screen_width, screen_height, config, main_font, photo_metadata)
+                draw_pause_icon(screen, screen_width, screen_height)
+                pygame.display.flip()
                 was_paused = False
                 while paused:
                     config = load_config() # Recharger pour réaction immédiate au bouton
@@ -1438,8 +1499,7 @@ def display_photo_with_pan_zoom(screen, pil_image, screen_width, screen_height, 
                     screen.blit(pygame_image_base, (0, 0))
                     draw_overlay(screen, screen_width, screen_height, config, main_font, photo_metadata)
 
-                    ticks = pygame.time.get_ticks()
-                    if (ticks // 500) % 2 == 0: draw_pause_icon(screen, screen_width, screen_height)
+                    draw_pause_icon(screen, screen_width, screen_height)
 
                     pygame.display.flip()
                     time.sleep(0.1)
@@ -1458,6 +1518,7 @@ def display_photo_with_pan_zoom(screen, pil_image, screen_width, screen_height, 
             overlay_updated = time.monotonic()
             screen.blit(initial_frame, (0, 0))
             screen.blit(overlay, (0, 0))
+            draw_pause_icon(screen, screen_width, screen_height)
             pygame.display.flip()
 
             clock = pygame.time.Clock()
@@ -1486,14 +1547,12 @@ def display_photo_with_pan_zoom(screen, pil_image, screen_width, screen_height, 
                     draw_overlay(overlay, screen_width, screen_height, config, main_font, photo_metadata)
                     overlay_updated = now
                 screen.blit(overlay, (0, 0))
+                draw_pause_icon(screen, screen_width, screen_height)
 
                 # Gestion de la pause
                 if paused:
                     config = load_config() # Recharger pendant la pause de l'animation
                     overlay_updated = float("-inf")
-                    ticks = pygame.time.get_ticks()
-                    if (ticks // 500) % 2 == 0:
-                        draw_pause_icon(screen, screen_width, screen_height)
 
                     pygame.display.flip()
                     time.sleep(0.1)
@@ -1700,7 +1759,7 @@ def display_video(screen, video_path, screen_width, screen_height, config, main_
             if MPV_LOG_FILE.exists():
                 try:
                     with MPV_LOG_FILE.open("r", encoding="utf-8") as f:
-                        # On ne prend que les 50 dernières lignes pour ne pas saturer le log Pimmich
+                        # On ne prend que les 50 dernières lignes pour ne pas saturer le log PictureFrame
                         log_content = "".join(f.readlines()[-50:])
                 except Exception: 
                     pass
@@ -1729,6 +1788,7 @@ def display_video(screen, video_path, screen_width, screen_height, config, main_
 def start_slideshow():
     pi_model = get_pi_model()
     global _current_background_music
+    photo_loader = ThreadPoolExecutor(max_workers=2, thread_name_prefix="slideshow-photo")
     try:
         logger.debug(f"📸 Starting slideshow initialization.")
         config = load_config()
@@ -1934,18 +1994,12 @@ def start_slideshow():
                     small_font = pygame.font.SysFont("Arial", 32)
 
                 # --- Logo ---
-                logo_surface, logo_height, logo_spacing = None, 0, 30
-                try:
-                    logo_path = Path(BASE_DIR) / 'static' / 'pimmich_logo.png'
-                    if logo_path.exists():
-                        logo_img = pygame.image.load(str(logo_path)).convert_alpha()
-                        original_width, original_height = logo_img.get_size()
-                        new_width = 300
-                        new_height = int(new_width * (original_height / original_width))
-                        logo_surface = pygame.transform.smoothscale(logo_img, (new_width, new_height))
-                        logo_height = logo_surface.get_height()
-                except Exception as e:
-                    logger.info(f"Erreur chargement du logo : {e}")
+                logo_surface = message_font.render("PictureFrame", True, (67, 165, 214))
+                if logo_surface.get_width() > SCREEN_WIDTH - 40:
+                    width = max(1, SCREEN_WIDTH - 40)
+                    height = max(1, int(logo_surface.get_height() * width / logo_surface.get_width()))
+                    logo_surface = pygame.transform.smoothscale(logo_surface, (width, height))
+                logo_height, logo_spacing = logo_surface.get_height(), 30
 
                 # --- Génération du QR Code ---
                 qr_surface, qr_height, qr_spacing = None, 0, 30
@@ -2085,10 +2139,10 @@ def start_slideshow():
                     current_pil_image = None # Initialize to None to ensure it's always defined
                     pan_zoom_plan = None
                     try:
-                        with Image.open(photo_path) as image:
-                            current_pil_image = fit_photo_to_screen(image, SCREEN_WIDTH, SCREEN_HEIGHT)
+                        current_pil_image = load_slideshow_photo(
+                            screen, photo_path, SCREEN_WIDTH, SCREEN_HEIGHT, photo_loader)
                         initial_image = None
-                        if config.get("pan_zoom_enabled", False):
+                        if current_pil_image is not None and config.get("pan_zoom_enabled", False):
                             pan_zoom_plan = prepare_pan_zoom(current_pil_image, SCREEN_WIDTH, SCREEN_HEIGHT, config)
                             base_image, start_offset, end_offset, start_zoom, end_zoom = pan_zoom_plan
                             base_surface = pygame.image.fromstring(base_image.tobytes(), base_image.size, base_image.mode)
@@ -2097,8 +2151,9 @@ def start_slideshow():
                             initial_image = Image.frombytes("RGB", (SCREEN_WIDTH, SCREEN_HEIGHT),
                                                             pygame.image.tostring(initial_frame, "RGB"))
                         # Perform transition if it's not the first photo and transition is enabled
-                        if previous_photo_surface is not None and transition_enabled and transition_duration > 0 and transition_type != "none": # Added transition_type check
-                            current_pil_image = perform_transition(screen, previous_photo_surface, photo_path, transition_duration, SCREEN_WIDTH, SCREEN_HEIGHT, main_font_loaded, config, transition_type, initial_image=initial_image)
+                        handle_slideshow_events(SCREEN_WIDTH)
+                        if current_pil_image is not None and not (next_photo_requested or previous_photo_requested) and previous_photo_surface is not None and transition_enabled and transition_duration > 0 and transition_type != "none":
+                            current_pil_image = perform_transition(screen, previous_photo_surface, photo_path, transition_duration, SCREEN_WIDTH, SCREEN_HEIGHT, main_font_loaded, config, transition_type, initial_image=initial_image, prepared_image=current_pil_image)
                             # Si la transition a échoué (ex: fichier non trouvé), on passe au suivant
                             if current_pil_image is None:
                                 previous_photo_surface = None # Réinitialiser pour ne pas tenter de transitionner depuis une surface vide
@@ -2111,7 +2166,9 @@ def start_slideshow():
                         playlist_index += 1
                         continue
 
-                    if current_pil_image: # Only proceed if image was successfully loaded
+                    if next_photo_requested or previous_photo_requested:
+                        previous_photo_surface = screen.copy()
+                    elif current_pil_image: # Only proceed if image was successfully loaded
                         display_photo_with_pan_zoom(screen, current_pil_image, SCREEN_WIDTH, SCREEN_HEIGHT, config, main_font_loaded, photo_path, pan_zoom_plan=pan_zoom_plan)
                         previous_photo_surface = screen.copy()
                     else:
@@ -2144,6 +2201,7 @@ def start_slideshow():
         logger.info(f"FATAL ERROR IN SLIDESHOW: {e}")
         traceback.print_exc() # Print full traceback for any unhandled error
     finally:
+        photo_loader.shutdown(wait=False, cancel_futures=True)
         # --- MODIFICATION SIGALOU 30/01/2026 ---
         # La gestion de l'alimentation de l'écran est maintenant centralisée dans le `slideshow_manager`.
         # On retire l'appel ici pour éviter les doubles appels et les conditions de concurrence

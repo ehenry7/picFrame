@@ -1,10 +1,10 @@
-# Icônes Météo pour Pimmich
+# Icônes Météo pour PictureFrame
 
 Ce dossier est destiné à contenir les icônes météo utilisées par le diaporama.
 
 ## Comment obtenir les icônes ?
 
-Pimmich utilise les codes d'icônes de l'API OpenWeatherMap. Vous devez télécharger les images correspondantes et les placer dans ce dossier.
+PictureFrame utilise les codes d'icônes de l'API OpenWeatherMap. Vous devez télécharger les images correspondantes et les placer dans ce dossier.
 
 1.  **Rendez-vous sur la page des conditions météorologiques d'OpenWeatherMap :**
     [https://openweathermap.org/weather-conditions](https://openweathermap.org/weather-conditions)

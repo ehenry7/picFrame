@@ -1,16 +1,16 @@
-# ❓ Frequently Asked Questions (FAQ) - Pimmich
+# ❓ Frequently Asked Questions (FAQ) - PictureFrame
 
-Here is a list of frequently asked questions to help you use and troubleshoot Pimmich.
+Here is a list of frequently asked questions to help you use and troubleshoot PictureFrame.
 
 ---
 
 ### General Questions
 
-**Q: What is Pimmich?**
+**Q: What is PictureFrame?**
 
-**A:** Pimmich is software that turns a Raspberry Pi into a smart digital photo frame. It can display photos from an [Immich](https://immich.app/) server, a USB stick, a network share (Samba/Windows), a smartphone, or even via the Telegram messaging app.
+**A:** PictureFrame is software that turns a Raspberry Pi into a smart digital photo frame. It can display photos from an [Immich](https://immich.app/) server, a USB stick, or a smartphone.
 
-**Q: What do I need to use Pimmich?**
+**Q: What do I need to use PictureFrame?**
 
 **A:** You will need:
 - A Raspberry Pi (model 3, 4, or 5 recommended) with its power supply.
@@ -22,7 +22,7 @@ Here is a list of frequently asked questions to help you use and troubleshoot Pi
 
 ### Installation and Configuration
 
-**Q: How do I install Pimmich?**
+**Q: How do I install PictureFrame?**
 
 **A:** The installation is designed to be simple:
 1. Clone the GitHub repository: `git clone https://github.com/gotenash/pimmich.git`
@@ -45,7 +45,7 @@ The script takes care of installing all dependencies and configuring the system 
 1. Log in to your Immich web interface.
 2. Go to "Account Settings" (via your profile icon).
 3. In the "API Keys" section, click "Generate New API Key".
-4. Give it a name (e.g., "Pimmich") and copy the generated key.
+4. Give it a name (e.g., "PictureFrame") and copy the generated key.
 
 *Tip:* For better security, create a dedicated Immich user for the frame with limited access to a single shared album.
 
@@ -53,21 +53,13 @@ The script takes care of installing all dependencies and configuring the system 
 
 ### Features
 
-**Q: How does the Telegram feature work?**
-
-**A:** It allows you and your guests to send photos directly to the frame.
-1.  **Create a bot** on Telegram by talking to `@BotFather`. It will give you a **Token**.
-2.  **Get your user ID** on Telegram by talking to a bot like `@userinfobot`.
-3.  Enter both pieces of information in the "Telegram" tab in Pimmich.
-4.  You can then create secure, temporary invitation links for your loved ones.
-
 **Q: What is the "Favorites" tab for?**
 
 **A:** By marking a photo as a favorite (using the star icon <i class="fas fa-star"></i> in the "Preview" tab), you increase its display frequency in the slideshow. You can adjust the "boost factor" in the "Display" tab to make them appear more or less often.
 
 **Q: What is the "Postcard" effect?**
 
-**A:** It's a filter that adds a white border and a space for a caption (if you add one via the interface) to your photos, giving them a postcard look. Photos sent via Telegram use this effect by default for a more personal and warm touch.
+**A:** It's a filter that adds a white border and a space for a caption (if you add one via the interface) to your photos, giving them a postcard look for a more personal and warm touch.
 
 ---
 
@@ -87,9 +79,9 @@ The script takes care of installing all dependencies and configuring the system 
 
 **A:** Sometimes, if an Ethernet cable is plugged in, the system gives it priority. In the **System** tab, you can try to temporarily disable the "**Wired Interface (eth0)**" to force the system to use Wi-Fi exclusively.
 
-**Q: How do I update Pimmich?**
+**Q: How do I update PictureFrame?**
 
-**A:** Go to the **System** tab and click the "**Check for updates**" button. Pimmich will download the latest version from GitHub and restart automatically.
+**A:** Remote updates from the web interface are not supported. Stop the app, back up configuration, and update the code manually using Git. Review changes and dependencies before restarting; local changes must be preserved.
 
 **Q: I changed a setting, but nothing changes on the slideshow.**
 

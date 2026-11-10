@@ -1,16 +1,16 @@
-# ❓ Foire Aux Questions (FAQ) - Pimmich
+# ❓ Foire Aux Questions (FAQ) - PictureFrame
 
-Voici une liste de questions fréquemment posées pour vous aider à utiliser et dépanner Pimmich.
+Voici une liste de questions fréquemment posées pour vous aider à utiliser et dépanner PictureFrame.
 
 ---
 
 ### Questions Générales
 
-**Q : Qu'est-ce que Pimmich ?**
+**Q : Qu'est-ce que PictureFrame ?**
 
-**R :** Pimmich est un logiciel qui transforme un Raspberry Pi en un cadre photo numérique intelligent. Il peut afficher des photos depuis un serveur [Immich](https://immich.app/), une clé USB, un partage réseau (Samba/Windows), un smartphone ou même via l'application de messagerie Telegram.
+**R :** PictureFrame est un logiciel qui transforme un Raspberry Pi en un cadre photo numérique intelligent. Il peut afficher des photos depuis un serveur [Immich](https://immich.app/), une clé USB ou un smartphone.
 
-**Q : De quoi ai-je besoin pour utiliser Pimmich ?**
+**Q : De quoi ai-je besoin pour utiliser PictureFrame ?**
 
 **R :** Il vous faut :
 - Un Raspberry Pi (modèle 3, 4 ou 5 recommandé) avec son alimentation.
@@ -22,7 +22,7 @@ Voici une liste de questions fréquemment posées pour vous aider à utiliser et
 
 ### Installation et Configuration
 
-**Q : Comment installer Pimmich ?**
+**Q : Comment installer PictureFrame ?**
 
 **R :** L'installation est conçue pour être simple :
 1. Clonez le dépôt GitHub : `git clone https://github.com/gotenash/pimmich.git`
@@ -51,7 +51,7 @@ Le script est conçu pour être relancé sans risque. Il détectera l'absence du
 1. Connectez-vous à votre interface web Immich.
 2. Allez dans "Paramètres du compte" (via votre icône de profil).
 3. Dans la section "Clés API", cliquez sur "Générer une nouvelle clé API".
-4. Donnez-lui un nom (ex: "Pimmich") et copiez la clé générée.
+4. Donnez-lui un nom (ex: "PictureFrame") et copiez la clé générée.
 
 *Conseil :* Pour plus de sécurité, créez un utilisateur Immich dédié pour le cadre avec un accès limité à un seul album partagé.
 
@@ -59,41 +59,13 @@ Le script est conçu pour être relancé sans risque. Il détectera l'absence du
 
 ### Fonctionnalités
 
-**Q : Comment fonctionne la fonction Telegram ?**
-
-**R :** Elle vous permet, ainsi qu'à des invités, d'envoyer des photos directement sur le cadre.
-1.  **Créez un bot** sur Telegram en parlant à `@BotFather`. Il vous donnera un **Token**.
-2.  **Obtenez votre ID utilisateur** Telegram en parlant à un bot comme `@userinfobot`.
-3.  Entrez ces deux informations dans l'onglet "Telegram" de Pimmich.
-4.  Vous pouvez ensuite créer des liens d'invitation sécurisés et temporaires pour vos proches.
-
 **Q : À quoi sert l'onglet "Favoris" ?**
 
 **R :** En marquant une photo comme favorite (via l'icône étoile <i class="fas fa-star"></i> dans l'onglet "Aperçu"), vous augmentez sa fréquence d'apparition dans le diaporama. Vous pouvez régler le "facteur de boost" dans l'onglet "Affichage" pour qu'elles apparaissent plus ou moins souvent.
 
 **Q : Qu'est-ce que l'effet "Carte Postale" ?**
 
-**R :** C'est un filtre qui ajoute un cadre blanc et un espace pour une légende (si vous en ajoutez une via l'interface) à vos photos, leur donnant un aspect de carte postale. Les photos envoyées via Telegram utilisent cet effet par défaut pour un rendu plus personnel et chaleureux.
-
-**Q : Quelles sont les commandes vocales disponibles ?**
-
-**R :** Une fois le contrôle vocal activé, commencez toutes vos commandes par le mot-clé **"Cadre Magique"**. Voici les commandes principales :
-
-*   **Contrôle du Diaporama :**
-    *   *"photo suivante"* / *"photo précédente"*
-    *   *"pause"* / *"lecture"* (pour mettre en pause ou reprendre)
-*   **Gestion de l'Affichage :**
-    *   *"règle la durée à 15 secondes"*
-    *   *"affiche pendant 30 secondes"*
-*   **Gestion des Playlists & Sources :**
-    *   *"lance la playlist Vacances"*
-    *   *"afficher les cartes postales"* (lance un diaporama des photos Telegram)
-    *   *"activer la source Samba"* / *"désactiver la source USB"*
-*   **Contrôle du Système :**
-    *   *"passer en mode veille"* (éteint l'écran)
-    *   *"réveiller le cadre"* (rallume l'écran)
-    *   *"éteindre le cadre"* (éteint complètement le Raspberry Pi)
-    *   *"revenir au diaporama principal"* (quitte une playlist en cours et relance le diaporama normal)
+**R :** C'est un filtre qui ajoute un cadre blanc et un espace pour une légende (si vous en ajoutez une via l'interface) à vos photos, leur donnant un aspect de carte postale pour un rendu plus personnel et chaleureux.
 
 ---
 
@@ -107,7 +79,7 @@ Le script est conçu pour être relancé sans risque. Il détectera l'absence du
 
 **Q : Mon écran ne s'éteint pas complètement, il reste rétro-éclairé. Que faire ?**
 
-**R :** Certains écrans ne répondent pas correctement à la commande de mise en veille logicielle (DPMS). La solution la plus fiable est d'utiliser une prise connectée Wi-Fi pour couper physiquement l'alimentation de l'écran. Pimmich intègre une fonctionnalité pour piloter ces prises. Allez dans l'onglet `Affichage`, activez l'option "Prise Connectée" et renseignez les URLs pour allumer et éteindre votre prise. De nombreuses prises (Tasmota, Shelly, Kasa, etc.) peuvent être contrôlées par de simples requêtes HTTP.
+**R :** Certains écrans ne répondent pas correctement à la commande de mise en veille logicielle (DPMS). La solution la plus fiable est d'utiliser une prise connectée Wi-Fi pour couper physiquement l'alimentation de l'écran. PictureFrame intègre une fonctionnalité pour piloter ces prises. Allez dans l'onglet `Affichage`, activez l'option "Prise Connectée" et renseignez les URLs pour allumer et éteindre votre prise. De nombreuses prises (Tasmota, Shelly, Kasa, etc.) peuvent être contrôlées par de simples requêtes HTTP.
 
 **Q : Les vidéos ne sont pas fluides ou ne s'affichent pas. Que faire ?**
 
@@ -117,9 +89,9 @@ Le script est conçu pour être relancé sans risque. Il détectera l'absence du
 
 **R :** Parfois, si un câble Ethernet est branché, le système lui donne la priorité. Dans l'onglet **Système**, vous pouvez essayer de désactiver temporairement l'interface "**Interface Filaire (eth0)**" pour forcer le système à utiliser exclusivement le Wi-Fi.
 
-**Q : Comment mettre à jour Pimmich ?**
+**Q : Comment mettre à jour PictureFrame ?**
 
-**R :** Allez dans l'onglet **Système** et cliquez sur le bouton "**Vérifier les mises à jour**". Pimmich se chargera de télécharger la dernière version depuis GitHub et de redémarrer automatiquement.
+**R :** Les mises à jour à distance depuis l'interface web ne sont pas prises en charge. Arrêtez l'application, sauvegardez la configuration et mettez le code à jour manuellement avec Git. Vérifiez les changements et les dépendances avant de redémarrer, en préservant vos modifications locales.
 
 **Q : J'ai modifié une configuration mais rien ne change sur le diaporama.**
 

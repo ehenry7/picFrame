@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Ce script est le point d'entrée principal de Pimmich, géré par Sway.
+# Ce script est le point d'entrée principal de PictureFrame, géré par Sway.
 # Il assure qu'une seule instance de l'application est en cours et gère les redémarrages.
 
 # Code de sortie spécial pour demander un redémarrage
@@ -24,12 +24,7 @@ cd "$(dirname "$0")" || exit 1
 mkdir -p logs
 
 cleanup() {
-    echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 🧹 Nettoyage des processus Pimmich existants..." >> logs/pimmich.log
-    # Tuer le processus de contrôle vocal s'il est en cours
-    if [ -f /tmp/pimmich_voice_control.pid ]; then
-        pkill -F /tmp/pimmich_voice_control.pid 2>/dev/null || true
-        rm -f /tmp/pimmich_voice_control.pid
-    fi
+    echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 🧹 Nettoyage des processus PictureFrame existants..." >> logs/pimmich.log
     # Tuer le processus du diaporama s'il est en cours
     if [ -f /tmp/pimmich_slideshow.pid ]; then
         pkill -F /tmp/pimmich_slideshow.pid 2>/dev/null || true
@@ -48,7 +43,7 @@ while true; do
     cleanup
 
 		echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 ================================================================" >> logs/pimmich.log
-		echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 🚀 Lancement de l'application Pimmich... 🚀🚀🚀🚀🚀🚀🚀🚀🚀" >> logs/pimmich.log
+		echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 🚀 Lancement de l'application PictureFrame... 🚀🚀🚀🚀🚀🚀🚀🚀🚀" >> logs/pimmich.log
 		echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 ================================================================" >> logs/pimmich.log
     
     # Vérifier et activer l'environnement virtuel

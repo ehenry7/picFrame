@@ -1,12 +1,16 @@
-# 🖼️ Pimmich – Cadre photo connecté intelligent
+# 🖼️ PictureFrame – Cadre photo connecté intelligent
 
-Pimmich est une application Python conçue pour transformer un Raspberry Pi en un cadre photo numérique intelligent et personnalisable. Il peut afficher des photos depuis de multiples sources, être contrôlé à la voix, et bien plus encore.
+PictureFrame est une application Python conçue pour transformer un Raspberry Pi en un cadre photo numérique intelligent et personnalisable. Il peut afficher des photos depuis de multiples sources et être contrôlé depuis son interface web.
 
-<img src="static/pimmich_logo.png" alt="Pimmich Logo" width="300" style="display: block; margin: auto;">
+PictureFrame est un fork de [Pimmich](https://github.com/gotenash/pimmich).
+Les noms internes historiques (script de démarrage, fichiers de statut, journaux,
+site NGINX et préfixe EXIF) sont conservés pour la compatibilité des installations.
+
+<img src="static/pictureframe_logo.svg" alt="PictureFrame Logo" width="300" style="display: block; margin: auto;">
 
 <p align="center">
   <a href="https://ko-fi.com/pimmich">
-    <img src="https://img.shields.io/badge/Support%20on%20Ko--fi-F16061?logo=kofi&logoColor=white" alt="Support Pimmich on Ko-fi">
+    <img src="https://img.shields.io/badge/Support%20on%20Ko--fi-F16061?logo=kofi&logoColor=white" alt="Soutenir le projet original Pimmich sur Ko-fi">
   </a>
 </p>
 
@@ -18,7 +22,6 @@ Pimmich est une application Python conçue pour transformer un Raspberry Pi en u
 - [🧰 Technologies utilisées](#-technologies-utilisées)
 - [🚀 Installation](#-installation)
 - [🔧 Configuration](#-configuration)
-- [🗣️ Contrôle Vocal](#️-contrôle-vocal)
 - [❓ Dépannage (FAQ)](#-dépannage-faq)
 - [🛣️ Feuille de Route](#️-feuille-de-route)
   - [Juin 2025](#-juin-2025-)
@@ -30,32 +33,33 @@ Pimmich est une application Python conçue pour transformer un Raspberry Pi en u
 
 ## ✨ Fonctionnalités Principales
 
-Pimmich est riche en fonctionnalités pour offrir une expérience complète et personnalisable :
+PictureFrame est riche en fonctionnalités pour offrir une expérience complète et personnalisable :
 
 #### 🖼️ **Affichage & Diaporama**
-- **Multi-sources :** Affichez des photos depuis [Immich](https://immich.app/), un partage réseau (Samba/Windows), une clé USB, un smartphone ou via Telegram.
+- **Multi-sources :** Affichez des photos depuis [Immich](https://immich.app/), une clé USB ou un smartphone.
+- **Imports Immich manuels :** Utilisez le bouton d'import Immich pour actualiser les photos. Aucune synchronisation automatique ne s'exécute en arrière-plan.
+- **Horaires actifs :** Les horaires du weekend s'appliquent le vendredi et le samedi ; ceux de semaine du dimanche au jeudi.
+- **Commandes du diaporama :** Gauche = photo précédente, Droite = suivante, Espace = pause/lecture. Ces touches affichent les boutons pendant cinq secondes et permettent de naviguer même pendant un fondu ou le chargement d'une photo.
 - **Personnalisation avancée :** Réglez la durée d'affichage, les heures d'activité, les transitions (fondu, glissement ou aléatoire à chaque changement de photo), et activez un effet de mouvement "Pan & Zoom".
 - **Filtres créatifs :** Appliquez des filtres à vos photos (Noir & Blanc, Sépia, Vintage) et des effets uniques comme le **Polaroid** ou la **Carte Postale**.
 - **Gestion des formats :** Prise en charge intelligente des photos portraits (fond flou) et des vidéos (avec son et accélération matérielle optionnelle).
 
 #### ⚙️ **Interface & Contrôle**
 - **Interface Web complète :** Une page de configuration locale, sécurisée par mot de passe et organisée en groupes et onglets thématiques pour une navigation intuitive.
-- **Contrôle Vocal :** Pilotez votre cadre avec des commandes vocales comme *"Cadre Magique, photo suivante"* ou *"Cadre Magique, lance la playlist Vacances"*.
 - **Gestion de contenu :**
     - **Playlists :** Créez des albums virtuels, réorganisez les photos par glisser-déposer et lancez des diaporamas thématiques avec un écran de titre dynamique (pêle-mêle de photos sur fond en liège).
     - **Favoris :** Marquez vos photos préférées pour qu'elles apparaissent plus souvent.
     - **Légendes :** Ajoutez du texte personnalisé sur vos photos et cartes postales.
 
 #### 🌐 **Connectivité & Interactions**
-- **Telegram :** Permettez à vos proches d'envoyer des photos sur le cadre via un bot Telegram, avec un système d'invitations sécurisé et temporaire.
 - **Wi-Fi & Réseau :** Configurez le Wi-Fi, scannez les réseaux et gérez les interfaces réseau directement depuis l'interface.
 - **Envoi depuis Smartphone :** Importez des photos directement depuis le navigateur de votre téléphone.
 
 #### 🛠️ **Maintenance & Monitoring**
-- **Mise à jour facile :** Mettez à jour Pimmich en un clic depuis l'interface.
+- **Mise à jour manuelle :** Le code est mis à jour manuellement, sans service de mise à jour à distance dans l'interface.
 - **Sauvegarde & Restauration :** Sauvegardez et restaurez l'ensemble de votre configuration.
 - **Monitoring système :** Suivez en temps réel la température, l'utilisation du CPU, de la RAM et du disque avec des graphiques d'historique.
-- **Logs détaillés :** Accédez aux journaux de chaque service (serveur web, diaporama, contrôle vocal) pour un dépannage facile.
+- **Logs détaillés :** Accédez aux journaux de chaque service (serveur web, diaporama) pour un dépannage facile.
 
 ---
 
@@ -65,27 +69,26 @@ Pimmich est riche en fonctionnalités pour offrir une expérience complète et p
 - **Frontend :** HTML, TailwindCSS, JavaScript
 - **Diaporama :** Pygame
 - **Traitement d'image :** Pillow
-- **Contrôle Vocal :** Picovoice Porcupine (mot-clé) & Vosk (reconnaissance)
 - **Serveur Web :** NGINX (en tant que reverse proxy)
 
 ---
 
 ## 🚀 Installation
 
-Il existe deux méthodes pour installer Pimmich.
+Il existe deux méthodes pour installer PictureFrame.
 
 ### Méthode 1 : Image pré-configurée (Recommandée et plus simple)
 
 Cette méthode est idéale pour une première installation rapide.
 
 1.  **Téléchargez l'image du mois en cours**
-    Téléchargez la version du Nouvel An (v1.6.0) directement ici : [pimmich271225.img.xz](https://github.com/gotenash/Pimmich/releases/download/v1.6.0/pimmich271225.img.xz) ou rendez-vous sur la page des Releases de Pimmich.
+    Téléchargez la version du Nouvel An (v1.6.0) directement ici : [pimmich271225.img.xz](https://github.com/gotenash/Pimmich/releases/download/v1.6.0/pimmich271225.img.xz) ou rendez-vous sur la page des Releases de PictureFrame.
 
 2.  **Flashez l'image sur une carte SD**
     Utilisez un logiciel comme Raspberry Pi Imager ou BalenaEtcher pour écrire le fichier image que vous venez de télécharger sur votre carte microSD.
 
 3.  **Démarrez votre Raspberry Pi**
-    Insérez la carte SD dans le Raspberry Pi, branchez l'écran et l'alimentation. Pimmich démarrera automatiquement.
+    Insérez la carte SD dans le Raspberry Pi, branchez l'écran et l'alimentation. PictureFrame démarrera automatiquement.
 
 ### Méthode 2 : Installation manuelle depuis le dépôt Git
 
@@ -119,6 +122,21 @@ Cette méthode est destinée aux utilisateurs avancés ou à ceux qui souhaitent
     sudo reboot
     ```
 
+### Basculer entre le mode cadre et le bureau
+
+Après l'installation, utilisez une de ces commandes depuis le dossier du projet :
+
+```bash
+bash enable_auto_frame_start.sh   # Mode cadre : connexion console + Sway
+bash disable_auto_frame_start.sh  # Mode bureau : connexion automatique au bureau
+```
+
+Ces scripts demandent les droits sudo et **redémarrent automatiquement** après
+avoir modifié le mode de démarrage avec succès. Enregistrez votre travail avant
+de les exécuter. L'activation nécessite la
+configuration Sway créée par setup ; la désactivation nécessite Raspberry Pi OS
+Desktop, pas Lite. PictureFrame et ses réglages sont conservés.
+
 ---
 
 ## 🔧 Configuration
@@ -135,7 +153,6 @@ Cette méthode est destinée aux utilisateurs avancés ou à ceux qui souhaitent
     1.  **L'URL de votre serveur** (ex: `http://192.168.1.YY:2283`).
     2.  **Un Token API :** Dans Immich, allez dans `Paramètres du compte` > `Clés API` > `Générer une nouvelle clé`.
     3.  **Le nom technique de l'album** que vous souhaitez afficher.
-- **Samba / Partage Windows :** Renseignez les informations de votre partage réseau.
 - **USB :** Branchez une clé USB et utilisez le bouton d'import dans l'onglet `Actions`.
 
 ### 3. Personnalisation
@@ -147,48 +164,9 @@ Explorez les différents onglets pour personnaliser votre cadre :
 
 ---
 
-## 🗣️ Contrôle Vocal
-
-Pimmich supporte le contrôle vocal en **Français** et en **Anglais**.
-
-Pour utiliser un mot-clé personnalisé ("Cadre Magique", "Magic Frame"...), une étape manuelle est requise :
-1.  Créez un compte gratuit sur la Picovoice Console.
-2.  Allez dans la section "Porcupine" et créez votre mot-clé personnalisé.
-3.  Téléchargez le modèle pour la plateforme **Raspberry Pi**.
-4.  Renommez le fichier `.ppn` téléchargé en `cadre-magique_raspberry-pi.ppn` (pour le français) ou `magic-frame_raspberry-pi_en.ppn` (pour l'anglais, exemple).
-5.  Placez ce fichier dans le dossier `voice_models` à la racine du projet Pimmich.
-6.  Dans l'interface Pimmich, allez dans l'onglet `Vocal`, sélectionnez la langue, entrez votre "Access Key" Picovoice et activez le service.
-
-### Commandes Disponibles
-
-Une fois le contrôle vocal activé, commencez toutes vos commandes par le mot-clé **"Cadre Magique"**.
-
-**Contrôle du Diaporama :**
-- *"photo suivante"*
-- *"photo précédente"*
-- *"pause"* / *"lecture"* (pour mettre en pause ou reprendre)
-
-**Gestion de l'Affichage :**
-- *"règle la durée à 15 secondes"*
-- *"affiche pendant 30 secondes"*
-
-**Gestion des Playlists & Sources :**
-- *"lance la playlist Vacances"*
-- *"afficher les cartes postales"* (lance un diaporama des photos Telegram)
-- *"activer la source Samba"*
-- *"désactiver la source USB"*
-
-**Contrôle du Système :**
-- *"passer en mode veille"* (éteint l'écran)
-- *"réveiller le cadre"* (rallume l'écran)
-- *"éteindre le cadre"* (éteint complètement le Raspberry Pi)
-- *"revenir au diaporama principal"* (quitte une playlist et relance le diaporama normal)
-
----
-
 ## ❓ Dépannage (FAQ)
 
-Pour toute question ou problème, consultez notre **Foire Aux Questions (FAQ.md)**. Vous y trouverez des solutions aux problèmes courants (Wi-Fi, affichage, etc.) et des astuces pour utiliser Pimmich au mieux.
+Pour toute question ou problème, consultez notre **Foire Aux Questions (FAQ.md)**. Vous y trouverez des solutions aux problèmes courants (Wi-Fi, affichage, etc.) et des astuces pour utiliser PictureFrame au mieux.
 
 ---
 
@@ -199,8 +177,7 @@ Pour toute question ou problème, consultez notre **Foire Aux Questions (FAQ.md)
 
 
 > 🎂 **SORTIE IMMINENTE : Version Anniversaire - 27 Mai**
-> Cette mise à jour majeure marque une étape clé dans le développement de Pimmich :
-> - 🚀 **Mise à jour fiabilisée :** Le moteur de mise à jour via l'interface est désormais 100% opérationnel et sécurisé.
+> Cette mise à jour majeure marque une étape clé dans le développement de PictureFrame :
 > - 📅 **Boost Anniversaire :** Revivez vos souvenirs avec une priorité d'affichage pour les photos prises à la même date les années passées.
 > - 🌍 **Métadonnées & Drapeaux :** Affichage personnalisable du lieu, de la date et du drapeau du pays d'origine.
 > - 📊 **Monitoring Avancé :** Nouveaux graphiques temps réel pour surveiller la santé de votre Raspberry Pi.
@@ -216,7 +193,7 @@ Pour toute question ou problème, consultez notre **Foire Aux Questions (FAQ.md)
 > 🗓️ À partir de juin 2025 — Une version majeure chaque mois
 
 ## ✅ Août 2026 - Mises à jour de Stabilité, Performance & Compatibilité Pi 2/3/4/5
-- 🚀 **Mise à jour asynchrone & Keep-Alives (anti-timeout) :** Toutes les tâches lourdes (Samba, Immich, photo/video prep) s'exécutent en arrière-plan avec pings réseau toutes les 10s pour éviter toute déconnexion de l'interface d'administration.
+- 🚀 **Mise à jour asynchrone & Keep-Alives (anti-timeout) :** Toutes les tâches lourdes (Immich, photo/video prep) s'exécutent en arrière-plan avec pings réseau toutes les 10s pour éviter toute déconnexion de l'interface d'administration.
 - 🔁 **Synchronisation intelligente incrémentale :** Seuls les nouveaux médias et les suppressions sont synchronisés, préservant la bande passante, le CPU et l'usure de la carte SD.
 - ⚡ **Optimisation de la mémoire GPU (CMA) :** Technique innovante de réduction de fenêtre 1x1 masquée (`pygame.HIDDEN`) pour libérer 100% de la mémoire GPU lors de la lecture vidéo `mpv`, résolvant les crashs et lenteurs sous Wayland/Sway.
 - ⏱️ **Lecture vidéo instantanée :** Suppression des appels lents à `ffprobe` au profit d'un Watchdog de sécurité fixe de 90 secondes. La vidéo se lance en moins d'une seconde.
@@ -224,7 +201,7 @@ Pour toute question ou problème, consultez notre **Foire Aux Questions (FAQ.md)
 - 🎨 **Transitions optimisées à 30/60 FPS :** Le fondu enchaîné est calculé à 50% de résolution sur Pi 1/2/3 (75% de pixels en moins à traiter) puis mis à l'échelle via l'accélération matérielle de SDL2, avec un sélecteur de FPS dans l'interface admin.
 - 🤫 **Zéro bruit CPU sonore au repos :** Le mixeur audio Pygame n'est initialisé qu'à la demande. Évite de charger les serveurs son (Pipewire) en tâche de fond et économise 40% de CPU sur les anciens Pi.
 - 🌐 **Vitesse réseau améliorée :** Optimisation de la détection Wi-Fi pour contourner les appels réseau lents sur les systèmes uniquement câblés (Pi 2).
-- 📦 **Dépendances optionnelles :** Support HEIF/HEIC et commandes vocales optionnels pour garantir le succès de l'installation sur toutes les architectures système, géré à la volée dans `setup.sh`.
+- 📦 **Dépendances optionnelles :** Support HEIF/HEIC optionnel pour garantir le succès de l'installation sur toutes les architectures système, géré à la volée dans `setup.sh`.
 - 🇫🇷 **Langue française native :** Configuration et génération automatique de la locale `fr_FR.UTF-8` lors de l'installation pour des dates affichées en français natif.
 
 ## ✅ Mai 2026
@@ -241,19 +218,14 @@ Pour toute question ou problème, consultez notre **Foire Aux Questions (FAQ.md)
     - ✅ Créez des albums virtuels, visualisez leur contenu, renommez-les et lancez des diaporamas thématiques.
 - 🔘 **Bouton Physique :**
     - ✅ Ajout du support pour un bouton physique (via GPIO) pour mettre en veille et réveiller le cadre.
-- �️ **Contrôle Vocal :**
-    - ✅ Ajout de la commande vocale ("Cadre Magique") et intégration profonde avec le système.
 - 🚀 **Optimisations et Stabilité :**
     - ✅ Amélioration de la réactivité de l'onglet "Système" grâce à une lecture optimisée des logs.
-    - ✅ Fiabilisation du script de mise à jour pour éviter les blocages.
     - ✅ Nombreuses corrections de bugs pour une meilleure stabilité générale.
 
 ## 🛠️✅ Août 2025  - (Version précédente)
 �
 - ✅ Gestion des vidéos
 -  Ajout d'une vignette lors de lecture de la vidéo (onglet Actions)
-- ✅ Ajout de la fonction "Carte Postle" par telegram
-    - ✅ sécurisation par lien d'invitation
 - ✅ Gestion accélération matérielle pour Pi3
 - ✅ Ajout traduction de l'application (Anglais et Espagnol)
 - ✅ Ajout QR Code première connexion
@@ -271,8 +243,6 @@ Pour toute question ou problème, consultez notre **Foire Aux Questions (FAQ.md)
 
 - ✅ 🧭 Ajout de la configuration Wi-Fi depuis l’interface Web  
 - ✅ 🗂️ Réorganisation de la page de configuration en onglets  
-- ✅ 🔁 Mise à jour automatique périodique de l’album Immich  
-- ✅ 📁 Support du protocole SMB pour accéder à des photos partagées en réseau
 - ✅ ⏰🌤️ Affichage de l’heure et de la météo sur l’écran
 - ✅ Ajout NGINX, plus besoin de mettre le numéro du port (50000)
 - ✅ Ajout des filtres (NB, Sépia, Polaroid ...)
@@ -300,8 +270,8 @@ Pour toute question ou problème, consultez notre **Foire Aux Questions (FAQ.md)
 ## 💡 Idées pour les versions suivantes
 
 - 📱 Création d’une APK Android pour contrôler le cadre 
-- Pimmich télécomande
-- Pimmich Android TV
+- PictureFrame télécomande
+- PictureFrame Android TV
 - Import Google Photos
 - Import PhotoPrism    
 
@@ -335,7 +305,7 @@ Clique sur “Generate new API Key” ou “Générer une nouvelle clé API”.
 
 
 Donne un nom à ta clé, par exemple :
-PimmichFrame
+PictureFrame
 
 ✅ Une fois générée, une clé s'affiche. C’est le token à copier.
 
@@ -349,7 +319,7 @@ Ne partage jamais ce token publiquement. Il donne un accès total à tes albums 
 
 Le mieux est de créer un compte Immich réservé au cadre photo avec accès à un seul album que tu pourras alimenter à partir d'un autre compte.
 
-### Se connecter à Pimmich
+### Se connecter à PictureFrame
 
 Dans un navigateur taper l'adresse ip du raspberry : http://xxx.xxx.xxx.xxx:7090
 
