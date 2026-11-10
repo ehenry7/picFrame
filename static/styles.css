@@ -345,3 +345,42 @@ button:hover {
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   }
 }
+.photo-lightbox-actions {
+    position: fixed;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 999999;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    padding: 10px;
+    width: max-content;
+    max-width: calc(100vw - 24px);
+    overflow-x: auto;
+    box-sizing: border-box;
+    border-radius: 8px;
+    background: #fff;
+    color: #222;
+    box-shadow: 0 2px 12px #0006;
+}
+
+.photo-lightbox-actions select {
+    width: auto;
+    max-width: 100%;
+    flex-shrink: 0;
+}
+
+.photo-lightbox-actions input {
+    width: 220px;
+    max-width: 100%;
+    flex-shrink: 0;
+}
+
+.photo-lightbox-actions button {
+    min-width: 36px;
+    min-height: 36px;
+    flex-shrink: 0;
+}

@@ -3094,6 +3094,12 @@ msgstr "Watercolor"
 msgid "Vignette"
 msgstr "Vignette"
 
+msgid "B&W Background"
+msgstr "B&W Background"
+
+msgid "Vignette - Dark Edges"
+msgstr "Vignette - Dark Edges"
+
 #~ msgid "Favoris"
 #~ msgstr "Favorites"
 

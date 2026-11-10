@@ -345,6 +345,20 @@ def apply_filter_to_image(image_path_str, filter_name):
         grayscale.putpalette(sepia_palette)
         img_to_save = grayscale.convert('RGB')
     elif filter_name == 'vignette':
+        img_to_save = ImageOps.grayscale(img).convert('RGB')
+        content_bbox = _get_content_bbox(img)
+        if content_bbox and not (
+                content_bbox[0] <= 0 and content_bbox[1] <= 0
+                and content_bbox[2] >= img.width and content_bbox[3] >= img.height):
+            img_to_save.paste(img.crop(content_bbox), content_bbox[:2])
+        else:
+            # Full-frame photos have no separate background; retain a soft color center instead.
+            mask = Image.new('L', img.size, 0)
+            ImageDraw.Draw(mask).ellipse(
+                (img.width * 0.1, img.height * 0.1, img.width * 0.9, img.height * 0.9), fill=255)
+            mask = mask.filter(ImageFilter.GaussianBlur(radius=max(img.size) * 0.03))
+            img_to_save = Image.composite(img, img_to_save, mask)
+    elif filter_name == 'dark_vignette':
         # A small elliptical falloff scales to any photo without a full-size Python pixel loop.
         mask = Image.new('L', (129, 129))
         mask.putdata([round(255 * (1 - 0.5 * (((x - 64) / 64) ** 2 / 2 +

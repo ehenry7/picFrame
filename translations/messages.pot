@@ -2841,3 +2841,9 @@ msgstr ""
 #: templates/configure.html.jinja:2067 templates/configure.html.jinja:2292
 msgid "Vignette"
 msgstr ""
+
+msgid "B&W Background"
+msgstr ""
+
+msgid "Vignette - Dark Edges"
+msgstr ""

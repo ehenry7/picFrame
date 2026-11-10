@@ -42,7 +42,8 @@
     ('tilt_shift', _('Tilt Shift')),
     ('cinematic', _('Cinematic')),
     ('cross_process', _('Cross Process')),
-    ('watercolor', _('Watercolor'))
+    ('watercolor', _('Watercolor')),
+    ('dark_vignette', _('Vignette - Dark Edges'))
 ] %}
 <option value="{{ value }}" {% if active_filter == value %}selected{% endif %}>{{ label }}</option>
 {% endfor %}
@@ -1973,7 +1974,7 @@
                                     <option value="sepia" {% if active_filter=='sepia' %}selected{% endif %}>{{
                                         _("Sépia") }}</option>
                                     <option value="vignette" {% if active_filter=='vignette' %}selected{% endif %}>{{
-                                        _("Vignette") }}</option>
+                                        _("B&W Background") }}</option>
                                     <option value="vintage" {% if active_filter=='vintage' %}selected{% endif %}>{{
                                         _("Vintage") }}</option>
                                     {{ extra_filter_options(active_filter) }}
@@ -2211,7 +2212,7 @@
                                 <option value="sepia" {% if active_filter=='sepia' %}selected{% endif %}>{{ _("Sépia")
                                     }}</option>
                                 <option value="vignette" {% if active_filter=='vignette' %}selected{% endif %}>{{
-                                    _("Vignette") }}</option>
+                                    _("B&W Background") }}</option>
                                 <option value="vintage" {% if active_filter=='vintage' %}selected{% endif %}>{{
                                     _("Vintage") }}</option>
                                 {{ extra_filter_options(active_filter) }}
@@ -2456,11 +2457,13 @@
             });
         </script>
         <script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
+        <script src="{{ url_for('static', filename='photo_lightbox.js') }}"></script>
         <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
         <script>
             const lightbox = GLightbox({
                 selector: '.glightbox'
             });
+            attachPhotoLightboxActions(lightbox);
 
             // Translations for JavaScript
             const i18n = {
@@ -3468,7 +3471,7 @@
                     if (statusSpan) statusSpan.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
                     // Trouver le filtre actif pour savoir quelle API appeler
-                    const filterSelect = document.querySelector(`.filter-select[data-photo="${photoPath}"]`);
+                    const filterSelect = tile.querySelector('.filter-select');
                     const activeFilter = filterSelect ? filterSelect.value : 'none';
 
                     let apiUrl, bodyData;

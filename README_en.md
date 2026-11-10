@@ -245,8 +245,17 @@ fine texture), **Pencil Sketch** (monochrome outlines), **Selective Color**
 horizontal center band with progressively blurred top and bottom).
 **Cinematic** adds teal shadows and warm highlights; **Cross Process** uses
 retro channel curves; **Watercolor** smooths detail into painted color patches
-with subtle outlines. **Vignette** gently darkens the edges while retaining the
-center brightness. These are stylized presets, not adjustable filter controls.
+with subtle outlines. **Vignette - Dark Edges** gently darkens the edges while
+retaining center brightness and color. The separate **B&W Background** effect
+(previously labeled Vignette) keeps the prepared foreground in color and makes
+its surroundings grayscale. If the photo fills the frame or an older photo
+lacks foreground bounds, it keeps a soft central oval in color instead.
+These effects do not detect subjects.
+These are stylized presets, not adjustable filter controls.
+Click a Preview or Favorites photo to enlarge it. The enlarged view includes its
+current filter, a filter selector, caption field, favorite star, crop and delete
+actions on a single row (scroll horizontally on narrow screens). Crop opens
+the existing editor after closing the enlarged view.
 
 ### Photo Import Settings
 

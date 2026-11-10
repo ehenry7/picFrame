@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+import gettext
 from pathlib import Path
 
 import piexif
@@ -12,7 +13,7 @@ from utils.image_filters import apply_filter_to_image
 FILTERS = ("auto_enhance", "vivid", "warm", "cool", "dramatic_bw",
            "soft_glow", "sharpen", "duotone", "posterize", "matte", "film_grain",
            "pencil_sketch", "selective_red", "selective_green", "selective_blue", "tilt_shift",
-           "cinematic", "cross_process", "watercolor")
+           "cinematic", "cross_process", "watercolor", "dark_vignette")
 
 
 class PhotoFilterTests(unittest.TestCase):
@@ -139,7 +140,7 @@ class PhotoFilterTests(unittest.TestCase):
 
     def test_vignette_keeps_center_bright_and_darkens_edges(self):
         Image.new("RGB", (96, 64), (200, 200, 200)).save(self.path, quality=100)
-        apply_filter_to_image(str(self.path), "vignette")
+        apply_filter_to_image(str(self.path), "dark_vignette")
         with Image.open(self.path) as result:
             center = result.getpixel((48, 32))[0]
             corner = result.getpixel((0, 0))[0]
@@ -154,11 +155,71 @@ class PhotoFilterTests(unittest.TestCase):
         for size in ((1, 1), (1, 5), (5, 1), (2, 2)):
             path = self.path.with_name(f"tiny_{size[0]}_{size[1]}.jpg")
             Image.new("RGB", size, (120, 80, 40)).save(path)
-            for name in ("cinematic", "cross_process", "watercolor", "vignette"):
+            for name in ("cinematic", "cross_process", "watercolor", "vignette", "dark_vignette"):
                 with self.subTest(size=size, filter=name):
                     apply_filter_to_image(str(path), name)
                     with Image.open(path) as result:
                         self.assertEqual(result.size, size)
+
+    def test_bw_background_preserves_color_foreground(self):
+        image = Image.new("RGB", (96, 64), (190, 60, 30))
+        exif = piexif.dump({"Exif": {
+            piexif.ExifIFD.UserComment: b"pimmich_bbox:32,0,32,64"}})
+        image.save(self.path, quality=100, exif=exif)
+        apply_filter_to_image(str(self.path), "vignette")
+        with Image.open(self.path) as result:
+            background = result.getpixel((10, 32))
+            foreground = result.getpixel((48, 32))
+            self.assertLessEqual(max(background) - min(background), 2)
+            self.assertGreater(foreground[0], foreground[2] + 100)
+            self.assertEqual(result.info["exif"], exif)
+        first_result = self.path.read_bytes()
+        apply_filter_to_image(str(self.path), "vignette")
+        self.assertEqual(self.path.read_bytes(), first_result)
+
+    def test_bw_background_without_bounds_uses_color_center(self):
+        Image.new("RGB", (96, 64), (190, 60, 30)).save(self.path, quality=100)
+        apply_filter_to_image(str(self.path), "vignette")
+        with Image.open(self.path) as result:
+            corner = result.getpixel((0, 0))
+            center = result.getpixel((48, 32))
+            self.assertLessEqual(max(corner) - min(corner), 2)
+            self.assertGreater(center[0], center[2] + 100)
+
+    def test_bw_background_full_frame_bounds_still_desaturates_surroundings(self):
+        image = Image.new("RGB", (96, 64), (190, 60, 30))
+        image.save(self.path, quality=100, exif=self.exif)
+        apply_filter_to_image(str(self.path), "vignette")
+        with Image.open(self.path) as result:
+            corner = result.getpixel((0, 0))
+            center = result.getpixel((48, 32))
+            self.assertLessEqual(max(corner) - min(corner), 2)
+            self.assertGreater(center[0], center[2] + 100)
+
+    def test_dark_vignette_keeps_edge_colors(self):
+        Image.new("RGB", (96, 64), (200, 100, 50)).save(self.path, quality=100)
+        apply_filter_to_image(str(self.path), "dark_vignette")
+        with Image.open(self.path) as result:
+            red, green, blue = result.getpixel((0, 0))
+            self.assertGreater(red, green)
+            self.assertGreater(green, blue)
+            self.assertLess(red, 120)
+
+    def test_distinct_labels_in_compiled_translations(self):
+        root = Path(__file__).resolve().parents[1]
+        source = (root / "templates" / "configure.html.jinja").read_text(encoding="utf-8")
+        self.assertEqual(source.count('_("B&W Background")'), 2)
+        for language in ("en", "fr", "he"):
+            with self.subTest(language=language):
+                translations = gettext.translation("messages", str(root / "translations"), [language])
+                background = translations.gettext("B&W Background")
+                vignette = translations.gettext("Vignette - Dark Edges")
+                self.assertNotEqual(background, vignette)
+                environment = Environment(extensions=["jinja2.ext.i18n"])
+                environment.install_gettext_translations(translations, newstyle=True)
+                rendered = environment.from_string(
+                    '{{ _("B&W Background") }} | {{ _("Vignette - Dark Edges") }}').render()
+                self.assertIn(vignette, rendered)
 
 
 if __name__ == "__main__":

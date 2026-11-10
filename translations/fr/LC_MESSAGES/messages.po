@@ -2852,6 +2852,12 @@ msgstr "Aquarelle"
 msgid "Vignette"
 msgstr "Vignettage"
 
+msgid "B&W Background"
+msgstr "Fond noir et blanc"
+
+msgid "Vignette - Dark Edges"
+msgstr "Vignettage - Bords sombres"
+
 #~ msgid "Hauteur utile de l'écran (% affiché) :"
 #~ msgstr ""
 
