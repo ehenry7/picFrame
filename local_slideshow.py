@@ -323,7 +323,7 @@ def fit_photo_to_screen(pil_image, screen_width, screen_height):
 
 
 def prepare_pan_zoom(pil_image, screen_width, screen_height, config):
-    start_zoom = max(1.0, float(config.get("pan_zoom_start_factor", 1.0)))
+    start_zoom = max(0.01, float(config.get("pan_zoom_start_factor", 1.0)))
     zoom_factor = max(1.0, float(config.get("pan_zoom_factor", 1.15)))
 
     def edge_point():
@@ -345,9 +345,14 @@ def prepare_pan_zoom(pil_image, screen_width, screen_height, config):
 
 def render_pan_zoom_frame(base_surface, screen_width, screen_height, start_offset, end_offset, start_zoom, end_zoom, progress):
     zoom = start_zoom + (end_zoom - start_zoom) * progress
-    width = max(screen_width, int(screen_width * zoom))
-    height = max(screen_height, int(screen_height * zoom))
+    width = max(1, int(screen_width * zoom))
+    height = max(1, int(screen_height * zoom))
     scaled = pygame.transform.smoothscale(base_surface, (width, height))
+    if width < screen_width or height < screen_height:
+        frame = pygame.Surface((screen_width, screen_height)).convert()
+        frame.fill((0, 0, 0))
+        frame.blit(scaled, ((screen_width - width) // 2, (screen_height - height) // 2))
+        return frame
     x_fraction = start_offset[0] + (end_offset[0] - start_offset[0]) * progress
     y_fraction = start_offset[1] + (end_offset[1] - start_offset[1]) * progress
     x = int(x_fraction * (width - screen_width))
@@ -1399,8 +1404,11 @@ def display_photo_with_pan_zoom(screen, pil_image, screen_width, screen_height, 
             base_surface = pygame.image.fromstring(base_image.tobytes(), base_image.size, base_image.mode)
             initial_frame = render_pan_zoom_frame(base_surface, screen_width, screen_height,
                                                  start_offset, end_offset, start_zoom, end_zoom, 0)
+            overlay = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
+            draw_overlay(overlay, screen_width, screen_height, config, main_font, photo_metadata)
+            overlay_updated = time.monotonic()
             screen.blit(initial_frame, (0, 0))
-            draw_overlay(screen, screen_width, screen_height, config, main_font, photo_metadata)
+            screen.blit(overlay, (0, 0))
             pygame.display.flip()
 
             clock = pygame.time.Clock()
@@ -1422,12 +1430,18 @@ def display_photo_with_pan_zoom(screen, pil_image, screen_width, screen_height, 
                                               start_offset, end_offset, start_zoom, end_zoom, eased_progress)
                 screen.blit(frame, (0, 0))
 
-                # Draw overlay (clock/date/weather)
-                draw_overlay(screen, screen_width, screen_height, config, main_font, photo_metadata)
+                # Refresh text once per second instead of rebuilding it for every animation frame.
+                now = time.monotonic()
+                if now - overlay_updated >= 1.0:
+                    overlay.fill((0, 0, 0, 0))
+                    draw_overlay(overlay, screen_width, screen_height, config, main_font, photo_metadata)
+                    overlay_updated = now
+                screen.blit(overlay, (0, 0))
 
                 # Gestion de la pause
                 if paused:
                     config = load_config() # Recharger pendant la pause de l'animation
+                    overlay_updated = float("-inf")
                     ticks = pygame.time.get_ticks()
                     if (ticks // 500) % 2 == 0:
                         draw_pause_icon(screen, screen_width, screen_height)

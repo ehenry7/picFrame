@@ -108,6 +108,7 @@ class SlideshowFramingTests(unittest.TestCase):
         config = {**self.config, "display_duration": 1}
         fake_time = Mock()
         fake_time.time.side_effect = [0, 0, 0, 0.5, 0.5, 1]
+        fake_time.monotonic.return_value = 0
         self.namespace["time"] = fake_time
         frames = []
         with patch.object(pygame.display, "flip", side_effect=lambda: frames.append(self.pixels())):
@@ -117,6 +118,32 @@ class SlideshowFramingTests(unittest.TestCase):
         self.assertEqual(frames[0], self.base.tobytes())
         self.assertEqual(frames[1], frames[0])
         self.assertNotEqual(frames[2], frames[0])
+
+    def test_animation_reuses_overlay_between_refreshes(self):
+        fake_time = Mock()
+        fake_time.time.side_effect = [0, 0, 0, 0.25, 0.25, 0.5, 0.5, 1]
+        fake_time.monotonic.side_effect = [0, 0.01, 0.26, 0.51]
+        self.namespace["time"] = fake_time
+        draw = Mock()
+        self.namespace["draw_overlay"] = draw
+        plan = (self.base, (0, 0), (1, 1), 1.0, 1.5)
+        self.namespace["display_photo_with_pan_zoom"](
+            self.screen, self.base, 64, 48, {**self.config, "display_duration": 1},
+            None, pan_zoom_plan=plan)
+        draw.assert_called_once()
+
+    def test_overlay_refreshes_after_one_second(self):
+        fake_time = Mock()
+        fake_time.time.side_effect = [0, 0, 0, 1.1, 1.1, 2]
+        fake_time.monotonic.side_effect = [0, 0.01, 1.1]
+        self.namespace["time"] = fake_time
+        draw = Mock()
+        self.namespace["draw_overlay"] = draw
+        plan = (self.base, (0, 0), (1, 1), 1.0, 1.5)
+        self.namespace["display_photo_with_pan_zoom"](
+            self.screen, self.base, 64, 48, {**self.config, "display_duration": 2},
+            None, pan_zoom_plan=plan)
+        self.assertEqual(draw.call_count, 2)
 
     def test_zoom_and_pan_change_together(self):
         base = pygame.image.fromstring(self.base.tobytes(), self.base.size, self.base.mode)
@@ -140,6 +167,26 @@ class SlideshowFramingTests(unittest.TestCase):
     def test_start_zoom_matches_fade_and_animation(self):
         self.config["pan_zoom_start_factor"] = 1.25
         self.test_transition_ends_at_exact_animation_start()
+
+    def test_small_start_zoom_matches_transition(self):
+        self.config["pan_zoom_start_factor"] = 0.5
+        self.test_transition_ends_at_exact_animation_start()
+
+    def test_small_start_is_centered_on_black(self):
+        plan = self.namespace["prepare_pan_zoom"](
+            self.base, 64, 48, {**self.config, "pan_zoom_start_factor": 0.5})
+        self.assertEqual(plan[3], 0.5)
+        base = pygame.Surface((64, 48))
+        base.fill("red")
+        for progress in (0, 0.25, 0.5, 0.75, 1):
+            frame = self.namespace["render_pan_zoom_frame"](base, 64, 48, *plan[1:], progress)
+            self.assertEqual(frame.get_size(), (64, 48))
+            self.assertGreaterEqual(frame.get_at((32, 24)).r, 250)
+            self.assertEqual(frame.get_at((32, 24))[1:3], (0, 0))
+            if progress == 0:
+                self.assertEqual(frame.get_at((15, 24))[:3], (0, 0, 0))
+                self.assertEqual(frame.get_at((16, 12))[:3], (255, 0, 0))
+                self.assertEqual(frame.get_at((48, 36))[:3], (0, 0, 0))
 
     def test_zoom_out_and_constant_zoom(self):
         base = pygame.image.fromstring(self.base.tobytes(), self.base.size, self.base.mode)

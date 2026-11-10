@@ -204,9 +204,14 @@ With Pan & Zoom enabled, transitions end at the animation's starting crop, so
 motion begins without a sudden change in framing.
 Pan and zoom now animate together throughout each photo's display time, from
 the configured **Start zoom** to **End zoom**, rather than zooming before panning.
-Both values are at least 1.00 (the full fitted image); 1.15 means 15% enlargement.
+Start zoom can be as low as 0.01; below 1.00, the image is smaller and centered on
+a black background. End zoom is at least 1.00 (the full fitted image);
+1.15 means 15% enlargement.
 The default is 1.00 → 1.15. Use a larger start than end value to zoom out, or equal
 values to pan at a constant zoom. Transitions match the selected starting zoom.
+Pan/zoom targets 60 FPS independently of the transition FPS setting. Its overlay
+is refreshed once per second and reused between frames to reduce animation work.
+Actual smoothness still depends on display resolution and available CPU.
 Photo metadata uses Immich's cached details for Immich photos and the original
 file's EXIF capture date / IPTC city and country for locally imported photos.
 Keep originals under `static/photos/{source}`. Missing dates or location names
