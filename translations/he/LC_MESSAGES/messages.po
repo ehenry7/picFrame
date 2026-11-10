@@ -2853,3 +2853,6 @@ msgstr "רקע בשחור ולבן"
 
 msgid "Vignette - Dark Edges"
 msgstr "וינייטה - שוליים כהים"
+
+msgid "No location metadata"
+msgstr "אין נתוני מיקום"

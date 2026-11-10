@@ -284,6 +284,7 @@
                     </div>
                 </div>
                 <p id="live-preview-metadata" class="hidden mt-2 w-64 truncate text-sm text-gray-600" dir="auto"></p>
+                <p id="live-preview-location" class="hidden mt-1 w-64 truncate text-sm text-gray-600" dir="auto"></p>
             </div>
         </div>
 
@@ -1962,6 +1963,8 @@
                             {% if media.type == 'image' %}
                             <p class="photo-metadata mt-1 w-32 truncate text-xs text-gray-600" dir="auto"
                                 title="{{ media.metadata_text }}">{{ media.metadata_text }}</p>
+                            <p class="photo-location mt-1 w-32 truncate text-xs text-gray-600" dir="auto"
+                                title="{{ media.location_text }}">{{ media.location_text }}</p>
                             {% endif %}
                             <div class="photo-actions mt-1 flex flex-col w-full gap-y-1">
                                 {% if media.type == 'image' %}
@@ -2111,6 +2114,7 @@
                             <img id="playlist-live-preview-image" src="" alt="{{ _('Photo en cours') }}"
                                 class="hidden mt-2 mx-auto max-w-xs max-h-48 rounded shadow">
                             <p id="playlist-live-preview-metadata" class="hidden mt-2 w-full truncate text-sm text-gray-600" dir="auto"></p>
+                            <p id="playlist-live-preview-location" class="hidden mt-1 w-full truncate text-sm text-gray-600" dir="auto"></p>
                         </div>
                     </div>
                 </div>
@@ -2200,6 +2204,8 @@
                         {% if media.type == 'image' %}
                         <p class="photo-metadata mt-1 w-32 truncate text-xs text-gray-600" dir="auto"
                             title="{{ media.metadata_text }}">{{ media.metadata_text }}</p>
+                        <p class="photo-location mt-1 w-32 truncate text-xs text-gray-600" dir="auto"
+                            title="{{ media.location_text }}">{{ media.location_text }}</p>
                         {% endif %}
                         <div class="photo-actions mt-1 flex flex-col w-full gap-y-1">
                             {% if media.type == 'image' %}
@@ -2292,7 +2298,9 @@
         <dialog id="photo-crop-dialog" class="rounded-lg shadow-xl p-5 max-w-3xl w-full">
             <h3 class="font-bold mb-2">{{ _("Crop photo") }}</h3>
             <p class="text-sm mb-3">{{ _("Drag the selection to position it. Adjust its size below. The selection always matches the slideshow screen ratio. Originals are preserved.") }}</p>
-            <canvas id="photo-crop-canvas" class="block mx-auto max-w-full" style="max-height:60vh;touch-action:none"></canvas>
+            <div class="flex items-center justify-center" style="height:min(420px,60vh)">
+                <canvas id="photo-crop-canvas" class="block mx-auto max-w-full" style="max-height:100%;touch-action:none"></canvas>
+            </div>
             <label class="block mt-3">{{ _("Selection size") }}
                 <input id="photo-crop-size" type="range" min="10" max="100" step="1" value="100" class="w-full">
             </label>
@@ -4719,6 +4727,15 @@
                         });
 
                         // Function to update a specific set of live preview elements
+                        ['live-preview-location', 'playlist-live-preview-location'].forEach(id => {
+                            const caption = document.getElementById(id);
+                            if (!caption) return;
+                            const visible = data.status !== 'stopped' && Boolean(data.current_photo);
+                            const text = visible ? (data.location_text || {{ _('No location metadata') | tojson }}) : '';
+                            caption.textContent = text;
+                            caption.title = text;
+                            caption.classList.toggle('hidden', !visible);
+                        });
                         function updateElements(statusElement, imageElement, controlsElement, boxElement) {
                             if (!statusElement || !imageElement) return; // Skip if elements don't exist
 
@@ -4752,7 +4769,8 @@
                         updateElements(playlistLivePreviewStatus, playlistLivePreviewImage);
                     } catch (error) {
                         console.error('Erreur de mise à jour de l\'aperçu en direct:', error);
-                        ['live-preview-metadata', 'playlist-live-preview-metadata'].forEach(id => {
+                        ['live-preview-metadata', 'playlist-live-preview-metadata',
+                         'live-preview-location', 'playlist-live-preview-location'].forEach(id => {
                             const caption = document.getElementById(id);
                             if (caption) {
                                 caption.textContent = '';

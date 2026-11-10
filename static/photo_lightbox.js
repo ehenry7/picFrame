@@ -1,8 +1,10 @@
 function attachPhotoLightboxActions(lightbox) {
     let cleanup = () => {};
+    let toolbarSlide = null;
 
     function showActions(slide) {
         if (!slide.slideNode || slide.slideNode !== lightbox.getActiveSlide()) return;
+        if (toolbarSlide === slide.slideNode) return;
         cleanup();
         const tile = slide.trigger?.closest('.photo-tile');
         const sourceSelect = tile?.querySelector('.filter-select');
@@ -25,6 +27,7 @@ function attachPhotoLightboxActions(lightbox) {
         filter.setAttribute('aria-label', sourceSelect.options[sourceSelect.selectedIndex].textContent.trim());
         bar.append(filter);
         filter.addEventListener('change', () => {
+            filter.setAttribute('aria-label', filter.options[filter.selectedIndex].textContent.trim());
             sourceSelect.value = filter.value;
             sourceSelect.dispatchEvent(new Event('change', { bubbles: true }));
         });
@@ -84,7 +87,9 @@ function attachPhotoLightboxActions(lightbox) {
         imageObserver.observe(image, { attributes: true, attributeFilter: ['src'] });
         observers.push(imageObserver);
         slide.slideNode.closest('.glightbox-container').append(bar);
+        toolbarSlide = slide.slideNode;
         cleanup = () => {
+            toolbarSlide = null;
             observers.forEach(observer => observer.disconnect());
             bar.remove();
         };

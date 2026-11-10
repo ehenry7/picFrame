@@ -3100,6 +3100,9 @@ msgstr "B&W Background"
 msgid "Vignette - Dark Edges"
 msgstr "Vignette - Dark Edges"
 
+msgid "No location metadata"
+msgstr "No location metadata"
+
 #~ msgid "Favoris"
 #~ msgstr "Favorites"
 

@@ -93,6 +93,18 @@ class PhotoMetadataTests(unittest.TestCase):
         }, translate), "")
         self.assertEqual(metadata_utils.format_photo_metadata({}, config, translate), "")
 
+    def test_preview_location_missing_partial_and_country_code(self):
+        translate = lambda message: message
+        for metadata, expected in (
+                ({}, "No location metadata"),
+                ({"city": "Paris"}, "Paris"),
+                ({"country": "France"}, "\U0001f1eb\U0001f1f7 France"),
+                ({"city": "Paris", "countryCode": "FR"}, "\U0001f1eb\U0001f1f7 Paris, France"),
+                ({"country": "fr"}, "\U0001f1eb\U0001f1f7 France"),
+                ({"country": "Unknown"}, "Unknown")):
+            with self.subTest(metadata=metadata):
+                self.assertEqual(metadata_utils.format_preview_location(metadata, translate), expected)
+
     def test_preview_api_caption_and_empty_states(self):
         app = Flask(__name__)
         status_file = self.root / "current.txt"
@@ -107,6 +119,7 @@ class PhotoMetadataTests(unittest.TestCase):
             "CURRENT_PHOTO_FILE": status_file, "os": os, "BASE_DIR": self.root,
             "url_for": url_for, "get_photo_metadata": metadata_utils.get_photo_metadata,
             "format_photo_metadata": metadata_utils.format_photo_metadata,
+            "format_preview_location": metadata_utils.format_preview_location,
             "load_config": lambda: config, "_": lambda message: message,
             "logger": logging.getLogger(__name__),
         }
@@ -118,6 +131,13 @@ class PhotoMetadataTests(unittest.TestCase):
         client = Client(app, Response)
         response = client.get("/current_photo_status")
         self.assertEqual(response.json["metadata_text"], "2020-06-15")
+        self.assertEqual(response.json["location_text"], "No location metadata")
+        with patch.object(metadata_utils.IptcImagePlugin, "getiptcinfo",
+                          return_value={(2, 90): b"Paris", (2, 101): b"France"}):
+            metadata_utils.read_local_metadata.cache_clear()
+            self.assertEqual(client.get("/current_photo_status").json["location_text"],
+                             "\U0001f1eb\U0001f1f7 Paris, France")
+        metadata_utils.read_local_metadata.cache_clear()
         config["photo_date_format"] = "%d/%m/%Y - %H:%M"
         self.assertEqual(client.get("/current_photo_status").json["metadata_text"],
                          "15/06/2020 - 12:34")
@@ -142,6 +162,7 @@ class PhotoMetadataTests(unittest.TestCase):
             "load_polaroid_texts": lambda: {}, "load_text_states": lambda: {},
             "VIDEO_EXTENSIONS": (".mp4",), "get_photo_metadata": metadata_utils.get_photo_metadata,
             "format_photo_metadata": metadata_utils.format_photo_metadata,
+            "format_preview_location": metadata_utils.format_preview_location,
             "_": lambda message: message,
         }
         source = Path(__file__).resolve().parents[1] / "app.py"

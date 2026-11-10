@@ -2847,3 +2847,6 @@ msgstr ""
 
 msgid "Vignette - Dark Edges"
 msgstr ""
+
+msgid "No location metadata"
+msgstr ""

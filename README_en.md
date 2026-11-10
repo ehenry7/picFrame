@@ -256,6 +256,10 @@ Click a Preview or Favorites photo to enlarge it. The enlarged view includes its
 current filter, a filter selector, caption field, favorite star, crop and delete
 actions on a single row (scroll horizontally on narrow screens). Crop opens
 the existing editor after closing the enlarged view.
+Small live previews and Preview/Favorites tiles also show a separate location
+line with available city/country names and a country flag emoji. Missing data
+is labeled **No location metadata**. This line is independent of the slideshow
+overlay settings; flag appearance depends on the browser/system emoji font.
 
 ### Photo Import Settings
 

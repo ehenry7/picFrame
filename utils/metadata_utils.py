@@ -16,6 +16,35 @@ DESCRIPTION_MAP_CACHE_FILE = BASE_DIR / 'cache' / 'immich_description_map.json'
 
 logger = logging.getLogger(__name__)
 
+@lru_cache(maxsize=1)
+def _preview_country_codes():
+    path = Path(__file__).resolve().parent.parent / "static" / "flags" / "country_codes.json"
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as error:
+        logger.warning("[Metadata] Cannot load country codes for preview flags: %s", error)
+        return {}
+
+
+def format_preview_location(metadata, translate):
+    city = (metadata.get("city") or "").strip()
+    country = (metadata.get("country") or "").strip()
+    code = (metadata.get("countryCode") or metadata.get("country_code") or "").strip().lower()
+    codes = _preview_country_codes()
+    if not code and country:
+        code = next((iso for iso, name in codes.items()
+                     if country.casefold() in (iso, name.casefold())), "")
+    if country.lower() in codes:
+        country = codes[country.lower()]
+    elif not country and code in codes:
+        country = codes[code]
+    location = ", ".join(value for value in (city, country) if value)
+    if not location:
+        return translate("No location metadata")
+    flag = "".join(chr(0x1F1E6 + ord(letter) - ord("a")) for letter in code) if code in codes else ""
+    return f"{flag} {location}".strip()
+
+
 def format_photo_metadata(metadata, config, translate):
     if not metadata:
         return ""

@@ -71,7 +71,7 @@ from utils.display_manager import get_display_output_name, set_display_power
 logging.getLogger(__name__).info("Startup: loading photo preparation and import utilities")
 from utils.prepare_all_photos import prepare_all_photos_with_progress
 from utils.import_usb_photos import import_usb_photos  # Déplacé dans utils
-from utils.metadata_utils import get_photo_metadata, format_photo_metadata
+from utils.metadata_utils import get_photo_metadata, format_photo_metadata, format_preview_location
 from utils.import_samba import import_samba_photos
 from utils.photo_import import PHOTO_EXTENSIONS, photo_digest, stream_digest
 from utils.photo_crop import original_photo, oriented_image, validate_crop, load_crops, save_crops, CROP_LOCK
@@ -515,6 +515,7 @@ def get_prepared_photos_by_source():
                     }
                     photo_metadata = get_photo_metadata(media_path_obj) if media_type == 'image' else {}
                     media_item["metadata_text"] = format_photo_metadata(photo_metadata, config, _) or _("No Metadata")
+                    media_item["location_text"] = format_preview_location(photo_metadata, _)
 
                     # Vérifier si c'est une photo anniversaire
                     if anniversary_boost_enabled and media_type == 'image':
@@ -2772,9 +2773,11 @@ def current_photo_status():
             if photo_path:
                 # Construire l'URL complète pour l'attribut src de l'image
                 metadata_path = BASE_DIR / "static" / photo_path
-                metadata_text = format_photo_metadata(get_photo_metadata(metadata_path), load_config(), _)
+                metadata = get_photo_metadata(metadata_path)
+                metadata_text = format_photo_metadata(metadata, load_config(), _)
                 return jsonify({"current_photo": url_for('static', filename=photo_path),
-                                "status": "running", "metadata_text": metadata_text or _("No Metadata")})
+                                "status": "running", "metadata_text": metadata_text or _("No Metadata"),
+                                "location_text": format_preview_location(metadata, _)})
     except Exception as e:
         logger.info(f"Erreur lecture fichier photo actuelle : {e}")
         

@@ -2858,6 +2858,9 @@ msgstr "Fond noir et blanc"
 msgid "Vignette - Dark Edges"
 msgstr "Vignettage - Bords sombres"
 
+msgid "No location metadata"
+msgstr "Aucune métadonnée de localisation"
+
 #~ msgid "Hauteur utile de l'écran (% affiché) :"
 #~ msgstr ""
 
