@@ -186,8 +186,9 @@ or `python` on Windows. Relative input paths are relative to your terminal's
 current directory. JPG, JPEG, PNG, HEIC, and HEIF files directly inside the
 folder are imported; subfolders and videos are not. HEIC/HEIF requires
 `pillow-heif`. Originals are kept, existing files are not overwritten, and
-conflicting filenames receive a numeric suffix. Re-importing the same external
-folder adds another copy; use the no-argument command to re-prepare existing photos.
+conflicting filenames receive a numeric suffix. Photos with identical file contents
+are skipped, even under a different filename, so repeating an import does not add
+duplicate copies. Already prepared photos are also skipped by the preparation pipeline.
 Restart the app/slideshow after successful preparation. Do not use `sudo` unless
 your photo/configuration directories actually require it.
 

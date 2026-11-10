@@ -1,6 +1,7 @@
 """Import a folder into the Smartphone photo source and prepare it for display."""
 
 import argparse
+import hashlib
 import os
 import shutil
 import sys
@@ -8,6 +9,14 @@ from pathlib import Path
 
 PROJECT_DIR = Path(__file__).resolve().parent
 PHOTO_EXTENSIONS = {".jpg", ".jpeg", ".png", ".heic", ".heif"}
+
+
+def photo_digest(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as file:
+        for chunk in iter(lambda: file.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def main() -> int:
@@ -40,7 +49,15 @@ def main() -> int:
         destination.mkdir(parents=True, exist_ok=True)
         if source != destination.resolve():
             used_stems = {path.stem.casefold() for path in destination.iterdir()}
+            existing_digests = {
+                photo_digest(path) for path in destination.iterdir()
+                if path.is_file() and path.suffix.lower() in PHOTO_EXTENSIONS
+            }
             for photo in photos:
+                digest = photo_digest(photo)
+                if digest in existing_digests:
+                    print(f"Skipped existing photo: {photo.name}", flush=True)
+                    continue
                 target = destination / photo.name
                 suffix = 1
                 while target.stem.casefold() in used_stems:
@@ -48,6 +65,7 @@ def main() -> int:
                     suffix += 1
                 shutil.copy2(photo, target)
                 used_stems.add(target.stem.casefold())
+                existing_digests.add(digest)
                 print(f"Copied: {photo.name} -> {target.name}", flush=True)
 
         source_photos = [
