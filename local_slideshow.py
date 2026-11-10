@@ -323,27 +323,36 @@ def fit_photo_to_screen(pil_image, screen_width, screen_height):
 
 
 def prepare_pan_zoom(pil_image, screen_width, screen_height, config):
+    start_zoom = max(1.0, float(config.get("pan_zoom_start_factor", 1.0)))
     zoom_factor = max(1.0, float(config.get("pan_zoom_factor", 1.15)))
-    scaled_width = max(screen_width, int(screen_width * zoom_factor))
-    scaled_height = max(screen_height, int(screen_height * zoom_factor))
-    scaled_image = pil_image.resize((scaled_width, scaled_height), Image.Resampling.LANCZOS)
-    max_x, max_y = scaled_width - screen_width, scaled_height - screen_height
 
     def edge_point():
         edge = random.choice(("top", "bottom", "left", "right"))
         if edge == "top":
-            return random.randint(0, max_x), 0
+            return random.random(), 0.0
         if edge == "bottom":
-            return random.randint(0, max_x), max_y
+            return random.random(), 1.0
         if edge == "left":
-            return 0, random.randint(0, max_y)
-        return max_x, random.randint(0, max_y)
+            return 0.0, random.random()
+        return 1.0, random.random()
 
     start = edge_point()
     end = edge_point()
     if end == start:
-        end = (max_x - start[0], max_y - start[1])
-    return scaled_image, start, end
+        end = (1.0 - start[0], 1.0 - start[1])
+    return pil_image, start, end, start_zoom, zoom_factor
+
+
+def render_pan_zoom_frame(base_surface, screen_width, screen_height, start_offset, end_offset, start_zoom, end_zoom, progress):
+    zoom = start_zoom + (end_zoom - start_zoom) * progress
+    width = max(screen_width, int(screen_width * zoom))
+    height = max(screen_height, int(screen_height * zoom))
+    scaled = pygame.transform.smoothscale(base_surface, (width, height))
+    x_fraction = start_offset[0] + (end_offset[0] - start_offset[0]) * progress
+    y_fraction = start_offset[1] + (end_offset[1] - start_offset[1]) * progress
+    x = int(x_fraction * (width - screen_width))
+    y = int(y_fraction * (height - screen_height))
+    return scaled.subsurface((x, y, screen_width, screen_height))
 
 
 # New function to perform a transition between two images
@@ -1386,12 +1395,11 @@ def display_photo_with_pan_zoom(screen, pil_image, screen_width, screen_height, 
         else:
             if pan_zoom_plan is None:
                 pan_zoom_plan = prepare_pan_zoom(pil_image, screen_width, screen_height, config)
-            scaled_pil_image, start_offset, end_offset = pan_zoom_plan
-            scaled_pygame_image = pygame.image.fromstring(scaled_pil_image.tobytes(), scaled_pil_image.size, scaled_pil_image.mode)
-
-            start_x, start_y = start_offset
-            end_x, end_y = end_offset
-            screen.blit(scaled_pygame_image, (0, 0), (start_x, start_y, screen_width, screen_height))
+            base_image, start_offset, end_offset, start_zoom, end_zoom = pan_zoom_plan
+            base_surface = pygame.image.fromstring(base_image.tobytes(), base_image.size, base_image.mode)
+            initial_frame = render_pan_zoom_frame(base_surface, screen_width, screen_height,
+                                                 start_offset, end_offset, start_zoom, end_zoom, 0)
+            screen.blit(initial_frame, (0, 0))
             draw_overlay(screen, screen_width, screen_height, config, main_font, photo_metadata)
             pygame.display.flip()
 
@@ -1410,12 +1418,9 @@ def display_photo_with_pan_zoom(screen, pil_image, screen_width, screen_height, 
                 raw_progress = min(1.0, elapsed_animation_time / display_duration)
                 eased_progress = 0.5 * (1 - math.cos(raw_progress * math.pi))
 
-                # Calculate current pan position
-                current_x = int(start_x + (end_x - start_x) * eased_progress)
-                current_y = int(start_y + (end_y - start_y) * eased_progress)
-
-                # Blit the portion of the scaled image onto the screen
-                screen.blit(scaled_pygame_image, (0, 0), (current_x, current_y, screen_width, screen_height))
+                frame = render_pan_zoom_frame(base_surface, screen_width, screen_height,
+                                              start_offset, end_offset, start_zoom, end_zoom, eased_progress)
+                screen.blit(frame, (0, 0))
 
                 # Draw overlay (clock/date/weather)
                 draw_overlay(screen, screen_width, screen_height, config, main_font, photo_metadata)
@@ -2022,8 +2027,12 @@ def start_slideshow():
                         initial_image = None
                         if config.get("pan_zoom_enabled", False):
                             pan_zoom_plan = prepare_pan_zoom(current_pil_image, SCREEN_WIDTH, SCREEN_HEIGHT, config)
-                            scaled_image, (start_x, start_y), _ = pan_zoom_plan
-                            initial_image = scaled_image.crop((start_x, start_y, start_x + SCREEN_WIDTH, start_y + SCREEN_HEIGHT))
+                            base_image, start_offset, end_offset, start_zoom, end_zoom = pan_zoom_plan
+                            base_surface = pygame.image.fromstring(base_image.tobytes(), base_image.size, base_image.mode)
+                            initial_frame = render_pan_zoom_frame(base_surface, SCREEN_WIDTH, SCREEN_HEIGHT,
+                                                                  start_offset, end_offset, start_zoom, end_zoom, 0)
+                            initial_image = Image.frombytes("RGB", (SCREEN_WIDTH, SCREEN_HEIGHT),
+                                                            pygame.image.tostring(initial_frame, "RGB"))
                         # Perform transition if it's not the first photo and transition is enabled
                         if previous_photo_surface is not None and transition_enabled and transition_duration > 0 and transition_type != "none": # Added transition_type check
                             current_pil_image = perform_transition(screen, previous_photo_surface, photo_path, transition_duration, SCREEN_WIDTH, SCREEN_HEIGHT, main_font_loaded, config, transition_type, initial_image=initial_image)

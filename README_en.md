@@ -202,6 +202,11 @@ Photos are fitted and centered using the same framing during transitions and
 static display, including when prepared photos are larger than the Windows slideshow window.
 With Pan & Zoom enabled, transitions end at the animation's starting crop, so
 motion begins without a sudden change in framing.
+Pan and zoom now animate together throughout each photo's display time, from
+the configured **Start zoom** to **End zoom**, rather than zooming before panning.
+Both values are at least 1.00 (the full fitted image); 1.15 means 15% enlargement.
+The default is 1.00 → 1.15. Use a larger start than end value to zoom out, or equal
+values to pan at a constant zoom. Transitions match the selected starting zoom.
 Photo metadata uses Immich's cached details for Immich photos and the original
 file's EXIF capture date / IPTC city and country for locally imported photos.
 Keep originals under `static/photos/{source}`. Missing dates or location names

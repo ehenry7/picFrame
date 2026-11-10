@@ -17,6 +17,7 @@ def create_default_config():
         "display_width": 1920,
         "display_height": 1080,
         "pan_zoom_factor": 1.15,
+        "pan_zoom_start_factor": 1.0,
         "immich_auto_update": False,
         "immich_update_interval_hours": 24,
         "pan_zoom_enabled": False,

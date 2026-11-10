@@ -2986,6 +2986,12 @@ msgstr "Minute / second"
 msgid "Examples (15 June 2020):"
 msgstr "Examples (15 June 2020):"
 
+msgid "Start zoom (1.00 = full image):"
+msgstr "Start zoom (1.00 = full image):"
+
+msgid "End zoom (1.15 = 15% zoom):"
+msgstr "End zoom (1.15 = 15% zoom):"
+
 #~ msgid "Favoris"
 #~ msgstr "Favorites"
 

@@ -2737,3 +2737,9 @@ msgstr ""
 
 msgid "Examples (15 June 2020):"
 msgstr ""
+
+msgid "Start zoom (1.00 = full image):"
+msgstr ""
+
+msgid "End zoom (1.15 = 15% zoom):"
+msgstr ""

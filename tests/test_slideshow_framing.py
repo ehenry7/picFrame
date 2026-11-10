@@ -25,7 +25,7 @@ class SlideshowFramingTests(unittest.TestCase):
         self.screen = pygame.display.set_mode((64, 48))
         source = Path(__file__).resolve().parents[1] / "local_slideshow.py"
         tree = ast.parse(source.read_text(encoding="utf-8"))
-        names = {"fit_photo_to_screen", "prepare_pan_zoom", "perform_transition",
+        names = {"fit_photo_to_screen", "prepare_pan_zoom", "render_pan_zoom_frame", "perform_transition",
                  "display_photo_with_pan_zoom"}
         functions = [node for node in tree.body if isinstance(node, ast.FunctionDef)
                      and node.name in names]
@@ -61,8 +61,9 @@ class SlideshowFramingTests(unittest.TestCase):
             for effect in ("fade", "slide_left", "slide_right", "slide_up", "slide_down", "random"):
                 with self.subTest(model=model, effect=effect):
                     plan = self.namespace["prepare_pan_zoom"](self.base, 64, 48, self.config)
-                    scaled, (x, y), _ = plan
-                    initial = scaled.crop((x, y, x + 64, y + 48))
+                    base_surface = pygame.image.fromstring(plan[0].tobytes(), plan[0].size, plan[0].mode)
+                    initial_frame = self.namespace["render_pan_zoom_frame"](base_surface, 64, 48, *plan[1:], 0)
+                    initial = Image.frombytes("RGB", (64, 48), pygame.image.tostring(initial_frame, "RGB"))
                     old = pygame.Surface((64, 48))
                     old.fill("black")
                     self.namespace["perform_transition"](
@@ -97,11 +98,13 @@ class SlideshowFramingTests(unittest.TestCase):
                 plan = self.namespace["prepare_pan_zoom"](
                     self.base, 64, 48, {"pan_zoom_factor": factor})
                 self.assertEqual(plan[0].size, (64, 48))
-                self.assertEqual(plan[1:], ((0, 0), (0, 0)))
+                self.assertEqual(plan[3:], (1.0, 1.0))
+                surface = pygame.image.fromstring(self.base.tobytes(), self.base.size, self.base.mode)
+                frame = self.namespace["render_pan_zoom_frame"](surface, 64, 48, *plan[1:], 0.5)
+                self.assertEqual(pygame.image.tostring(frame, "RGB"), self.base.tobytes())
 
     def test_animation_moves_from_shared_start(self):
-        scaled = self.base.resize((96, 72), Image.Resampling.LANCZOS)
-        plan = (scaled, (0, 0), (32, 24))
+        plan = (self.base, (0, 0), (1, 1), 1.0, 1.5)
         config = {**self.config, "display_duration": 1}
         fake_time = Mock()
         fake_time.time.side_effect = [0, 0, 0, 0.5, 0.5, 1]
@@ -111,9 +114,47 @@ class SlideshowFramingTests(unittest.TestCase):
             self.namespace["display_photo_with_pan_zoom"](
                 self.screen, self.base, 64, 48, config, None, pan_zoom_plan=plan)
         self.assertEqual(len(frames), 3)
-        self.assertEqual(frames[0], scaled.crop((0, 0, 64, 48)).tobytes())
+        self.assertEqual(frames[0], self.base.tobytes())
         self.assertEqual(frames[1], frames[0])
         self.assertNotEqual(frames[2], frames[0])
+
+    def test_zoom_and_pan_change_together(self):
+        base = pygame.image.fromstring(self.base.tobytes(), self.base.size, self.base.mode)
+        rectangles = []
+        sizes = []
+        for progress in (0, 0.25, 0.5, 0.75, 1):
+            frame = self.namespace["render_pan_zoom_frame"](base, 64, 48, (1, 1), (1, 1), 1.0, 1.5, progress)
+            sizes.append(frame.get_parent().get_size())
+            rectangles.append(frame.get_offset())
+            self.assertEqual(frame.get_size(), (64, 48))
+        self.assertEqual(sizes, [(64, 48), (72, 54), (80, 60), (88, 66), (96, 72)])
+        self.assertEqual(rectangles, [(0, 0), (8, 6), (16, 12), (24, 18), (32, 24)])
+
+    def test_all_pan_directions_stay_inside_scaled_image(self):
+        base = pygame.image.fromstring(self.base.tobytes(), self.base.size, self.base.mode)
+        for end in ((0, 0), (1, 0), (0, 1), (1, 1), (0.5, 1)):
+            for progress in (0, 0.1, 0.5, 0.9, 1):
+                frame = self.namespace["render_pan_zoom_frame"](base, 64, 48, (0, 0), end, 1.0, 1.5, progress)
+                self.assertEqual(frame.get_size(), (64, 48))
+
+    def test_start_zoom_matches_fade_and_animation(self):
+        self.config["pan_zoom_start_factor"] = 1.25
+        self.test_transition_ends_at_exact_animation_start()
+
+    def test_zoom_out_and_constant_zoom(self):
+        base = pygame.image.fromstring(self.base.tobytes(), self.base.size, self.base.mode)
+        for start, end in ((1.5, 1.0), (1.5, 1.5)):
+            sizes = []
+            offsets = []
+            for progress in (0, 0.5, 1):
+                frame = self.namespace["render_pan_zoom_frame"](
+                    base, 64, 48, (0, 0), (1, 1), start, end, progress)
+                sizes.append(frame.get_parent().get_size())
+                offsets.append(frame.get_offset())
+            expected = [(96, 72), (80, 60), (64, 48)] if end == 1.0 else [(96, 72)] * 3
+            self.assertEqual(sizes, expected)
+            if start == end:
+                self.assertEqual(offsets, [(0, 0), (16, 12), (32, 24)])
 
 
 if __name__ == "__main__":

@@ -795,7 +795,7 @@ def configure():
             'transition_type', 'home_assistant_token',
             'transition_duration', # Added transition_duration
             'transition_fps', # Added transition_fps
-            'pan_zoom_factor', 'favorite_boost_factor',
+            'pan_zoom_factor', 'pan_zoom_start_factor', 'favorite_boost_factor',
             'immich_update_interval_hours', 'date_format', 
             'weather_api_key', 'weather_city', 'weather_units', 'weather_update_interval_minutes', 'anniversary_boost_factor',
             'smart_plug_on_url', 'smart_plug_off_url', 'smart_plug_on_delay', 'smart_plug_status_url',
@@ -817,7 +817,7 @@ def configure():
                         config[key] = int(value)
                     except (ValueError, TypeError):
                         config[key] = 0 # Mettre une valeur par défaut en cas d'erreur
-                elif key in ['pan_zoom_factor']: # Float fields
+                elif key in ['pan_zoom_factor', 'pan_zoom_start_factor']: # Float fields
                     try:
                         config[key] = float(value)
                     except (ValueError, TypeError): # type: ignore

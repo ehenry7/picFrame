@@ -2744,6 +2744,12 @@ msgstr "Minute / seconde"
 msgid "Examples (15 June 2020):"
 msgstr "Exemples (15 juin 2020) :"
 
+msgid "Start zoom (1.00 = full image):"
+msgstr "Zoom initial (1.00 = image entière) :"
+
+msgid "End zoom (1.15 = 15% zoom):"
+msgstr "Zoom final (1.15 = agrandissement de 15%) :"
+
 #~ msgid "Hauteur utile de l'écran (% affiché) :"
 #~ msgstr ""
 
