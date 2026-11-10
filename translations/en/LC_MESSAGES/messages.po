@@ -2913,6 +2913,36 @@ msgstr ""
 "Return to login\n"
 "          administrator"
 
+msgid "Import photos"
+msgstr "Import photos"
+
+msgid "Import folder"
+msgstr "Import folder"
+
+msgid ""
+"Select photos or a folder from this device. Duplicate photos are skipped."
+msgstr ""
+"Select photos or a folder from this device. Duplicate photos are skipped."
+
+#, python-format
+msgid "Unsupported photo file: %(name)s"
+msgstr "Unsupported photo file: %(name)s"
+
+#, python-format
+msgid "%(imported)s photos imported; %(skipped)s duplicates skipped."
+msgstr "%(imported)s photos imported; %(skipped)s duplicates skipped."
+
+msgid "Photo preparation failed or was cancelled."
+msgstr "Photo preparation failed or was cancelled."
+
+msgid ""
+"Selection exceeds the 32 MB upload limit. Import fewer photos at a time."
+msgstr ""
+"Selection exceeds the 32 MB upload limit. Import fewer photos at a time."
+
+msgid "Import ended before completion. Please try again."
+msgstr "Import ended before completion. Please try again."
+
 #~ msgid "Favoris"
 #~ msgstr "Favorites"
 

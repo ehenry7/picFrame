@@ -204,3 +204,12 @@ static display, including when prepared photos are larger than the Windows slide
 ### Photo Import Settings
 
 Choose between importing from an Immich album or a USB stick, and manage downloaded files.
+
+In the Actions tab under photo importing, **Import photos** selects multiple
+files and **Import folder** selects a folder on the device running your browser
+(including its subfolders). Photos are added to the Smartphone source, prepared,
+and enabled automatically. Identical file contents are skipped, including renamed
+duplicates; different photos with matching names are preserved with numeric suffixes.
+Each selection is limited to 32 MB including upload overhead; use smaller selections
+or the command-line importer for large folders. Folder selection requires a browser
+that supports directory uploads.

@@ -10,12 +10,12 @@ msgstr ""
 "POT-Creation-Date: 2026-11-10 11:47+0200\n"
 "PO-Revision-Date: 2025-07-21 23:26+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: fr\n"
 "Language-Team: fr <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "Generated-By: Babel 2.18.0\n"
 
 #: app.py:611
@@ -37,8 +37,8 @@ msgstr ""
 #: app.py:636
 #, python-format
 msgid ""
-"Félicitations %(name)s ! Vous pouvez maintenant envoyer des cartes "
-"postales au cadre."
+"Félicitations %(name)s ! Vous pouvez maintenant envoyer des cartes postales "
+"au cadre."
 msgstr ""
 
 #: app.py:664
@@ -85,8 +85,8 @@ msgstr ""
 
 #: app.py:920
 msgid ""
-"La valeur pour la limite de photos Immich est invalide. La valeur "
-"précédente est conservée."
+"La valeur pour la limite de photos Immich est invalide. La valeur précédente"
+" est conservée."
 msgstr ""
 
 #: app.py:1075
@@ -157,8 +157,8 @@ msgstr ""
 
 #: app.py:2230
 msgid ""
-"L'application web redémarre... La page sera inaccessible pendant quelques"
-" instants."
+"L'application web redémarre... La page sera inaccessible pendant quelques "
+"instants."
 msgstr ""
 
 #: app.py:2566
@@ -171,7 +171,8 @@ msgstr ""
 
 #: app.py:2861
 #, python-format
-msgid "Résolution appliquée : %(width)sx%(height)s. Le diaporama a été redémarré."
+msgid ""
+"Résolution appliquée : %(width)sx%(height)s. Le diaporama a été redémarré."
 msgstr ""
 
 #: app.py:2863
@@ -187,8 +188,8 @@ msgstr ""
 
 #: app.py:2961
 msgid ""
-"Paramètres Wi-Fi appliqués. Le service réseau a été redémarré pour forcer"
-" la connexion. Veuillez patienter une minute et vérifier le statut."
+"Paramètres Wi-Fi appliqués. Le service réseau a été redémarré pour forcer la"
+" connexion. Veuillez patienter une minute et vérifier le statut."
 msgstr ""
 
 #: app.py:2963
@@ -210,8 +211,8 @@ msgstr ""
 
 #: app.py:3032
 msgid ""
-"Mot de passe mis à jour avec succès. Il sera nécessaire pour votre "
-"prochaine connexion."
+"Mot de passe mis à jour avec succès. Il sera nécessaire pour votre prochaine"
+" connexion."
 msgstr ""
 
 #: app.py:3034
@@ -363,8 +364,7 @@ msgstr ""
 
 #: templates/configure.html.jinja:257
 msgid ""
-"Gérez les paramètres d'affichage du diaporama, la durée, les "
-"transitions..."
+"Gérez les paramètres d'affichage du diaporama, la durée, les transitions..."
 msgstr ""
 
 #: templates/configure.html.jinja:258
@@ -501,8 +501,8 @@ msgstr ""
 
 #: templates/configure.html.jinja:342
 msgid ""
-"Si vous changez l'orientation, pensez à relancer une préparation des "
-"photos (onglet Actions) pour adapter le contenu."
+"Si vous changez l'orientation, pensez à relancer une préparation des photos "
+"(onglet Actions) pour adapter le contenu."
 msgstr ""
 
 #: templates/configure.html.jinja:347
@@ -620,7 +620,8 @@ msgid "Ex: 0 = pas de boost, 2 = 3x plus de chances d'apparaître."
 msgstr ""
 
 #: templates/configure.html.jinja:448
-msgid "Activer le boost pour les photos à leur date anniversaire de prise de vue"
+msgid ""
+"Activer le boost pour les photos à leur date anniversaire de prise de vue"
 msgstr ""
 
 #: templates/configure.html.jinja:452
@@ -636,7 +637,8 @@ msgid "Activer le son pour les vidéos"
 msgstr ""
 
 #: templates/configure.html.jinja:467
-msgid "Activer le décodage vidéo matériel (plus fluide, mais peut être instable)"
+msgid ""
+"Activer le décodage vidéo matériel (plus fluide, mais peut être instable)"
 msgstr ""
 
 #: templates/configure.html.jinja:469
@@ -671,9 +673,9 @@ msgstr ""
 
 #: templates/configure.html.jinja:499
 msgid ""
-"Si votre écran ne se met pas complètement en veille, vous pouvez utiliser"
-" une prise connectée (Wi-Fi) pour couper son alimentation. Pimmich "
-"enverra une simple requête HTTP aux URLs que vous spécifiez."
+"Si votre écran ne se met pas complètement en veille, vous pouvez utiliser "
+"une prise connectée (Wi-Fi) pour couper son alimentation. Pimmich enverra "
+"une simple requête HTTP aux URLs que vous spécifiez."
 msgstr ""
 
 #: templates/configure.html.jinja:500
@@ -716,8 +718,8 @@ msgstr ""
 
 #: templates/configure.html.jinja:557
 msgid ""
-"Temps d'attente pour que l'écran s'initialise avant de forcer la "
-"résolution. Augmentez si la résolution est toujours incorrecte."
+"Temps d'attente pour que l'écran s'initialise avant de forcer la résolution."
+" Augmentez si la résolution est toujours incorrecte."
 msgstr ""
 
 #: templates/configure.html.jinja:560
@@ -866,8 +868,7 @@ msgstr ""
 #: templates/configure.html.jinja:743
 msgid ""
 "Une clé API est\n"
-"                        requise. Vous pouvez trouver les coordonnées de "
-"votre port sur des sites comme"
+"                        requise. Vous pouvez trouver les coordonnées de votre port sur des sites comme"
 msgstr ""
 
 #: templates/configure.html.jinja:747
@@ -944,15 +945,13 @@ msgstr ""
 #: templates/configure.html.jinja:832
 msgid ""
 "La détection automatique du fuseau horaire a\n"
-"                            échoué lors de l'installation. Le système est"
-" configuré sur <strong>UTC</strong>. L'heure\n"
+"                            échoué lors de l'installation. Le système est configuré sur <strong>UTC</strong>. L'heure\n"
 "                            affichée peut être incorrecte."
 msgstr ""
 
 #: templates/configure.html.jinja:836
 msgid ""
-"Vous pouvez le corriger manuellement en vous connectant au Raspberry Pi "
-"(via SSH) et\n"
+"Vous pouvez le corriger manuellement en vous connectant au Raspberry Pi (via SSH) et\n"
 "                            en exécutant la commande :"
 msgstr ""
 
@@ -989,8 +988,7 @@ msgstr ""
 #: templates/configure.html.jinja:883
 msgid ""
 "Nombre maximum de photos à récupérer depuis Immich.\n"
-"                        Mettez 0, -1 ou laissez vide pour ne pas avoir de"
-" limite."
+"                        Mettez 0, -1 ou laissez vide pour ne pas avoir de limite."
 msgstr ""
 
 #: templates/configure.html.jinja:889
@@ -1028,8 +1026,7 @@ msgstr ""
 #: templates/configure.html.jinja:918
 msgid ""
 "Sélectionnez les sources de photos à inclure dans le diaporama.\n"
-"                        Les photos seront mélangées entre les sources "
-"sélectionnées."
+"                        Les photos seront mélangées entre les sources sélectionnées."
 msgstr ""
 
 #: templates/configure.html.jinja:923
@@ -1118,8 +1115,8 @@ msgstr ""
 
 #: templates/configure.html.jinja:1014
 msgid ""
-"Si cette option est cochée, les mises à jour automatiques (Immich, Samba)"
-" ne se lanceront pas immédiatement après un redémarrage du cadre, mais "
+"Si cette option est cochée, les mises à jour automatiques (Immich, Samba) ne"
+" se lanceront pas immédiatement après un redémarrage du cadre, mais "
 "attendront le prochain cycle programmé."
 msgstr ""
 
@@ -1129,19 +1126,15 @@ msgstr ""
 
 #: templates/configure.html.jinja:1024
 msgid ""
-"Activez cette fonction pour permettre à des utilisateurs autorisés "
-"d'envoyer des photos\n"
-"                        directement sur le cadre via un bot Telegram. Les"
-" photos reçues seront ajoutées à la source\n"
+"Activez cette fonction pour permettre à des utilisateurs autorisés d'envoyer des photos\n"
+"                        directement sur le cadre via un bot Telegram. Les photos reçues seront ajoutées à la source\n"
 "                        \"Telegram\"."
 msgstr ""
 
 #: templates/configure.html.jinja:1028
 msgid ""
-"Pour créer un bot et obtenir un token, parlez à @BotFather sur Telegram. "
-"L'ID de\n"
-"                        l'administrateur est votre propre ID utilisateur "
-"Telegram (obtenu via @userinfobot par\n"
+"Pour créer un bot et obtenir un token, parlez à @BotFather sur Telegram. L'ID de\n"
+"                        l'administrateur est votre propre ID utilisateur Telegram (obtenu via @userinfobot par\n"
 "                        exemple)."
 msgstr ""
 
@@ -1177,10 +1170,8 @@ msgstr ""
 
 #: templates/configure.html.jinja:1079
 msgid ""
-"Créez des codes d'invitation uniques pour permettre à vos amis et votre "
-"famille d'envoyer\n"
-"                        des photos au cadre. Ils devront envoyer ce code "
-"à votre bot Telegram pour être autorisés."
+"Créez des codes d'invitation uniques pour permettre à vos amis et votre famille d'envoyer\n"
+"                        des photos au cadre. Ils devront envoyer ce code à votre bot Telegram pour être autorisés."
 msgstr ""
 
 #: templates/configure.html.jinja:1085
@@ -1222,8 +1213,7 @@ msgstr ""
 #: templates/configure.html.jinja:1116
 msgid ""
 "N'oubliez pas d'activer la source \"Telegram\" dans l'onglet\n"
-"                        \"Sources\" pour que les photos reçues "
-"apparaissent dans le diaporama."
+"                        \"Sources\" pour que les photos reçues apparaissent dans le diaporama."
 msgstr ""
 
 #: templates/configure.html.jinja:1122
@@ -1233,8 +1223,7 @@ msgstr ""
 #: templates/configure.html.jinja:1124
 msgid ""
 "Augmentez temporairement la fréquence d'affichage des\n"
-"                        nouvelles cartes postales reçues pour qu'elles "
-"apparaissent plus souvent."
+"                        nouvelles cartes postales reçues pour qu'elles apparaissent plus souvent."
 msgstr ""
 
 #: templates/configure.html.jinja:1130
@@ -1278,10 +1267,8 @@ msgstr ""
 #: templates/configure.html.jinja:1171
 msgid ""
 "Pour utiliser le mot-clé\n"
-"                            personnalisé \"Cadre Magique\", vous devez "
-"créer un modèle sur le site de Picovoice, le\n"
-"                            télécharger, et le placer dans le dossier "
-"`voice_models` sous le nom\n"
+"                            personnalisé \"Cadre Magique\", vous devez créer un modèle sur le site de Picovoice, le\n"
+"                            télécharger, et le placer dans le dossier `voice_models` sous le nom\n"
 "                            `cadre-magique_raspberry-pi.ppn`."
 msgstr ""
 
@@ -1326,8 +1313,7 @@ msgstr ""
 #: templates/configure.html.jinja:1206
 msgid ""
 "Le changement de langue nécessite un redémarrage du\n"
-"                            service vocal (désactiver puis réactiver le "
-"contrôle vocal)."
+"                            service vocal (désactiver puis réactiver le contrôle vocal)."
 msgstr ""
 
 #: templates/configure.html.jinja:1211
@@ -1372,8 +1358,7 @@ msgstr ""
 
 #: templates/configure.html.jinja:1259
 msgid ""
-"Règle le volume pour les sons de notification (confirmation du contrôle "
-"vocal, réception\n"
+"Règle le volume pour les sons de notification (confirmation du contrôle vocal, réception\n"
 "                        de carte postale, etc.)."
 msgstr ""
 
@@ -1389,10 +1374,8 @@ msgstr ""
 
 #: templates/configure.html.jinja:1279
 msgid ""
-"Si votre microphone n'apparaît pas dans la liste ci-dessus, utilisez cet "
-"outil pour\n"
-"                        vérifier si le système d'exploitation le détecte "
-"correctement."
+"Si votre microphone n'apparaît pas dans la liste ci-dessus, utilisez cet outil pour\n"
+"                        vérifier si le système d'exploitation le détecte correctement."
 msgstr ""
 
 #: templates/configure.html.jinja:1284 templates/configure.html.jinja:2428
@@ -1573,8 +1556,7 @@ msgstr ""
 #: templates/configure.html.jinja:1570
 msgid ""
 "L'import depuis Telegram se fait automatiquement à la\n"
-"                            réception des photos. Activez la source dans "
-"l'onglet \"Sources\" pour les voir."
+"                            réception des photos. Activez la source dans l'onglet \"Sources\" pour les voir."
 msgstr ""
 
 #: templates/configure.html.jinja:1578
@@ -1598,8 +1580,7 @@ msgstr ""
 
 #: templates/configure.html.jinja:1596
 msgid ""
-"Téléchargez vos propres fichiers MP3 ou WAV pour accompagner vos "
-"playlists."
+"Téléchargez vos propres fichiers MP3 ou WAV pour accompagner vos playlists."
 msgstr ""
 
 #: templates/configure.html.jinja:1600
@@ -1651,8 +1632,7 @@ msgstr ""
 #: templates/configure.html.jinja:1660
 msgid ""
 "La sélection du pays est obligatoire pour activer\n"
-"                    l'interface Wi-Fi et respecter les réglementations "
-"locales sur les fréquences radio."
+"                    l'interface Wi-Fi et respecter les réglementations locales sur les fréquences radio."
 msgstr ""
 
 #: templates/configure.html.jinja:1664
@@ -1714,10 +1694,8 @@ msgstr ""
 #: templates/configure.html.jinja:1706
 msgid ""
 "Note : Après avoir appliqué les paramètres, la connexion\n"
-"                    peut prendre jusqu'à une minute. Si le statut de "
-"connexion ci-dessus ne passe pas à \"Connecté\",\n"
-"                    vérifiez le mot de passe puis essayez de redémarrer "
-"le système."
+"                    peut prendre jusqu'à une minute. Si le statut de connexion ci-dessus ne passe pas à \"Connecté\",\n"
+"                    vérifiez le mot de passe puis essayez de redémarrer le système."
 msgstr ""
 
 #: templates/configure.html.jinja:1713
@@ -1727,10 +1705,8 @@ msgstr ""
 #: templates/configure.html.jinja:1715
 msgid ""
 "Si le Wi-Fi ne se connecte pas alors qu'un câble Ethernet\n"
-"                    est branché, c'est souvent un problème de priorité. "
-"Désactivez l'interface Ethernet pour forcer le\n"
-"                    système à utiliser exclusivement le Wi-Fi. Cette "
-"action redémarre le service réseau."
+"                    est branché, c'est souvent un problème de priorité. Désactivez l'interface Ethernet pour forcer le\n"
+"                    système à utiliser exclusivement le Wi-Fi. Cette action redémarre le service réseau."
 msgstr ""
 
 #: templates/configure.html.jinja:1723
@@ -1744,8 +1720,7 @@ msgstr ""
 #: templates/configure.html.jinja:1739
 msgid ""
 "Cliquez sur le bouton pour rechercher les réseaux Wi-Fi disponibles.\n"
-"                    Cliquer sur un réseau dans la liste remplira "
-"automatiquement le champ SSID ci-dessus."
+"                    Cliquer sur un réseau dans la liste remplira automatiquement le champ SSID ci-dessus."
 msgstr ""
 
 #: templates/configure.html.jinja:1744 templates/configure.html.jinja:2374
@@ -1793,8 +1768,7 @@ msgstr ""
 #: templates/configure.html.jinja:1804
 msgid ""
 "Sauvegardez votre configuration (API, partages,\n"
-"                    affichage...) dans un fichier. Vous pourrez le "
-"restaurer plus tard ou sur une nouvelle\n"
+"                    affichage...) dans un fichier. Vous pourrez le restaurer plus tard ou sur une nouvelle\n"
 "                    installation."
 msgstr ""
 
@@ -1827,13 +1801,13 @@ msgstr ""
 #: templates/configure.html.jinja:1835
 msgid ""
 "Cliquez sur le bouton pour rechercher et installer les\n"
-"                    dernières mises à jour de Pimmich depuis GitHub. "
-"L'application redémarrera automatiquement après la\n"
+"                    dernières mises à jour de Pimmich depuis GitHub. L'application redémarrera automatiquement après la\n"
 "                    mise à jour."
 msgstr ""
 
 #: templates/configure.html.jinja:1840
-msgid "Lancer la mise à jour ? Vous allez être redirigé vers la page de suivi."
+msgid ""
+"Lancer la mise à jour ? Vous allez être redirigé vers la page de suivi."
 msgstr ""
 
 #: templates/configure.html.jinja:1841
@@ -1847,10 +1821,8 @@ msgstr ""
 #: templates/configure.html.jinja:1849
 msgid ""
 "Si vous avez flashé Pimmich sur une carte SD plus grande que\n"
-"                    l'image, utilisez cette option pour étendre la "
-"partition et utiliser tout l'espace disponible. Un\n"
-"                    redémarrage du système sera nécessaire pour finaliser"
-" l'opération."
+"                    l'image, utilisez cette option pour étendre la partition et utiliser tout l'espace disponible. Un\n"
+"                    redémarrage du système sera nécessaire pour finaliser l'opération."
 msgstr ""
 
 #: templates/configure.html.jinja:1853
@@ -1860,8 +1832,7 @@ msgstr ""
 #: templates/configure.html.jinja:1853
 msgid ""
 "Cette opération est sûre et ne supprime aucune donnée.\n"
-"                        Elle prépare simplement le système à s'étendre au"
-" prochain démarrage."
+"                        Elle prépare simplement le système à s'étendre au prochain démarrage."
 msgstr ""
 
 #: templates/configure.html.jinja:1858
@@ -1965,8 +1936,7 @@ msgstr ""
 #: templates/configure.html.jinja:1988
 msgid ""
 "Voici les photos qui sont prêtes à être affichées par le diaporama,\n"
-"                    classées par source. Cliquez sur une photo pour "
-"l'agrandir."
+"                    classées par source. Cliquez sur une photo pour l'agrandir."
 msgstr ""
 
 #: templates/configure.html.jinja:1999
@@ -2068,8 +2038,7 @@ msgstr ""
 #: templates/configure.html.jinja:2143
 msgid ""
 "Créez des albums virtuels (playlists) en sélectionnant des\n"
-"                    photos de n'importe quelle source. Vous pouvez "
-"ensuite lancer un diaporama contenant uniquement les\n"
+"                    photos de n'importe quelle source. Vous pouvez ensuite lancer un diaporama contenant uniquement les\n"
 "                    photos d'une playlist."
 msgstr ""
 
@@ -2081,8 +2050,8 @@ msgstr ""
 
 #: templates/configure.html.jinja:2174
 msgid ""
-"Arrête la playlist en cours et relance le diaporama avec toutes les "
-"sources activées."
+"Arrête la playlist en cours et relance le diaporama avec toutes les sources "
+"activées."
 msgstr ""
 
 #: templates/configure.html.jinja:2175 templates/configure.html.jinja:4547
@@ -2371,8 +2340,8 @@ msgstr ""
 
 #: templates/configure.html.jinja:3607
 msgid ""
-"Êtes-vous sûr de vouloir supprimer cette playlist ? Les photos ne seront "
-"pas supprimées."
+"Êtes-vous sûr de vouloir supprimer cette playlist ? Les photos ne seront pas"
+" supprimées."
 msgstr ""
 
 #: templates/configure.html.jinja:3663
@@ -2549,8 +2518,8 @@ msgstr ""
 
 #: templates/configure.html.jinja:5171
 msgid ""
-"Êtes-vous sûr de vouloir effacer le contenu du log \"__LOG_NAME__\" ? "
-"Cette action est irréversible."
+"Êtes-vous sûr de vouloir effacer le contenu du log \"__LOG_NAME__\" ? Cette "
+"action est irréversible."
 msgstr ""
 
 #: templates/configure.html.jinja:5186
@@ -2563,8 +2532,8 @@ msgstr ""
 
 #: templates/configure.html.jinja:5289
 msgid ""
-"Cette opération va préparer le système à étendre la partition au prochain"
-" redémarrage. Voulez-vous continuer ?"
+"Cette opération va préparer le système à étendre la partition au prochain "
+"redémarrage. Voulez-vous continuer ?"
 msgstr ""
 
 #: templates/configure.html.jinja:5351
@@ -2701,6 +2670,37 @@ msgid ""
 "          administrateur"
 msgstr ""
 
+msgid "Import photos"
+msgstr "Importer des photos"
+
+msgid "Import folder"
+msgstr "Importer un dossier"
+
+msgid ""
+"Select photos or a folder from this device. Duplicate photos are skipped."
+msgstr ""
+"Sélectionnez des photos ou un dossier sur cet appareil. Les doublons sont "
+"ignorés."
+
+#, python-format
+msgid "Unsupported photo file: %(name)s"
+msgstr "Fichier photo non pris en charge : %(name)s"
+
+#, python-format
+msgid "%(imported)s photos imported; %(skipped)s duplicates skipped."
+msgstr "%(imported)s photos importées ; %(skipped)s doublons ignorés."
+
+msgid "Photo preparation failed or was cancelled."
+msgstr "La préparation des photos a échoué ou a été annulée."
+
+msgid ""
+"Selection exceeds the 32 MB upload limit. Import fewer photos at a time."
+msgstr ""
+"La sélection dépasse la limite de 32 Mo. Importez moins de photos à la fois."
+
+msgid "Import ended before completion. Please try again."
+msgstr "L’importation s’est terminée avant la fin. Veuillez réessayer."
+
 #~ msgid "Hauteur utile de l'écran (% affiché) :"
 #~ msgstr ""
 
@@ -2708,9 +2708,8 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Êtes-vous sûr de vouloir effacer "
-#~ "le contenu du log \"%(logName)s\" ? "
-#~ "Cette action est irréversible."
+#~ "Êtes-vous sûr de vouloir effacer le contenu du log \"%(logName)s\" ? Cette "
+#~ "action est irréversible."
 #~ msgstr ""
 
 #~ msgid "Sources des photos"
@@ -2747,8 +2746,7 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Force une résolution spécifique. Utile "
-#~ "si l'écran n'est pas détecté "
+#~ "Force une résolution spécifique. Utile si l'écran n'est pas détecté "
 #~ "correctement au démarrage."
 #~ msgstr ""
 
@@ -2759,8 +2757,7 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Fréquence des favoris (nombre d'ajouts "
-#~ "supplémentaires dans la liste de "
+#~ "Fréquence des favoris (nombre d'ajouts supplémentaires dans la liste de "
 #~ "lecture) :"
 #~ msgstr ""
 
@@ -2768,10 +2765,8 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Cochez cette case pour une lecture "
-#~ "plus fluide sur les Raspberry Pi. "
-#~ "Décochez si vous rencontrez des écrans"
-#~ " bleus/noirs après les vidéos."
+#~ "Cochez cette case pour une lecture plus fluide sur les Raspberry Pi. "
+#~ "Décochez si vous rencontrez des écrans bleus/noirs après les vidéos."
 #~ msgstr ""
 
 #~ msgid "Couleur du fond (hex RGBA) :"
@@ -2781,111 +2776,85 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Une clé API est requise. Vous "
-#~ "pouvez trouver les coordonnées de votre"
-#~ " port sur des sites comme"
+#~ "Une clé API est requise. Vous pouvez trouver les coordonnées de votre port "
+#~ "sur des sites comme"
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Note : Cette API fournit les "
-#~ "hauteurs de marée, mais pas le "
-#~ "coefficient de marée."
+#~ "Note : Cette API fournit les hauteurs de marée, mais pas le coefficient de "
+#~ "marée."
 #~ msgstr ""
 
 #~ msgid "Dernière mise à jour des données :"
 #~ msgstr ""
 
 #~ msgid ""
-#~ "La détection automatique du fuseau "
-#~ "horaire a échoué lors de l'installation."
-#~ " Le système est configuré sur "
-#~ "<strong>UTC</strong>. L'heure affichée peut "
+#~ "La détection automatique du fuseau horaire a échoué lors de l'installation. "
+#~ "Le système est configuré sur <strong>UTC</strong>. L'heure affichée peut "
 #~ "être incorrecte."
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Vous pouvez le corriger manuellement en"
-#~ " vous connectant au Raspberry Pi (via"
-#~ " SSH) et en exécutant la commande "
-#~ ":"
+#~ "Vous pouvez le corriger manuellement en vous connectant au Raspberry Pi (via"
+#~ " SSH) et en exécutant la commande :"
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Le fuseau horaire a été configuré "
-#~ "automatiquement lors de l'installation."
+#~ "Le fuseau horaire a été configuré automatiquement lors de l'installation."
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Sélectionnez les sources de photos à "
-#~ "inclure dans le diaporama. Les photos"
-#~ " seront mélangées entre les sources "
-#~ "sélectionnées."
+#~ "Sélectionnez les sources de photos à inclure dans le diaporama. Les photos "
+#~ "seront mélangées entre les sources sélectionnées."
 #~ msgstr ""
 
 #~ msgid "Ignorer le premier import automatique au démarrage"
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Si cette option est cochée, les "
-#~ "mises à jour automatiques (Immich, "
-#~ "Samba) ne se lanceront pas immédiatement"
-#~ " après un redémarrage du cadre, mais"
-#~ " attendront le prochain cycle programmé."
+#~ "Si cette option est cochée, les mises à jour automatiques (Immich, Samba) ne"
+#~ " se lanceront pas immédiatement après un redémarrage du cadre, mais "
+#~ "attendront le prochain cycle programmé."
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Activez cette fonction pour permettre à"
-#~ " des utilisateurs autorisés d'envoyer des"
-#~ " photos directement sur le cadre via"
-#~ " un bot Telegram. Les photos reçues"
-#~ " seront ajoutées à la source "
-#~ "\"Telegram\"."
+#~ "Activez cette fonction pour permettre à des utilisateurs autorisés d'envoyer"
+#~ " des photos directement sur le cadre via un bot Telegram. Les photos reçues "
+#~ "seront ajoutées à la source \"Telegram\"."
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Pour créer un bot et obtenir un"
-#~ " token, parlez à @BotFather sur "
-#~ "Telegram. L'ID de l'administrateur est "
-#~ "votre propre ID utilisateur Telegram "
-#~ "(obtenu via @userinfobot par exemple)."
+#~ "Pour créer un bot et obtenir un token, parlez à @BotFather sur Telegram. "
+#~ "L'ID de l'administrateur est votre propre ID utilisateur Telegram (obtenu "
+#~ "via @userinfobot par exemple)."
 #~ msgstr ""
 
 #~ msgid "ID de l'administrateur :"
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Créez des codes d'invitation uniques "
-#~ "pour permettre à vos amis et votre"
-#~ " famille d'envoyer des photos au "
-#~ "cadre. Ils devront envoyer ce code "
-#~ "à votre bot Telegram pour être "
-#~ "autorisés."
+#~ "Créez des codes d'invitation uniques pour permettre à vos amis et votre "
+#~ "famille d'envoyer des photos au cadre. Ils devront envoyer ce code à votre "
+#~ "bot Telegram pour être autorisés."
 #~ msgstr ""
 
 #~ msgid ""
-#~ "N'oubliez pas d'activer la source "
-#~ "\"Telegram\" dans l'onglet \"Sources\" pour"
-#~ " que les photos reçues apparaissent "
-#~ "dans le diaporama."
+#~ "N'oubliez pas d'activer la source \"Telegram\" dans l'onglet \"Sources\" "
+#~ "pour que les photos reçues apparaissent dans le diaporama."
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Augmentez temporairement la fréquence "
-#~ "d'affichage des nouvelles cartes postales "
-#~ "reçues pour qu'elles apparaissent plus "
-#~ "souvent."
+#~ "Augmentez temporairement la fréquence d'affichage des nouvelles cartes "
+#~ "postales reçues pour qu'elles apparaissent plus souvent."
 #~ msgstr ""
 
 #~ msgid "Durée du boost (jours) :"
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Pour utiliser le mot-clé personnalisé"
-#~ " \"Cadre Magique\", vous devez créer "
-#~ "un modèle sur le site de "
-#~ "Picovoice, le télécharger, et le placer"
-#~ " dans le dossier `voice_models` sous "
-#~ "le nom `cadre-magique_raspberry-pi.ppn`."
+#~ "Pour utiliser le mot-clé personnalisé \"Cadre Magique\", vous devez créer un"
+#~ " modèle sur le site de Picovoice, le télécharger, et le placer dans le "
+#~ "dossier `voice_models` sous le nom `cadre-magique_raspberry-pi.ppn`."
 #~ msgstr ""
 
 #~ msgid "Activer le contrôle vocal (action immédiate)"
@@ -2895,9 +2864,8 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Le changement de langue nécessite un "
-#~ "redémarrage du service vocal (désactiver "
-#~ "puis réactiver le contrôle vocal)."
+#~ "Le changement de langue nécessite un redémarrage du service vocal "
+#~ "(désactiver puis réactiver le contrôle vocal)."
 #~ msgstr ""
 
 #~ msgid "Clé d'accès Picovoice Porcupine"
@@ -2910,35 +2878,27 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Si votre microphone n'apparaît pas dans"
-#~ " la liste ci-dessus, utilisez cet "
-#~ "outil pour vérifier si le système "
-#~ "d'exploitation le détecte correctement."
+#~ "Si votre microphone n'apparaît pas dans la liste ci-dessus, utilisez cet "
+#~ "outil pour vérifier si le système d'exploitation le détecte correctement."
 #~ msgstr ""
 
 #~ msgid ""
-#~ "L'import depuis Telegram se fait "
-#~ "automatiquement à la réception des "
-#~ "photos. Activez la source dans l'onglet"
-#~ " \"Sources\" pour les voir."
+#~ "L'import depuis Telegram se fait automatiquement à la réception des photos. "
+#~ "Activez la source dans l'onglet \"Sources\" pour les voir."
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Envoyez des photos directement depuis "
-#~ "votre téléphone via le navigateur."
+#~ "Envoyez des photos directement depuis votre téléphone via le navigateur."
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Approuvez ou rejetez les photos "
-#~ "envoyées. Les photos approuvées seront "
+#~ "Approuvez ou rejetez les photos envoyées. Les photos approuvées seront "
 #~ "ajoutées à la source \"Smartphone\"."
 #~ msgstr ""
 
 #~ msgid ""
-#~ "La sélection du pays est obligatoire "
-#~ "pour activer l'interface Wi-Fi et "
-#~ "respecter les réglementations locales sur "
-#~ "les fréquences radio."
+#~ "La sélection du pays est obligatoire pour activer l'interface Wi-Fi et "
+#~ "respecter les réglementations locales sur les fréquences radio."
 #~ msgstr ""
 
 #~ msgid "Pays (pour la réglementation Wi-Fi)"
@@ -2948,31 +2908,23 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Note : Après avoir appliqué les "
-#~ "paramètres, la connexion peut prendre "
-#~ "jusqu'à une minute. Si le statut "
-#~ "de connexion ci-dessus ne passe "
-#~ "pas à \"Connecté\", vérifiez le mot "
-#~ "de passe puis essayez de redémarrer "
-#~ "le système."
+#~ "Note : Après avoir appliqué les paramètres, la connexion peut prendre "
+#~ "jusqu'à une minute. Si le statut de connexion ci-dessus ne passe pas à "
+#~ "\"Connecté\", vérifiez le mot de passe puis essayez de redémarrer le "
+#~ "système."
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Si le Wi-Fi ne se connecte "
-#~ "pas alors qu'un câble Ethernet est "
-#~ "branché, c'est souvent un problème de"
-#~ " priorité. Désactivez l'interface Ethernet "
-#~ "pour forcer le système à utiliser "
-#~ "exclusivement le Wi-Fi. Cette action "
-#~ "redémarre le service réseau."
+#~ "Si le Wi-Fi ne se connecte pas alors qu'un câble Ethernet est branché, c'est"
+#~ " souvent un problème de priorité. Désactivez l'interface Ethernet pour "
+#~ "forcer le système à utiliser exclusivement le Wi-Fi. Cette action redémarre "
+#~ "le service réseau."
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Cliquez sur le bouton pour rechercher"
-#~ " les réseaux Wi-Fi disponibles. "
-#~ "Cliquer sur un réseau dans la "
-#~ "liste remplira automatiquement le champ "
-#~ "SSID ci-dessus."
+#~ "Cliquez sur le bouton pour rechercher les réseaux Wi-Fi disponibles. Cliquer"
+#~ " sur un réseau dans la liste remplira automatiquement le champ SSID ci-"
+#~ "dessus."
 #~ msgstr ""
 
 #~ msgid "Nouveau mot de passe"
@@ -2982,76 +2934,60 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Sauvegardez votre configuration (API, "
-#~ "partages, affichage...) dans un fichier. "
-#~ "Vous pourrez le restaurer plus tard "
-#~ "ou sur une nouvelle installation."
+#~ "Sauvegardez votre configuration (API, partages, affichage...) dans un "
+#~ "fichier. Vous pourrez le restaurer plus tard ou sur une nouvelle "
+#~ "installation."
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Cliquez sur le bouton pour rechercher"
-#~ " et installer les dernières mises à"
-#~ " jour de Pimmich depuis GitHub. "
-#~ "L'application redémarrera automatiquement après "
-#~ "la mise à jour."
+#~ "Cliquez sur le bouton pour rechercher et installer les dernières mises à "
+#~ "jour de Pimmich depuis GitHub. L'application redémarrera automatiquement "
+#~ "après la mise à jour."
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Si vous avez flashé Pimmich sur "
-#~ "une carte SD plus grande que "
-#~ "l'image, utilisez cette option pour "
-#~ "étendre la partition et utiliser tout"
-#~ " l'espace disponible. Un redémarrage du "
-#~ "système sera nécessaire pour finaliser "
+#~ "Si vous avez flashé Pimmich sur une carte SD plus grande que l'image, "
+#~ "utilisez cette option pour étendre la partition et utiliser tout l'espace "
+#~ "disponible. Un redémarrage du système sera nécessaire pour finaliser "
 #~ "l'opération."
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Cette opération est sûre et ne "
-#~ "supprime aucune donnée. Elle prépare "
-#~ "simplement le système à s'étendre au "
-#~ "prochain démarrage."
+#~ "Cette opération est sûre et ne supprime aucune donnée. Elle prépare "
+#~ "simplement le système à s'étendre au prochain démarrage."
 #~ msgstr ""
 
 #~ msgid "Êtes-vous sûr de vouloir REDÉMARRER le système ?"
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Voici les photos qui sont prêtes à"
-#~ " être affichées par le diaporama, "
-#~ "classées par source. Cliquez sur une "
-#~ "photo pour l'agrandir."
+#~ "Voici les photos qui sont prêtes à être affichées par le diaporama, classées"
+#~ " par source. Cliquez sur une photo pour l'agrandir."
 #~ msgstr ""
 
 #~ msgid "Supprimer cette photo"
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Aucune photo préparée n'a été trouvée."
-#~ " Veuillez en importer depuis l'onglet "
+#~ "Aucune photo préparée n'a été trouvée. Veuillez en importer depuis l'onglet "
 #~ "\"Actions\"."
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Créez des albums virtuels (playlists) en"
-#~ " sélectionnant des photos de n'importe "
-#~ "quelle source. Vous pouvez ensuite "
-#~ "lancer un diaporama contenant uniquement "
-#~ "les photos d'une playlist."
+#~ "Créez des albums virtuels (playlists) en sélectionnant des photos de "
+#~ "n'importe quelle source. Vous pouvez ensuite lancer un diaporama contenant "
+#~ "uniquement les photos d'une playlist."
 #~ msgstr ""
 
 #~ msgid "Contrôle du Diaporama Actuel"
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Voici toutes vos photos marquées comme"
-#~ " favorites. Vous pouvez les gérer "
-#~ "ici."
+#~ "Voici toutes vos photos marquées comme favorites. Vous pouvez les gérer ici."
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Mise à jour terminée. L'application va"
-#~ " redémarrer. La page se rechargera "
+#~ "Mise à jour terminée. L'application va redémarrer. La page se rechargera "
 #~ "dans quelques instants..."
 #~ msgstr ""
 
@@ -3083,10 +3019,8 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Êtes-vous sûr de vouloir lancer la"
-#~ " mise à jour ? L'application sera "
-#~ "indisponible pendant le processus et "
-#~ "redémarrera automatiquement."
+#~ "Êtes-vous sûr de vouloir lancer la mise à jour ? L'application sera "
+#~ "indisponible pendant le processus et redémarrera automatiquement."
 #~ msgstr ""
 
 #~ msgid "Mise à jour terminée. Redirection..."
@@ -3100,15 +3034,12 @@ msgstr ""
 
 #~ msgid ""
 #~ "Si vous changez l'orientation, pensez à relancer une\n"
-#~ "                            préparation des photos"
-#~ " (onglet Actions) pour adapter le "
-#~ "contenu."
+#~ "                            préparation des photos (onglet Actions) pour adapter le contenu."
 #~ msgstr ""
 
 #~ msgid ""
 #~ "Force une résolution spécifique. Utile si l'écran\n"
-#~ "                            n'est pas détecté "
-#~ "correctement au démarrage."
+#~ "                            n'est pas détecté correctement au démarrage."
 #~ msgstr ""
 
 #~ msgid ""
@@ -3133,19 +3064,12 @@ msgstr ""
 
 #~ msgid ""
 #~ "Cochez cette case pour une lecture plus fluide sur\n"
-#~ "                            les Raspberry Pi. "
-#~ "Décochez si vous rencontrez des écrans"
-#~ " bleus/noirs après les vidéos."
+#~ "                            les Raspberry Pi. Décochez si vous rencontrez des écrans bleus/noirs après les vidéos."
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Si votre écran ne se met pas "
-#~ "complètement en veille, vous pouvez "
-#~ "utiliser une prise\n"
-#~ "                        connectée (Wi-Fi) pour"
-#~ " couper son alimentation. Pimmich enverra"
-#~ " une simple requête HTTP aux URLs"
-#~ "\n"
+#~ "Si votre écran ne se met pas complètement en veille, vous pouvez utiliser une prise\n"
+#~ "                        connectée (Wi-Fi) pour couper son alimentation. Pimmich enverra une simple requête HTTP aux URLs\n"
 #~ "                        que vous spécifiez."
 #~ msgstr ""
 
@@ -3156,9 +3080,7 @@ msgstr ""
 
 #~ msgid ""
 #~ "Temps d'attente pour que l'écran s'initialise\n"
-#~ "                                avant de forcer "
-#~ "la résolution. Augmentez si la "
-#~ "résolution est toujours incorrecte."
+#~ "                                avant de forcer la résolution. Augmentez si la résolution est toujours incorrecte."
 #~ msgstr ""
 
 #~ msgid ""
@@ -3173,9 +3095,7 @@ msgstr ""
 
 #~ msgid ""
 #~ "Si cette option est cochée, les mises à jour\n"
-#~ "                        automatiques (Immich, Samba)"
-#~ " ne se lanceront pas immédiatement "
-#~ "après un redémarrage du cadre,\n"
+#~ "                        automatiques (Immich, Samba) ne se lanceront pas immédiatement après un redémarrage du cadre,\n"
 #~ "                        mais attendront le prochain cycle programmé."
 #~ msgstr ""
 
@@ -3230,8 +3150,7 @@ msgstr ""
 #~ msgstr[1] ""
 
 #~ msgid ""
-#~ "DeprecationWarning: The {param_type} {name!r} "
-#~ "is deprecated.{extra_message}"
+#~ "DeprecationWarning: The {param_type} {name!r} is deprecated.{extra_message}"
 #~ msgstr ""
 
 #~ msgid "env var: {var}"
@@ -3425,16 +3344,12 @@ msgstr ""
 
 #~ msgid ""
 #~ "La détection automatique du fuseau horaire a\n"
-#~ "                            échoué lors de "
-#~ "l'installation. Le système est configuré "
-#~ "sur <strong>UTC</strong>. L'heure\n"
+#~ "                            échoué lors de l'installation. Le système est configuré sur <strong>UTC</strong>. L'heure\n"
 #~ "                            affichée peut être incorrecte."
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Vous pouvez le corriger manuellement en"
-#~ " vous connectant au Raspberry Pi (via"
-#~ " SSH) et\n"
+#~ "Vous pouvez le corriger manuellement en vous connectant au Raspberry Pi (via SSH) et\n"
 #~ "                            en exécutant la commande :"
 #~ msgstr ""
 
@@ -3444,23 +3359,15 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Pour créer un bot et obtenir un"
-#~ " token, parlez à @BotFather sur "
-#~ "Telegram. L'ID de\n"
-#~ "                        l'administrateur est votre"
-#~ " propre ID utilisateur Telegram (obtenu "
-#~ "via @userinfobot par\n"
+#~ "Pour créer un bot et obtenir un token, parlez à @BotFather sur Telegram. L'ID de\n"
+#~ "                        l'administrateur est votre propre ID utilisateur Telegram (obtenu via @userinfobot par\n"
 #~ "                        exemple)."
 #~ msgstr ""
 
 #~ msgid ""
 #~ "Pour utiliser le mot-clé\n"
-#~ "                            personnalisé \"Cadre "
-#~ "Magique\", vous devez créer un modèle"
-#~ " sur le site de Picovoice, le\n"
-#~ "                            télécharger, et le "
-#~ "placer dans le dossier `voice_models` "
-#~ "sous le nom\n"
+#~ "                            personnalisé \"Cadre Magique\", vous devez créer un modèle sur le site de Picovoice, le\n"
+#~ "                            télécharger, et le placer dans le dossier `voice_models` sous le nom\n"
 #~ "                            `cadre-magique_raspberry-pi.ppn`."
 #~ msgstr ""
 
@@ -3476,9 +3383,7 @@ msgstr ""
 
 #~ msgid ""
 #~ "Le changement de langue nécessite un redémarrage du\n"
-#~ "                            service vocal "
-#~ "(désactiver puis réactiver le contrôle "
-#~ "vocal)."
+#~ "                            service vocal (désactiver puis réactiver le contrôle vocal)."
 #~ msgstr ""
 
 #~ msgid ""
@@ -3499,9 +3404,7 @@ msgstr ""
 
 #~ msgid ""
 #~ "L'import depuis Telegram se fait automatiquement à la\n"
-#~ "                            réception des photos."
-#~ " Activez la source dans l'onglet "
-#~ "\"Sources\" pour les voir."
+#~ "                            réception des photos. Activez la source dans l'onglet \"Sources\" pour les voir."
 #~ msgstr ""
 
 #~ msgid ""
@@ -3516,75 +3419,52 @@ msgstr ""
 
 #~ msgid ""
 #~ "La sélection du pays est obligatoire pour activer\n"
-#~ "                    l'interface Wi-Fi et "
-#~ "respecter les réglementations locales sur "
-#~ "les fréquences radio."
+#~ "                    l'interface Wi-Fi et respecter les réglementations locales sur les fréquences radio."
 #~ msgstr ""
 
 #~ msgid ""
 #~ "Note : Après avoir appliqué les paramètres, la connexion\n"
-#~ "                    peut prendre jusqu'à une"
-#~ " minute. Si le statut de connexion"
-#~ " ci-dessus ne passe pas à "
-#~ "\"Connecté\",\n"
-#~ "                    vérifiez le mot de "
-#~ "passe puis essayez de redémarrer le "
-#~ "système."
+#~ "                    peut prendre jusqu'à une minute. Si le statut de connexion ci-dessus ne passe pas à \"Connecté\",\n"
+#~ "                    vérifiez le mot de passe puis essayez de redémarrer le système."
 #~ msgstr ""
 
 #~ msgid ""
 #~ "Si le Wi-Fi ne se connecte pas alors qu'un câble Ethernet\n"
-#~ "                    est branché, c'est souvent"
-#~ " un problème de priorité. Désactivez "
-#~ "l'interface Ethernet pour forcer le\n"
-#~ "                    système à utiliser "
-#~ "exclusivement le Wi-Fi. Cette action "
-#~ "redémarre le service réseau."
+#~ "                    est branché, c'est souvent un problème de priorité. Désactivez l'interface Ethernet pour forcer le\n"
+#~ "                    système à utiliser exclusivement le Wi-Fi. Cette action redémarre le service réseau."
 #~ msgstr ""
 
 #~ msgid ""
 #~ "Sauvegardez votre configuration (API, partages,\n"
-#~ "                    affichage...) dans un "
-#~ "fichier. Vous pourrez le restaurer plus"
-#~ " tard ou sur une nouvelle\n"
+#~ "                    affichage...) dans un fichier. Vous pourrez le restaurer plus tard ou sur une nouvelle\n"
 #~ "                    installation."
 #~ msgstr ""
 
 #~ msgid ""
 #~ "Cliquez sur le bouton pour rechercher et installer les\n"
-#~ "                    dernières mises à jour "
-#~ "de Pimmich depuis GitHub. L'application "
-#~ "redémarrera automatiquement après la\n"
+#~ "                    dernières mises à jour de Pimmich depuis GitHub. L'application redémarrera automatiquement après la\n"
 #~ "                    mise à jour."
 #~ msgstr ""
 
 #~ msgid ""
 #~ "Si vous avez flashé Pimmich sur une carte SD plus grande que\n"
-#~ "                    l'image, utilisez cette "
-#~ "option pour étendre la partition et "
-#~ "utiliser tout l'espace disponible. Un\n"
-#~ "                    redémarrage du système "
-#~ "sera nécessaire pour finaliser l'opération."
+#~ "                    l'image, utilisez cette option pour étendre la partition et utiliser tout l'espace disponible. Un\n"
+#~ "                    redémarrage du système sera nécessaire pour finaliser l'opération."
 #~ msgstr ""
 
 #~ msgid ""
 #~ "Cette opération est sûre et ne supprime aucune donnée.\n"
-#~ "                        Elle prépare simplement "
-#~ "le système à s'étendre au prochain "
-#~ "démarrage."
+#~ "                        Elle prépare simplement le système à s'étendre au prochain démarrage."
 #~ msgstr ""
 
 #~ msgid ""
 #~ "Voici les photos qui sont prêtes à être affichées par le diaporama,\n"
-#~ "                    classées par source. "
-#~ "Cliquez sur une photo pour l'agrandir."
+#~ "                    classées par source. Cliquez sur une photo pour l'agrandir."
 #~ msgstr ""
 
 #~ msgid ""
 #~ "Créez des albums virtuels (playlists) en sélectionnant des\n"
-#~ "                    photos de n'importe quelle"
-#~ " source. Vous pouvez ensuite lancer "
-#~ "un diaporama contenant uniquement les\n"
+#~ "                    photos de n'importe quelle source. Vous pouvez ensuite lancer un diaporama contenant uniquement les\n"
 #~ "                    photos d'une playlist."
 #~ msgstr ""
 
@@ -3614,8 +3494,6 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Approuvez ou rejetez les photos "
-#~ "envoyées. Les photos approuvées seront "
+#~ "Approuvez ou rejetez les photos envoyées. Les photos approuvées seront "
 #~ "ajoutées à la source \"Invités\"."
 #~ msgstr ""
-

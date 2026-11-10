@@ -71,6 +71,7 @@ from utils.prepare_all_photos import prepare_all_photos_with_progress
 from utils.import_usb_photos import import_usb_photos  # Déplacé dans utils
 from utils.metadata_utils import get_photo_metadata # Import get_photo_metadata
 from utils.import_samba import import_samba_photos
+from utils.photo_import import PHOTO_EXTENSIONS, photo_digest, stream_digest
 from utils.image_filters import apply_filter_to_image, add_text_to_polaroid, add_text_to_image, create_polaroid_effect
 logging.getLogger(__name__).info("Startup: loading voice control manager")
 from utils.voice_control_manager import start_voice_control, stop_voice_control, is_voice_control_running
@@ -1073,6 +1074,7 @@ def import_samba():
 @app.route("/import-smartphone", methods=['POST'])
 @login_required
 def import_smartphone():
+    uploaded_files = request.files.getlist('photos')
     # Nettoyer le drapeau d'annulation avant de commencer
     cancel_flag = CANCEL_FLAG_PATH
     if cancel_flag.exists(): cancel_flag.unlink()
@@ -1093,30 +1095,79 @@ def import_smartphone():
             # --- Étape 1: Réception et sauvegarde des fichiers ---
             yield stream_event({"type": "progress", "stage": "UPLOADING", "percent": 5, "message": "Réception des fichiers..."})
 
-            # Vider le dossier de destination pour éviter les mélanges
-            if source_dir.exists():
-                shutil.rmtree(source_dir)
             source_dir.mkdir(parents=True, exist_ok=True)
 
-            uploaded_files = request.files.getlist('photos')
             if not uploaded_files or not uploaded_files[0].filename:
                 yield stream_event({"type": "error", "message": "Aucun fichier sélectionné."})
                 return
 
+            existing_digests = {
+                photo_digest(path) for path in source_dir.iterdir()
+                if path.is_file() and path.suffix.lower() in PHOTO_EXTENSIONS
+            }
+            used_stems = {path.stem.casefold() for path in source_dir.iterdir()}
+            imported = skipped = 0
             for file in uploaded_files:
-                file.save(source_dir / file.filename)
+                filename = secure_filename((file.filename or "").replace("\\", "/").rsplit("/", 1)[-1])
+                if Path(filename).suffix.lower() not in PHOTO_EXTENSIONS:
+                    yield stream_event({"type": "error", "message": _("Unsupported photo file: %(name)s", name=filename)})
+                    return
+                digest = stream_digest(file.stream)
+                file.stream.seek(0)
+                if digest in existing_digests:
+                    skipped += 1
+                    continue
+                target = source_dir / filename
+                suffix = 1
+                while target.stem.casefold() in used_stems:
+                    target = source_dir / f"{Path(filename).stem}_{suffix}{Path(filename).suffix}"
+                    suffix += 1
+                with target.open("xb") as output:
+                    shutil.copyfileobj(file.stream, output)
+                used_stems.add(target.stem.casefold())
+                existing_digests.add(digest)
+                imported += 1
 
-            yield stream_event({"type": "progress", "stage": "PREPARING", "percent": 80, "message": f"{len(uploaded_files)} photos reçues, préparation en cours..."})
+            yield stream_event({"type": "progress", "stage": "PREPARING", "percent": 80,
+                                "message": _("%(imported)s photos imported; %(skipped)s duplicates skipped.",
+                                             imported=imported, skipped=skipped)})
 
             # --- Étape 2: Préparation des photos ---
+            completed = False
+            failed = False
             for update in prepare_all_photos_with_progress(screen_width, screen_height, source_type="smartphone"):
+                if update["type"] in {"warning", "error"}:
+                    failed = True
+                if update["type"] == "done":
+                    completed = True
+                    continue
                 # Ajouter l'URL d'aperçu
                 if update.get("current_photo_path"):
                     update["current_photo_url"] = url_for('static', filename=f"prepared/smartphone/{update['current_photo_path']}")
                 yield stream_event(update)
+            prepared_dir = BASE_DIR / "static" / "prepared" / "smartphone"
+            for photo in source_dir.iterdir():
+                if photo.is_file() and photo.suffix.lower() in PHOTO_EXTENSIONS:
+                    output = prepared_dir / f"{photo.stem}.jpg"
+                    if not output.is_file() or output.stat().st_size == 0:
+                        failed = True
+            if failed or not completed:
+                yield stream_event({"type": "error", "message": _("Photo preparation failed or was cancelled.")})
+                return
+            config = load_config()
+            sources = config.setdefault("display_sources", [])
+            if "smartphone" not in sources:
+                sources.append("smartphone")
+            save_config(config)
+            if is_slideshow_running():
+                restart_slideshow_for_update()
+            yield stream_event({"type": "done", "percent": 100,
+                                "message": _("%(imported)s photos imported; %(skipped)s duplicates skipped.",
+                                             imported=imported, skipped=skipped),
+                                "imported": imported, "skipped": skipped})
 
         except Exception as e:
-            logger.info(f"[Import Smartphone] Erreur : {e}")
+            logger.exception("[Import Smartphone] Import failed")
             yield stream_event({"type": "error", "message": f"Erreur critique lors de l'import : {str(e)}"})
 
     return Response(generate(), mimetype='text/event-stream', headers={"Cache-Control": "no-cache", "Connection": "keep-alive"})

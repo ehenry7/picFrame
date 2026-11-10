@@ -1,22 +1,13 @@
 """Import a folder into the Smartphone photo source and prepare it for display."""
 
 import argparse
-import hashlib
 import os
 import shutil
 import sys
 from pathlib import Path
+from utils.photo_import import PHOTO_EXTENSIONS, photo_digest
 
 PROJECT_DIR = Path(__file__).resolve().parent
-PHOTO_EXTENSIONS = {".jpg", ".jpeg", ".png", ".heic", ".heif"}
-
-
-def photo_digest(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as file:
-        for chunk in iter(lambda: file.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def main() -> int:

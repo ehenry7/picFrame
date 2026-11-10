@@ -2669,3 +2669,31 @@ msgid ""
 "Retour à la connexion\n"
 "          administrateur"
 msgstr ""
+
+msgid "Import photos"
+msgstr "ייבוא תמונות"
+
+msgid "Import folder"
+msgstr "ייבוא תיקייה"
+
+msgid ""
+"Select photos or a folder from this device. Duplicate photos are skipped."
+msgstr "בחרו תמונות או תיקייה מהמכשיר הזה. תמונות כפולות יידלגו."
+
+#, python-format
+msgid "Unsupported photo file: %(name)s"
+msgstr "קובץ תמונה לא נתמך: %(name)s"
+
+#, python-format
+msgid "%(imported)s photos imported; %(skipped)s duplicates skipped."
+msgstr "יובאו %(imported)s תמונות; דולגו %(skipped)s כפילויות."
+
+msgid "Photo preparation failed or was cancelled."
+msgstr "הכנת התמונות נכשלה או בוטלה."
+
+msgid ""
+"Selection exceeds the 32 MB upload limit. Import fewer photos at a time."
+msgstr "הבחירה חורגת ממגבלת ההעלאה של 32 MB. ייבאו פחות תמונות בכל פעם."
+
+msgid "Import ended before completion. Please try again."
+msgstr "הייבוא הסתיים לפני שהושלם. נסו שוב."

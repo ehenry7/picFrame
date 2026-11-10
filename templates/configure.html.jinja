@@ -1419,21 +1419,20 @@
                     <div class="mt-4 pt-4 border-t border-gray-200">
                     </div>
 
-                    <!-- Smartphone Upload Form -->
-                    <form id="smartphone-upload-form" enctype="multipart/form-data"
+                    <div id="smartphone-upload-form"
                         class="mt-4 pt-4 border-t border-gray-200">
-                        <h5 class="text-lg font-semibold mb-2 flex items-center gap-2"><i class="fas fa-mobile-alt"></i>
-                            {{ _("Importer depuis un Smartphone") }}</h5>
-                        <p class="text-sm text-gray-600 mb-3">{{ _("Envoyez des photos directement depuis votre
-                            téléphone via le navigateur.") }}</p>
-                        <input type="file" name="photos"
-                            class="block w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 cursor-pointer focus:outline-none mb-3"
-                            multiple required>
-                        <button type="submit" id="import-smartphone-btn"
+                        <p class="text-sm text-gray-600 mb-3">{{ _("Select photos or a folder from this device. Duplicate photos are skipped.") }}</p>
+                        <input type="file" id="photo-files-input" accept=".jpg,.jpeg,.png,.heic,.heif" multiple class="hidden">
+                        <input type="file" id="photo-folder-input" accept=".jpg,.jpeg,.png,.heic,.heif" webkitdirectory multiple class="hidden">
+                        <button type="button" id="import-smartphone-btn"
                             class="import-button bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-                            <i class="fas fa-upload"></i> {{ _("Envoyer les photos") }}
+                            <i class="fas fa-images"></i> {{ _("Import photos") }}
                         </button>
-                    </form>
+                        <button type="button" id="import-folder-btn"
+                            class="import-button bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                            <i class="fas fa-folder-open"></i> {{ _("Import folder") }}
+                        </button>
+                    </div>
                     <div id="smartphone-progress-container" class="progress-container hidden">
                         <div id="smartphone-progress-bar" class="progress-bar"></div>
                     </div>
@@ -3763,17 +3762,22 @@
                 setInterval(fetchTideInfo, 30000); // Mise à jour toutes les 30 secondes
 
                 // ----- IMPORT SMARTPHONE -----
-                document.getElementById('smartphone-upload-form').addEventListener('submit', function (event) {
-                    event.preventDefault(); // Prevent default form submission
-
-                    const form = event.target;
-                    const formData = new FormData(form);
-                    const btn = document.getElementById('import-smartphone-btn');
+                const photoFilesInput = document.getElementById('photo-files-input');
+                const photoFolderInput = document.getElementById('photo-folder-input');
+                document.getElementById('import-smartphone-btn').addEventListener('click', () => photoFilesInput.click());
+                document.getElementById('import-folder-btn').addEventListener('click', () => photoFolderInput.click());
+                [photoFilesInput, photoFolderInput].forEach(input => input.addEventListener('change', async function () {
+                    const formData = new FormData();
+                    const files = Array.from(this.files).filter(file => /\.(jpe?g|png|heic|heif)$/i.test(file.name));
+                    files.forEach(file => formData.append('photos', file, file.name));
+                    const btn = document.getElementById(input === photoFolderInput ? 'import-folder-btn' : 'import-smartphone-btn');
+                    const originalButtonHTML = btn.innerHTML;
                     const progressBar = document.getElementById('smartphone-progress-bar');
                     const progressContainer = document.getElementById('smartphone-progress-container');
                     const statusDiv = document.getElementById('smartphone-import-status');
                     const allImportButtons = document.querySelectorAll('.import-button, #import-smartphone-btn');
                     let hasErrorOccurred = false; // Flag to track errors
+                    let completed = false;
 
                     // Check if files were selected
                     if (!formData.has('photos') || !formData.get('photos').name) {
@@ -3794,39 +3798,26 @@
                     progressContainer.classList.remove('hidden');
                     statusDiv.innerHTML = '';
 
-                    fetch('/import-smartphone', {
+                    try {
+                        const response = await fetch('/import-smartphone', {
                         method: 'POST',
                         body: formData
-                    })
-                        .then(response => {
+                        });
                             if (!response.ok) {
+                                if (response.status === 413) {
+                                    throw new Error({{ _("Selection exceeds the 32 MB upload limit. Import fewer photos at a time.") | tojson }});
+                                }
                                 throw new Error(`Erreur HTTP: ${response.status}`);
                             }
                             const reader = response.body.getReader();
                             const decoder = new TextDecoder();
 
-                            function processStream() {
-                                reader.read().then(({ done, value }) => {
-                                    if (done) { // Stream finished
-                                        if (!hasErrorOccurred) {
-                                            displayMessage(statusDiv, "{{ _('Importation réussie ! Rechargement de la page...') }}", 'success');
-                                            setTimeout(() => { location.reload(); }, 2000);
-                                        } else {
-                                            // Re-enable buttons after a delay if there was an error
-                                            setTimeout(() => {
-                                                allImportButtons.forEach(b => {
-                                                    b.disabled = false;
-                                                    b.classList.remove("opacity-50", "cursor-not-allowed");
-                                                });
-                                                btn.innerHTML = '<i class="fas fa-upload"></i> {{ _("Envoyer les photos") }}';
-                                            }, 5000);
-                                        }
-                                        return; // End the stream processing
-                                    }
-
-                                    // Process the stream chunk
-                                    const chunk = decoder.decode(value, { stream: true });
-                                    const lines = chunk.split('\n\n');
+                            let buffer = '';
+                            while (true) {
+                                    const { done, value } = await reader.read();
+                                    buffer += done ? decoder.decode() : decoder.decode(value, { stream: true });
+                                    const lines = buffer.split('\n\n');
+                                    buffer = lines.pop();
                                     lines.forEach(line => {
                                         if (line.startsWith('data: ')) {
                                             try {
@@ -3837,23 +3828,30 @@
                                                 if (data.type === 'error') {
                                                     hasErrorOccurred = true;
                                                 }
+                                                if (data.type === 'done') completed = true;
                                             } catch (e) {
                                                 displayMessage(statusDiv, "{{ _('Données invalides reçues du serveur.') }}", 'error');
                                                 hasErrorOccurred = true;
                                             }
                                         }
                                     });
-                                    processStream();
-                                });
+                                    if (done) break;
                             }
-                            processStream();
-                        })
-                        .catch(error => {
+                            if (!completed && !hasErrorOccurred) {
+                                throw new Error({{ _("Import ended before completion. Please try again.") | tojson }});
+                            }
+                            if (completed && !hasErrorOccurred) {
+                                const sourceCheckbox = document.getElementById('display_source_smartphone');
+                                if (sourceCheckbox) sourceCheckbox.checked = true;
+                            }
+                    } catch (error) {
                             displayMessage(statusDiv, `{{ _('Erreur de communication :') }} ${error.message}`, 'error');
+                    } finally {
                             allImportButtons.forEach(b => { b.disabled = false; b.classList.remove("opacity-50", "cursor-not-allowed"); });
-                            btn.innerHTML = '<i class="fas fa-upload"></i> {{ _("Envoyer les photos") }}';
-                        });
-                });
+                            btn.innerHTML = originalButtonHTML;
+                            input.value = '';
+                    }
+                }));
 
                 // --- GESTION DE L'UPLOAD DE MUSIQUE ---
                 const musicUploadInput = document.getElementById('music-upload-input');
