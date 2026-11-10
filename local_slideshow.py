@@ -27,6 +27,7 @@ from utils.text_drawer import draw_text_with_outline
 from utils.metadata_utils import get_photo_metadata, load_photo_metadata_cache, format_photo_metadata
 from utils.config_manager import load_config
 from utils.country_flags import country_flags
+from utils.slideshow_fonts import load_font, clear_font_cache
 from platform_utils import (
     IS_LINUX,
     consume_slideshow_commands,
@@ -247,6 +248,7 @@ def reinit_pygame():
     pygame.quit()
     pygame.display.init()
     pygame.font.init()
+    clear_font_cache()
 
     global _icon_cache
     _icon_cache = {}
@@ -1119,7 +1121,7 @@ def draw_overlay(screen, screen_width, screen_height, config, main_font, photo_m
                     # Utiliser une police légèrement plus petite pour le message d'erreur
                     font_path = config.get("clock_font_path", get_default_font_path())
                     font_size = int(main_font.get_height() * 0.8) # 80% de la taille de la police principale
-                    font_to_use = pygame.font.Font(font_path, font_size)
+                    font_to_use = load_font(font_path, font_size)
                 except Exception as e:
                     logger.info(f"[Display] Erreur chargement police pour message marée: {e}")
                     font_to_use = main_font # Fallback
@@ -1167,11 +1169,7 @@ def draw_overlay(screen, screen_width, screen_height, config, main_font, photo_m
         metadata_font_path = config.get("photo_metadata_font_path", get_default_font_path())
         metadata_font_size = int(config.get("photo_metadata_font_size", 23))
 
-        try:
-            metadata_font = pygame.font.Font(metadata_font_path, metadata_font_size)
-        except Exception as e:
-            logger.info(f"[Display] Erreur chargement police métadonnées : {e}.")
-            metadata_font = main_font
+        metadata_font = load_font(metadata_font_path, metadata_font_size)
 
         # Couleurs personnalisées pour les métadonnées
         metadata_text_color = parse_color(config.get("photo_metadata_color", "#ffffff"))
@@ -1414,7 +1412,7 @@ def display_title_slide(screen, screen_width, screen_height, title, duration, co
         font_path = str(Path(BASE_DIR) / "static" / "fonts" / "Caveat-Regular.ttf")
         # Augmenter la taille de la police pour un meilleur impact visuel
         title_font_size = int(config.get("clock_font_size", 72) * 2.5)
-        title_font = pygame.font.Font(font_path, title_font_size)
+        title_font = load_font(font_path, title_font_size)
     except Exception as e:
         logger.info(f"Erreur chargement police pour l'écran titre: {e}")
         title_font = pygame.font.SysFont("Arial", 150, bold=True)
@@ -1965,11 +1963,7 @@ def start_slideshow():
             # C'est plus robuste, surtout après une réinitialisation de l'affichage.
             font_path_config = config.get("clock_font_path", get_default_font_path())
             clock_font_size_config = int(config.get("clock_font_size", 72))
-            try:
-                main_font_loaded = pygame.font.Font(font_path_config, clock_font_size_config)
-            except Exception as e:
-                logger.info(f"Erreur chargement police : {e}. Utilisation de la police système.")
-                main_font_loaded = pygame.font.SysFont("Arial", clock_font_size_config)
+            main_font_loaded = load_font(font_path_config, clock_font_size_config)
             # --- Fin du chargement de la police ---
             
             if not playlist:
@@ -1983,11 +1977,11 @@ def start_slideshow():
                 try:
                     font_path = config.get("clock_font_path", get_default_font_path())
                     font_size = int(config.get("clock_font_size", 72) * 0.6) # Augmenté de 0.5
-                    message_font = pygame.font.Font(font_path, font_size)
+                    message_font = load_font(font_path, font_size)
                     ip_font_size = int(config.get("clock_font_size", 72) * 0.8) # Augmenté de 0.65
-                    ip_font = pygame.font.Font(font_path, ip_font_size)
+                    ip_font = load_font(font_path, ip_font_size)
                     small_font_size = int(config.get("clock_font_size", 72) * 0.4) # Augmenté de 0.35
-                    small_font = pygame.font.Font(font_path, small_font_size)
+                    small_font = load_font(font_path, small_font_size)
                 except Exception:
                     message_font = pygame.font.SysFont("Arial", 48)
                     ip_font = pygame.font.SysFont("Arial", 64)
@@ -2116,10 +2110,7 @@ def start_slideshow():
                         # Recharger la police car pygame.quit() l'a invalidée
                         font_path_config = config.get("clock_font_path", get_default_font_path())
                         clock_font_size_config = int(config.get("clock_font_size", 72))
-                        try:
-                            main_font_loaded = pygame.font.Font(font_path_config, clock_font_size_config)
-                        except Exception:
-                            main_font_loaded = pygame.font.SysFont("Arial", clock_font_size_config)
+                        main_font_loaded = load_font(font_path_config, clock_font_size_config)
                         # Relancer la musique si elle était active
                         if _current_background_music:
                             play_background_music(_current_background_music)

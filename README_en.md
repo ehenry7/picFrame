@@ -117,6 +117,10 @@ sudo ./setup.sh
 
 This script installs system and Python dependencies, sets up the environment, and configures auto-start of the slideshow.
 
+If a configured slideshow font is unavailable, PictureFrame logs one warning
+and uses a cached system font at the requested size for the rest of the session.
+Changing the configured font path tries the new font; restart to retry a repaired path.
+
 ### Switch between frame mode and the desktop
 
 After running setup, use either command from the project directory:
