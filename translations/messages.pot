@@ -2741,5 +2741,6 @@ msgstr ""
 msgid "Start zoom (1.00 = full image):"
 msgstr ""
 
-msgid "End zoom (1.15 = 15% zoom):"
+#, python-format
+msgid "End zoom (1.15 = 15%% zoom):"
 msgstr ""

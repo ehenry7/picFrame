@@ -2744,5 +2744,6 @@ msgstr "דוגמאות (15 ביוני 2020):"
 msgid "Start zoom (1.00 = full image):"
 msgstr "זום התחלתי (1.00 = תמונה מלאה):"
 
-msgid "End zoom (1.15 = 15% zoom):"
-msgstr "זום סופי (1.15 = הגדלה של 15%):"
+#, python-format
+msgid "End zoom (1.15 = 15%% zoom):"
+msgstr "זום סופי (1.15 = הגדלה של 15%%):"
