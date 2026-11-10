@@ -234,6 +234,20 @@ reloads a running slideshow. **Reset crop** restores the uncropped preparation.
 Originals are never modified and must remain in `static/photos/{source}`.
 Selections are saved in `config/crop_states.json` and reused during future preparation.
 
+The Preview and Favorites filter menus also offer **Auto Enhance**, **Vivid**,
+**Warm**, **Cool**, **Dramatic B&W**, **Soft Glow**, **Sharpen**, **Duotone**
+(navy shadows and warm highlights), and **Posterize**. Filters are applied on demand,
+not per animation frame, and always start from the clean prepared backup.
+Choose **Original** to remove a color effect; this keeps the saved crop.
+Additional presets include **Matte** (lifted blacks), **Film Grain** (repeatable
+fine texture), **Pencil Sketch** (monochrome outlines), **Selective Color**
+(red, green or blue retained against grayscale), and **Tilt Shift** (a sharp
+horizontal center band with progressively blurred top and bottom).
+**Cinematic** adds teal shadows and warm highlights; **Cross Process** uses
+retro channel curves; **Watercolor** smooths detail into painted color patches
+with subtle outlines. **Vignette** gently darkens the edges while retaining the
+center brightness. These are stylized presets, not adjustable filter controls.
+
 ### Photo Import Settings
 
 Choose between importing from an Immich album or a USB stick, and manage downloaded files.

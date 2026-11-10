@@ -2186,10 +2186,6 @@ msgstr "Black & White"
 msgid "Sépia"
 msgstr "Sepia"
 
-#: templates/configure.html.jinja:2067 templates/configure.html.jinja:2292
-msgid "Vignette"
-msgstr "Thumbnail"
-
 #: templates/configure.html.jinja:2069 templates/configure.html.jinja:2294
 msgid "Vintage"
 msgstr "Vintage"
@@ -3036,6 +3032,67 @@ msgid ""
 msgstr ""
 "Increase selection size to include the full photo. Extra space uses a "
 "blurred background."
+
+msgid "Auto Enhance"
+msgstr "Auto Enhance"
+
+msgid "Vivid"
+msgstr "Vivid"
+
+msgid "Warm"
+msgstr "Warm"
+
+msgid "Cool"
+msgstr "Cool"
+
+msgid "Dramatic B&W"
+msgstr "Dramatic B&W"
+
+msgid "Soft Glow"
+msgstr "Soft Glow"
+
+msgid "Sharpen"
+msgstr "Sharpen"
+
+msgid "Duotone"
+msgstr "Duotone"
+
+msgid "Posterize"
+msgstr "Posterize"
+
+msgid "Matte"
+msgstr "Matte"
+
+msgid "Film Grain"
+msgstr "Film Grain"
+
+msgid "Pencil Sketch"
+msgstr "Pencil Sketch"
+
+msgid "Selective Color - Red"
+msgstr "Selective Color - Red"
+
+msgid "Selective Color - Green"
+msgstr "Selective Color - Green"
+
+msgid "Selective Color - Blue"
+msgstr "Selective Color - Blue"
+
+msgid "Tilt Shift"
+msgstr "Tilt Shift"
+
+msgid "Cinematic"
+msgstr "Cinematic"
+
+msgid "Cross Process"
+msgstr "Cross Process"
+
+msgid "Watercolor"
+msgstr "Watercolor"
+
+#: templates/configure.html.jinja:2067 templates/configure.html.jinja:2292
+msgid "Vignette"
+msgstr "Vignette"
 
 #~ msgid "Favoris"
 #~ msgstr "Favorites"

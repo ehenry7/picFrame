@@ -22,6 +22,31 @@
     </ul>
 </details>
 {% endmacro %}
+{% macro extra_filter_options(active_filter) %}
+{% for value, label in [
+    ('auto_enhance', _('Auto Enhance')),
+    ('vivid', _('Vivid')),
+    ('warm', _('Warm')),
+    ('cool', _('Cool')),
+    ('dramatic_bw', _('Dramatic B&W')),
+    ('soft_glow', _('Soft Glow')),
+    ('sharpen', _('Sharpen')),
+    ('duotone', _('Duotone')),
+    ('posterize', _('Posterize')),
+    ('matte', _('Matte')),
+    ('film_grain', _('Film Grain')),
+    ('pencil_sketch', _('Pencil Sketch')),
+    ('selective_red', _('Selective Color - Red')),
+    ('selective_green', _('Selective Color - Green')),
+    ('selective_blue', _('Selective Color - Blue')),
+    ('tilt_shift', _('Tilt Shift')),
+    ('cinematic', _('Cinematic')),
+    ('cross_process', _('Cross Process')),
+    ('watercolor', _('Watercolor'))
+] %}
+<option value="{{ value }}" {% if active_filter == value %}selected{% endif %}>{{ label }}</option>
+{% endfor %}
+{% endmacro %}
 <html lang="{{ get_locale() }}" dir="{{ 'rtl' if get_locale() == 'he' else 'ltr' }}">
 
 <head>
@@ -1951,6 +1976,7 @@
                                         _("Vignette") }}</option>
                                     <option value="vintage" {% if active_filter=='vintage' %}selected{% endif %}>{{
                                         _("Vintage") }}</option>
+                                    {{ extra_filter_options(active_filter) }}
                                     {% if has_polaroid %}
                                     <option value="polaroid" {% if active_filter=='polaroid' %}selected{% endif %}>{{
                                         _("Polaroid") }}</option>
@@ -2188,6 +2214,7 @@
                                     _("Vignette") }}</option>
                                 <option value="vintage" {% if active_filter=='vintage' %}selected{% endif %}>{{
                                     _("Vintage") }}</option>
+                                {{ extra_filter_options(active_filter) }}
                                 {% if has_polaroid %}
                                 <option value="polaroid" {% if active_filter=='polaroid' %}selected{% endif %}>{{
                                     _("Polaroid") }}</option>

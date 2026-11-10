@@ -1975,10 +1975,6 @@ msgstr ""
 msgid "Sépia"
 msgstr ""
 
-#: templates/configure.html.jinja:2067 templates/configure.html.jinja:2292
-msgid "Vignette"
-msgstr ""
-
 #: templates/configure.html.jinja:2069 templates/configure.html.jinja:2294
 msgid "Vintage"
 msgstr ""
@@ -2790,3 +2786,64 @@ msgid ""
 "blurred background."
 msgstr ""
 "הגדילו את הבחירה כדי לכלול את כל התמונה. השטח הנוסף מתמלא ברקע מטושטש."
+
+msgid "Auto Enhance"
+msgstr "שיפור אוטומטי"
+
+msgid "Vivid"
+msgstr "צבעים חיים"
+
+msgid "Warm"
+msgstr "חם"
+
+msgid "Cool"
+msgstr "קר"
+
+msgid "Dramatic B&W"
+msgstr "שחור לבן דרמטי"
+
+msgid "Soft Glow"
+msgstr "זוהר רך"
+
+msgid "Sharpen"
+msgstr "חידוד"
+
+msgid "Duotone"
+msgstr "דו-גוני"
+
+msgid "Posterize"
+msgstr "פוסטריזציה"
+
+msgid "Matte"
+msgstr "מט"
+
+msgid "Film Grain"
+msgstr "גרעיניות פילם"
+
+msgid "Pencil Sketch"
+msgstr "רישום עיפרון"
+
+msgid "Selective Color - Red"
+msgstr "צבע סלקטיבי - אדום"
+
+msgid "Selective Color - Green"
+msgstr "צבע סלקטיבי - ירוק"
+
+msgid "Selective Color - Blue"
+msgstr "צבע סלקטיבי - כחול"
+
+msgid "Tilt Shift"
+msgstr "אפקט מיניאטורה"
+
+msgid "Cinematic"
+msgstr "קולנועי"
+
+msgid "Cross Process"
+msgstr "עיבוד מוצלב"
+
+msgid "Watercolor"
+msgstr "צבעי מים"
+
+#: templates/configure.html.jinja:2067 templates/configure.html.jinja:2292
+msgid "Vignette"
+msgstr "הכהיית שוליים"

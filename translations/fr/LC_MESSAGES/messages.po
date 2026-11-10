@@ -1975,10 +1975,6 @@ msgstr ""
 msgid "Sépia"
 msgstr ""
 
-#: templates/configure.html.jinja:2067 templates/configure.html.jinja:2292
-msgid "Vignette"
-msgstr ""
-
 #: templates/configure.html.jinja:2069 templates/configure.html.jinja:2294
 msgid "Vintage"
 msgstr ""
@@ -2794,6 +2790,67 @@ msgid ""
 msgstr ""
 "Augmentez la taille de la sélection pour inclure toute la photo. L’espace "
 "supplémentaire utilise un fond flou."
+
+msgid "Auto Enhance"
+msgstr "Amélioration automatique"
+
+msgid "Vivid"
+msgstr "Couleurs vives"
+
+msgid "Warm"
+msgstr "Chaud"
+
+msgid "Cool"
+msgstr "Froid"
+
+msgid "Dramatic B&W"
+msgstr "Noir et blanc intense"
+
+msgid "Soft Glow"
+msgstr "Lueur douce"
+
+msgid "Sharpen"
+msgstr "Netteté"
+
+msgid "Duotone"
+msgstr "Bichromie"
+
+msgid "Posterize"
+msgstr "Postérisation"
+
+msgid "Matte"
+msgstr "Mat"
+
+msgid "Film Grain"
+msgstr "Grain argentique"
+
+msgid "Pencil Sketch"
+msgstr "Croquis au crayon"
+
+msgid "Selective Color - Red"
+msgstr "Couleur sélective - Rouge"
+
+msgid "Selective Color - Green"
+msgstr "Couleur sélective - Vert"
+
+msgid "Selective Color - Blue"
+msgstr "Couleur sélective - Bleu"
+
+msgid "Tilt Shift"
+msgstr "Effet miniature"
+
+msgid "Cinematic"
+msgstr "Cinématique"
+
+msgid "Cross Process"
+msgstr "Traitement croisé"
+
+msgid "Watercolor"
+msgstr "Aquarelle"
+
+#: templates/configure.html.jinja:2067 templates/configure.html.jinja:2292
+msgid "Vignette"
+msgstr "Vignettage"
 
 #~ msgid "Hauteur utile de l'écran (% affiché) :"
 #~ msgstr ""

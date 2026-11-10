@@ -1,7 +1,7 @@
 import os
 import shutil
 from pathlib import Path
-from PIL import Image, ImageEnhance, ImageOps, ImageFilter, ImageDraw, ImageFont
+from PIL import Image, ImageEnhance, ImageOps, ImageFilter, ImageDraw, ImageFont, ImageChops
 import random
 import piexif
 import json
@@ -255,6 +255,86 @@ def apply_filter_to_image(image_path_str, filter_name):
         img_to_save = img
     elif filter_name == 'grayscale':
         img_to_save = ImageOps.grayscale(img).convert('RGB')
+    elif filter_name == 'auto_enhance':
+        img_to_save = ImageOps.autocontrast(img, cutoff=1, preserve_tone=True)
+    elif filter_name == 'vivid':
+        img_to_save = ImageEnhance.Color(img).enhance(1.35)
+        img_to_save = ImageEnhance.Contrast(img_to_save).enhance(1.15)
+    elif filter_name in {'warm', 'cool'}:
+        red, green, blue = img.split()
+        red_scale, blue_scale = (1.08, 0.92) if filter_name == 'warm' else (0.92, 1.08)
+        red = red.point(lambda value: min(255, round(value * red_scale)))
+        blue = blue.point(lambda value: min(255, round(value * blue_scale)))
+        img_to_save = Image.merge('RGB', (red, green, blue))
+    elif filter_name == 'dramatic_bw':
+        gray = ImageOps.autocontrast(ImageOps.grayscale(img), cutoff=1)
+        img_to_save = ImageEnhance.Contrast(gray).enhance(1.3).convert('RGB')
+    elif filter_name == 'soft_glow':
+        blurred = img.filter(ImageFilter.GaussianBlur(radius=max(img.size) * 0.008))
+        glow = ImageEnhance.Brightness(blurred).enhance(1.12)
+        img_to_save = Image.blend(img, glow, 0.3)
+    elif filter_name == 'sharpen':
+        img_to_save = img.filter(ImageFilter.UnsharpMask(radius=2, percent=130, threshold=3))
+    elif filter_name == 'duotone':
+        img_to_save = ImageOps.colorize(ImageOps.grayscale(img), '#172b4d', '#ffd6a0')
+    elif filter_name == 'posterize':
+        img_to_save = ImageOps.posterize(img, bits=3)
+    elif filter_name == 'matte':
+        softened = ImageEnhance.Color(img).enhance(0.85)
+        img_to_save = softened.point(lambda value: round(24 + value * 0.85))
+    elif filter_name == 'film_grain':
+        # A local seeded generator keeps repeat applications stable without changing global randomness.
+        noise = Image.frombytes('L', img.size, random.Random(0).randbytes(img.width * img.height))
+        noise = noise.point(lambda value: 116 + round(value * 24 / 255)).convert('RGB')
+        img_to_save = ImageChops.add(img, noise, offset=-128)
+    elif filter_name == 'pencil_sketch':
+        gray = ImageOps.grayscale(img)
+        edges = gray.filter(ImageFilter.FIND_EDGES)
+        # FIND_EDGES leaves an unprocessed border; whitening it avoids an artificial dark frame.
+        edges_draw = ImageDraw.Draw(edges)
+        edges_draw.rectangle((0, 0, img.width - 1, img.height - 1), outline=0)
+        sketch = ImageOps.invert(ImageOps.autocontrast(edges))
+        img_to_save = Image.blend(sketch, Image.new('L', img.size, 255), 0.15).convert('RGB')
+    elif filter_name in {'selective_red', 'selective_green', 'selective_blue'}:
+        red, green, blue = img.split()
+        selected = {'selective_red': red, 'selective_green': green, 'selective_blue': blue}[filter_name]
+        others = {'selective_red': (green, blue), 'selective_green': (red, blue),
+                  'selective_blue': (red, green)}[filter_name]
+        dominance = ImageChops.subtract(selected, ImageChops.lighter(*others))
+        mask = dominance.point(lambda value: min(255, max(0, (value - 15) * 8)))
+        img_to_save = Image.composite(img, ImageOps.grayscale(img).convert('RGB'), mask)
+    elif filter_name == 'tilt_shift':
+        blurred = img.filter(ImageFilter.GaussianBlur(radius=max(img.size) * 0.015))
+        mask = Image.new('L', (1, img.height))
+        mask.putdata([round(255 * min(1, max(0, (abs((y + 0.5) / img.height - 0.5) - 0.15) / 0.25)))
+                      for y in range(img.height)])
+        img_to_save = Image.composite(blurred, img, mask.resize(img.size))
+    elif filter_name == 'cinematic':
+        red, green, blue = img.split()
+        shadows = Image.merge('RGB', (
+            red.point(lambda value: max(0, value - 12)),
+            green.point(lambda value: min(255, value + 6)),
+            blue.point(lambda value: min(255, value + 12))))
+        highlights = Image.merge('RGB', (
+            red.point(lambda value: min(255, value + 12)),
+            green.point(lambda value: min(255, value + 3)),
+            blue.point(lambda value: max(0, value - 10))))
+        toned = Image.composite(highlights, shadows, ImageOps.grayscale(img))
+        img_to_save = ImageEnhance.Color(toned).enhance(0.9)
+    elif filter_name == 'cross_process':
+        red, green, blue = img.split()
+        red = red.point(lambda value: round(255 * (3 * (value / 255) ** 2 - 2 * (value / 255) ** 3)))
+        green = green.point(lambda value: round(255 * (0.25 * value / 255 +
+                           0.75 * (3 * (value / 255) ** 2 - 2 * (value / 255) ** 3))))
+        blue = blue.point(lambda value: round(24 + value * 0.82))
+        img_to_save = Image.merge('RGB', (red, green, blue))
+    elif filter_name == 'watercolor':
+        softened = img.filter(ImageFilter.MedianFilter(size=5)).filter(ImageFilter.SMOOTH_MORE)
+        painted = Image.blend(softened, ImageOps.posterize(softened, bits=5), 0.65)
+        edges = ImageOps.grayscale(softened).filter(ImageFilter.FIND_EDGES)
+        ImageDraw.Draw(edges).rectangle((0, 0, img.width - 1, img.height - 1), outline=0)
+        ink = edges.point(lambda value: 255 - round(value * 0.25)).convert('RGB')
+        img_to_save = ImageChops.multiply(painted, ink)
     elif filter_name == 'sepia':
         grayscale = ImageOps.grayscale(img)
         # Créer une palette sépia. La palette doit être une liste plate de 768 entiers (256 * RGB).
@@ -265,15 +345,13 @@ def apply_filter_to_image(image_path_str, filter_name):
         grayscale.putpalette(sepia_palette)
         img_to_save = grayscale.convert('RGB')
     elif filter_name == 'vignette':
-        img_to_save = img.copy()
-        width, height = img_to_save.size
-        mask = Image.new('L', (width, height), 0)
-        draw = ImageDraw.Draw(mask)
-        draw.ellipse((width * 0.05, height * 0.05, width * 0.95, height * 0.95), fill=255)
-        mask = mask.filter(ImageFilter.GaussianBlur(radius=max(width, height) // 7))
-        mask = ImageOps.invert(mask)
-        black_layer = Image.new('RGB', img.size, (0, 0, 0))
-        img_to_save = Image.composite(img, black_layer, mask)
+        # A small elliptical falloff scales to any photo without a full-size Python pixel loop.
+        mask = Image.new('L', (129, 129))
+        mask.putdata([round(255 * (1 - 0.5 * (((x - 64) / 64) ** 2 / 2 +
+                                           ((y - 64) / 64) ** 2 / 2) ** 1.3))
+                      for y in range(129) for x in range(129)])
+        mask = mask.resize(img.size, Image.Resampling.LANCZOS)
+        img_to_save = Image.composite(img, Image.new('RGB', img.size, 0), mask)
     elif filter_name == 'vintage':
         # 1. Réduire la saturation des couleurs pour un look délavé
         enhancer = ImageEnhance.Color(img)
