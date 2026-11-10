@@ -2744,3 +2744,38 @@ msgstr ""
 #, python-format
 msgid "End zoom (1.15 = 15%% zoom):"
 msgstr ""
+
+msgid "Crop photo"
+msgstr ""
+
+msgid ""
+"Drag the selection to position it. Adjust its size below. The selection "
+"always matches the slideshow screen ratio. Originals are preserved."
+msgstr ""
+
+msgid "Selection size"
+msgstr ""
+
+msgid "Cancel"
+msgstr ""
+
+msgid "Reset crop"
+msgstr ""
+
+msgid "Save crop"
+msgstr ""
+
+msgid "Loading crop editor..."
+msgstr ""
+
+msgid "Could not load original photo."
+msgstr ""
+
+msgid "Preparing cropped photo..."
+msgstr ""
+
+msgid "Crop saved."
+msgstr ""
+
+msgid "Another crop is being prepared. Please wait."
+msgstr ""

@@ -223,6 +223,14 @@ The Preview and Favorites photo tiles also show this caption below each image,
 next to its filter and caption controls. Both date-format fields include an
 expandable reference with codes and examples (such as `%d/%m/%Y` for 15/06/2020).
 
+Use **Crop photo** on a Preview or Favorites tile to select which part is displayed.
+Drag the selection and adjust **Selection size**; its aspect ratio always matches
+the configured slideshow width and height. **Save crop** regenerates that photo's
+prepared image, Polaroid and postcard versions, keeps saved filters/captions, and
+reloads a running slideshow. **Reset crop** restores the uncropped preparation.
+Originals are never modified and must remain in `static/photos/{source}`.
+Selections are saved in `config/crop_states.json` and reused during future preparation.
+
 ### Photo Import Settings
 
 Choose between importing from an Immich album or a USB stick, and manage downloaded files.

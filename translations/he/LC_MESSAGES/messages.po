@@ -2747,3 +2747,40 @@ msgstr "זום התחלתי (1.00 = תמונה מלאה):"
 #, python-format
 msgid "End zoom (1.15 = 15%% zoom):"
 msgstr "זום סופי (1.15 = הגדלה של 15%%):"
+
+msgid "Crop photo"
+msgstr "חיתוך תמונה"
+
+msgid ""
+"Drag the selection to position it. Adjust its size below. The selection "
+"always matches the slideshow screen ratio. Originals are preserved."
+msgstr ""
+"גררו את הבחירה למיקום הרצוי ושנו את גודלה למטה. היחס תמיד תואם למסך המצגת. "
+"המקור נשמר."
+
+msgid "Selection size"
+msgstr "גודל הבחירה"
+
+msgid "Cancel"
+msgstr "ביטול"
+
+msgid "Reset crop"
+msgstr "איפוס חיתוך"
+
+msgid "Save crop"
+msgstr "שמירת חיתוך"
+
+msgid "Loading crop editor..."
+msgstr "טוען עורך חיתוך..."
+
+msgid "Could not load original photo."
+msgstr "לא ניתן לטעון את תמונת המקור."
+
+msgid "Preparing cropped photo..."
+msgstr "מכין תמונה חתוכה..."
+
+msgid "Crop saved."
+msgstr "החיתוך נשמר."
+
+msgid "Another crop is being prepared. Please wait."
+msgstr "חיתוך אחר בהכנה. נא להמתין."

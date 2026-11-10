@@ -2000,6 +2000,8 @@
                                 <!-- Le menu des playlists sera injecté ici -->
                             </div>
                             {% if media.type == 'image' %}
+                            <button type="button" class="crop-photo-btn mt-2 text-xs text-blue-600 underline"
+                                data-photo="{{ photo_path }}">{{ _("Crop photo") }}</button>
                             <div class="generic-text-input-container mt-2" data-photo="{{ photo_path }}">
                                 <input type="text" class="generic-text-input w-full text-xs p-1 border rounded"
                                     placeholder="{{ _('Ajouter une légende...') }}" value="{{ media.text or '' }}">
@@ -2230,6 +2232,8 @@
                             <!-- Le menu des playlists sera injecté ici -->
                         </div>
                         {% if media.type == 'image' %}
+                        <button type="button" class="crop-photo-btn mt-2 text-xs text-blue-600 underline"
+                            data-photo="{{ photo_path }}">{{ _("Crop photo") }}</button>
                         <div class="generic-text-input-container mt-2" data-photo="{{ photo_path }}">
                             <input type="text" class="generic-text-input w-full text-xs p-1 border rounded"
                                 placeholder="{{ _('Ajouter une légende...') }}" value="{{ media.text or '' }}">
@@ -2247,6 +2251,147 @@
         </div>
 
 
+        <dialog id="photo-crop-dialog" class="rounded-lg shadow-xl p-5 max-w-3xl w-full">
+            <h3 class="font-bold mb-2">{{ _("Crop photo") }}</h3>
+            <p class="text-sm mb-3">{{ _("Drag the selection to position it. Adjust its size below. The selection always matches the slideshow screen ratio. Originals are preserved.") }}</p>
+            <canvas id="photo-crop-canvas" class="block mx-auto max-w-full" style="max-height:60vh;touch-action:none"></canvas>
+            <label class="block mt-3">{{ _("Selection size") }}
+                <input id="photo-crop-size" type="range" min="10" max="100" step="1" value="100" class="w-full">
+            </label>
+            <p id="photo-crop-status" role="status" class="text-sm my-2"></p>
+            <div class="flex justify-end gap-3">
+                <button id="photo-crop-cancel" type="button">{{ _("Cancel") }}</button>
+                <button id="photo-crop-reset" type="button" class="text-blue-600">{{ _("Reset crop") }}</button>
+                <button id="photo-crop-save" type="button" class="bg-blue-600 text-white rounded px-4 py-2">{{ _("Save crop") }}</button>
+            </div>
+        </dialog>
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const dialog = document.getElementById('photo-crop-dialog');
+                const canvas = document.getElementById('photo-crop-canvas');
+                const context = canvas.getContext('2d');
+                const slider = document.getElementById('photo-crop-size');
+                const status = document.getElementById('photo-crop-status');
+                const save = document.getElementById('photo-crop-save');
+                const reset = document.getElementById('photo-crop-reset');
+                const cancel = document.getElementById('photo-crop-cancel');
+                let photo, image, crop, maxWidth, maxHeight, drag, busy = false;
+                let loadVersion = 0;
+                function draw() {
+                    context.clearRect(0, 0, canvas.width, canvas.height);
+                    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+                    context.fillStyle = 'rgba(0,0,0,0.55)';
+                    context.fillRect(0, 0, canvas.width, canvas.height);
+                    const x = crop.x * canvas.width, y = crop.y * canvas.height;
+                    const width = crop.width * canvas.width, height = crop.height * canvas.height;
+                    context.save();
+                    context.beginPath();
+                    context.rect(x, y, width, height);
+                    context.clip();
+                    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+                    context.restore();
+                    context.strokeStyle = '#ffffff';
+                    context.lineWidth = 2;
+                    context.strokeRect(x, y, width, height);
+                }
+                function setBusy(value) {
+                    busy = value;
+                    save.disabled = reset.disabled = slider.disabled = value;
+                    cancel.disabled = value;
+                }
+                function resizeSelection() {
+                    const fraction = Number(slider.value) / 100;
+                    const width = maxWidth * fraction, height = maxHeight * fraction;
+                    crop = {x: Math.max(0, Math.min(1 - width, crop.x + (crop.width - width) / 2)),
+                            y: Math.max(0, Math.min(1 - height, crop.y + (crop.height - height) / 2)),
+                            width, height};
+                    draw();
+                }
+                document.querySelectorAll('.crop-photo-btn').forEach(button => button.addEventListener('click', async () => {
+                    photo = button.dataset.photo;
+                    const version = ++loadVersion;
+                    image = crop = null;
+                    context.clearRect(0, 0, canvas.width, canvas.height);
+                    status.textContent = {{ _("Loading crop editor...") | tojson }};
+                    setBusy(true);
+                    dialog.showModal();
+                    try {
+                        const url = '/api/photo_crop?photo=' + encodeURIComponent(photo);
+                        const response = await fetch(url);
+                        const data = await response.json();
+                        if (!response.ok) throw new Error(data.message || `HTTP ${response.status}`);
+                        const loaded = new Image();
+                        await new Promise((resolve, reject) => {
+                            loaded.onload = resolve;
+                            loaded.onerror = () => reject(new Error({{ _("Could not load original photo.") | tojson }}));
+                            loaded.src = url + '&image=1';
+                        });
+                        if (version !== loadVersion || !dialog.open) return;
+                        image = loaded;
+                        const scale = Math.min(700 / data.width, 420 / data.height, 1);
+                        canvas.width = Math.max(1, Math.round(data.width * scale));
+                        canvas.height = Math.max(1, Math.round(data.height * scale));
+                        maxWidth = Math.min(1, data.aspect_ratio * data.height / data.width);
+                        maxHeight = maxWidth * data.width / (data.aspect_ratio * data.height);
+                        crop = data.crop || {x: (1 - maxWidth) / 2, y: (1 - maxHeight) / 2,
+                                             width: maxWidth, height: maxHeight};
+                        // Refit saved selections if the configured screen ratio has changed.
+                        const fraction = Math.min(1, crop.width / maxWidth, crop.height / maxHeight);
+                        slider.value = Math.max(10, Math.round(fraction * 100));
+                        resizeSelection();
+                        status.textContent = '';
+                        setBusy(false);
+                    } catch (error) {
+                        status.textContent = error.message;
+                        cancel.disabled = false;
+                    }
+                }));
+                slider.addEventListener('input', () => { if (!busy && crop) resizeSelection(); });
+                function point(event) {
+                    const bounds = canvas.getBoundingClientRect();
+                    return {x: (event.clientX - bounds.left) / bounds.width,
+                            y: (event.clientY - bounds.top) / bounds.height};
+                }
+                canvas.addEventListener('pointerdown', event => {
+                    if (busy || !crop) return;
+                    const position = point(event);
+                    if (position.x < crop.x || position.x > crop.x + crop.width ||
+                        position.y < crop.y || position.y > crop.y + crop.height) return;
+                    drag = {x: position.x - crop.x, y: position.y - crop.y};
+                    canvas.setPointerCapture(event.pointerId);
+                });
+                canvas.addEventListener('pointermove', event => {
+                    if (!drag || busy) return;
+                    const position = point(event);
+                    crop.x = Math.max(0, Math.min(1 - crop.width, position.x - drag.x));
+                    crop.y = Math.max(0, Math.min(1 - crop.height, position.y - drag.y));
+                    draw();
+                });
+                canvas.addEventListener('pointerup', () => { drag = null; });
+                canvas.addEventListener('pointercancel', () => { drag = null; });
+                dialog.addEventListener('cancel', event => { if (busy) event.preventDefault(); });
+                cancel.onclick = () => { ++loadVersion; drag = null; dialog.close(); };
+                async function persist(selection) {
+                    if (busy || !crop) return;
+                    setBusy(true);
+                    status.textContent = {{ _("Preparing cropped photo...") | tojson }};
+                    try {
+                        const response = await fetch('/api/photo_crop', {
+                            method: 'POST', headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({photo, crop: selection})
+                        });
+                        const data = await response.json();
+                        if (!response.ok || !data.success) throw new Error(data.message || `HTTP ${response.status}`);
+                        location.reload();
+                    } catch (error) {
+                        status.textContent = error.message;
+                        setBusy(false);
+                    }
+                }
+                save.onclick = () => persist(crop);
+                reset.onclick = () => persist(null);
+            });
+        </script>
         <script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
         <script>

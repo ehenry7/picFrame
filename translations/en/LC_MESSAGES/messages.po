@@ -2993,6 +2993,43 @@ msgstr "Start zoom (1.00 = full image):"
 msgid "End zoom (1.15 = 15%% zoom):"
 msgstr "End zoom (1.15 = 15%% zoom):"
 
+msgid "Crop photo"
+msgstr "Crop photo"
+
+msgid ""
+"Drag the selection to position it. Adjust its size below. The selection "
+"always matches the slideshow screen ratio. Originals are preserved."
+msgstr ""
+"Drag the selection to position it. Adjust its size below. The selection "
+"always matches the slideshow screen ratio. Originals are preserved."
+
+msgid "Selection size"
+msgstr "Selection size"
+
+msgid "Cancel"
+msgstr "Cancel"
+
+msgid "Reset crop"
+msgstr "Reset crop"
+
+msgid "Save crop"
+msgstr "Save crop"
+
+msgid "Loading crop editor..."
+msgstr "Loading crop editor..."
+
+msgid "Could not load original photo."
+msgstr "Could not load original photo."
+
+msgid "Preparing cropped photo..."
+msgstr "Preparing cropped photo..."
+
+msgid "Crop saved."
+msgstr "Crop saved."
+
+msgid "Another crop is being prepared. Please wait."
+msgstr "Another crop is being prepared. Please wait."
+
 #~ msgid "Favoris"
 #~ msgstr "Favorites"
 

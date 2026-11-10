@@ -47,6 +47,8 @@ import requests
 import threading
 import collections
 import shutil
+import io
+import tempfile
 from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
 from werkzeug.security import check_password_hash
@@ -72,6 +74,7 @@ from utils.import_usb_photos import import_usb_photos  # Déplacé dans utils
 from utils.metadata_utils import get_photo_metadata, format_photo_metadata
 from utils.import_samba import import_samba_photos
 from utils.photo_import import PHOTO_EXTENSIONS, photo_digest, stream_digest
+from utils.photo_crop import original_photo, oriented_image, validate_crop, load_crops, save_crops, CROP_LOCK
 from utils.image_filters import apply_filter_to_image, add_text_to_polaroid, add_text_to_image, create_polaroid_effect
 logging.getLogger(__name__).info("Startup: loading voice control manager")
 from utils.voice_control_manager import start_voice_control, stop_voice_control, is_voice_control_running
@@ -1893,6 +1896,10 @@ def delete_photo(photo):
         states = load_filter_states()
         if states.pop(photo, None):
             save_filter_states(states)
+        with CROP_LOCK:
+            crops = load_crops()
+            if crops.pop(photo, None) is not None:
+                save_crops(crops)
 
         # Supprimer des favoris si la photo y était
         favorites = load_favorites()
@@ -3286,6 +3293,104 @@ def apply_filter_api():
     except Exception as e:
         logger.info(f"Erreur lors de l'application du filtre : {e}")
         return jsonify({"success": False, "message": f"Erreur interne du serveur : {e}"}), 500
+
+@app.route('/api/photo_crop', methods=['GET', 'POST'])
+@login_required
+def photo_crop():
+    crop_locked = False
+    try:
+        if request.method == 'POST':
+            crop_locked = CROP_LOCK.acquire(blocking=False)
+            if not crop_locked:
+                logger.warning("Photo crop rejected: another crop is being prepared")
+                return jsonify({"success": False, "message": _("Another crop is being prepared. Please wait.")}), 409
+        data = request.get_json() if request.method == 'POST' else request.args
+        if not isinstance(data, dict) and request.method == 'POST':
+            raise ValueError("Invalid crop request.")
+        photo = data.get("photo")
+        original, prepared = original_photo(photo)
+        image = oriented_image(original)
+        config = load_config()
+        width, height = int(config["display_width"]), int(config["display_height"])
+        if width <= 0 or height <= 0:
+            raise ValueError("Invalid display dimensions.")
+        crops = load_crops()
+        if request.method == 'GET':
+            if request.args.get("image") == "1":
+                image.thumbnail((1200, 1200))
+                output = io.BytesIO()
+                image.save(output, format="JPEG", quality=90)
+                return Response(output.getvalue(), mimetype="image/jpeg",
+                                headers={"Cache-Control": "no-store"})
+            return jsonify({"width": image.width, "height": image.height,
+                            "aspect_ratio": width / height, "crop": crops.get(photo)})
+        crop = data.get("crop")
+        if crop is not None:
+            crop = validate_crop(crop, image.size, (width, height))
+        from utils.prepare_all_photos import prepare_photo
+        # Stage a complete set before replacing display files or crop settings.
+        with tempfile.TemporaryDirectory(prefix="picframe-crop-") as directory:
+            stage = Path(directory) / "static" / "prepared" / original.parent.name / prepared.name
+            stage.parent.mkdir(parents=True)
+            caption = load_text_states().get(photo, "")
+            prepare_photo(str(original), str(stage), width, height,
+                          source_type=original.parent.name, caption=caption, crop_selection=crop)
+            outputs = [stage, stage.with_name(f"{stage.stem}_polaroid.jpg"),
+                       stage.with_name(f"{stage.stem}_postcard.jpg")]
+            if any(not path.is_file() or path.stat().st_size == 0 for path in outputs):
+                raise RuntimeError("Crop preparation failed; existing images were not changed.")
+            clean_backup = Path(directory) / "clean.jpg"
+            shutil.copy2(stage, clean_backup)
+            if caption:
+                add_text_to_image(str(stage), caption)
+            polaroid_caption = load_polaroid_texts().get(photo, "")
+            if polaroid_caption:
+                add_text_to_polaroid(str(outputs[1]), polaroid_caption)
+            selected_filter = load_filter_states().get(photo, "none")
+            if selected_filter not in {"none", "original", "polaroid", "postcard"}:
+                # Filter the captioned image, without retaining its temporary backup.
+                stage_backup = Path(directory) / "static" / ".backups" / original.parent.name / prepared.name
+                if stage_backup.exists():
+                    stage_backup.unlink()
+                apply_filter_to_image(str(stage), selected_filter)
+            targets = [prepared, prepared.with_name(outputs[1].name), prepared.with_name(outputs[2].name),
+                       BASE_DIR / "static" / ".backups" / original.parent.name / prepared.name]
+            replacements = [*outputs, clean_backup]
+            previous = {}
+            for index, target in enumerate(targets):
+                if target.exists():
+                    backup = Path(directory) / f"previous-{index}.jpg"
+                    shutil.copy2(target, backup)
+                    previous[target] = backup
+            try:
+                for replacement, target in zip(replacements, targets):
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(replacement, target)
+                if crop is None:
+                    crops.pop(photo, None)
+                else:
+                    crops[photo] = crop
+                save_crops(crops)
+            except Exception:
+                for target in targets:
+                    if target in previous:
+                        shutil.copy2(previous[target], target)
+                    elif target.exists():
+                        target.unlink()
+                raise
+        if is_slideshow_running():
+            restart_slideshow_for_update()
+        return jsonify({"success": True, "message": _("Crop saved.")})
+    except (ValueError, FileNotFoundError) as error:
+        logger.warning("Photo crop rejected: %s", error)
+        return jsonify({"success": False, "message": str(error)}), 400
+    except Exception as error:
+        logger.exception("Photo crop failed")
+        return jsonify({"success": False, "message": str(error)}), 500
+    finally:
+        if crop_locked:
+            CROP_LOCK.release()
+
 
 @app.route('/api/set_photo_filter', methods=['POST'])
 @login_required

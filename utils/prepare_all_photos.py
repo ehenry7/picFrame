@@ -1,5 +1,5 @@
 import os
-from PIL import Image, ImageFilter, ImageDraw, ImageFont
+from PIL import Image, ImageFilter, ImageDraw, ImageFont, ImageOps
 import json
 try:
     import pillow_heif
@@ -10,7 +10,7 @@ import subprocess, sys
 from utils.config import load_config
 import piexif
 from utils.image_filters import create_polaroid_effect, create_postcard_effect
-from utils.exif import get_rotation_angle
+from utils.photo_crop import apply_crop, load_crops
 import logging
 import re
 from pathlib import Path
@@ -136,7 +136,7 @@ def get_pi_model():
     """Détecte le modèle du Raspberry Pi."""
     return get_platform_pi_model()
 
-def prepare_photo(source_path, dest_path, output_width, output_height, source_type=None, caption=None):
+def prepare_photo(source_path, dest_path, output_width, output_height, source_type=None, caption=None, crop_selection="saved"):
     """Prépare une photo pour l'affichage avec redimensionnement, rotation EXIF et fond flou."""
     config = load_config()
     screen_height_percent = int(config.get("screen_height_percent", "100"))
@@ -151,17 +151,17 @@ def prepare_photo(source_path, dest_path, output_width, output_height, source_ty
                 logger.warning(f"Support HEIF désactivé (pillow-heif non installé). Impossible de traiter {source_path}")
                 return None
         
-        img = Image.open(source_path)
+        with Image.open(source_path) as source_image:
+            img = ImageOps.exif_transpose(source_image)
         
         # Modification Sigalou 25/01/2026 - Suppression de la lecture EXIF redondante
         # Les métadonnées sont déjà dans le JSON créé par download_album.py
         # On ne lit plus les EXIF ici pour éviter la duplication
         # Fin Modification Sigalou 25/01/2026
         
-        # 1. Handle EXIF Orientation
-        rotation_angle = get_rotation_angle(img)
-        if rotation_angle != 0:
-            img = img.rotate(rotation_angle, expand=True)
+        if crop_selection == "saved":
+            crop_selection = load_crops().get(f"{source_type}/{Path(dest_path).name}")
+        img = apply_crop(img, crop_selection)
         
         # Remove EXIF data after rotation
         if "exif" in img.info:

@@ -2751,6 +2751,43 @@ msgstr "Zoom initial (1.00 = image entière) :"
 msgid "End zoom (1.15 = 15%% zoom):"
 msgstr "Zoom final (1.15 = agrandissement de 15%%) :"
 
+msgid "Crop photo"
+msgstr "Recadrer la photo"
+
+msgid ""
+"Drag the selection to position it. Adjust its size below. The selection "
+"always matches the slideshow screen ratio. Originals are preserved."
+msgstr ""
+"Déplacez la sélection et ajustez sa taille ci-dessous. Elle conserve les "
+"proportions de l’écran du diaporama. Les originaux sont conservés."
+
+msgid "Selection size"
+msgstr "Taille de la sélection"
+
+msgid "Cancel"
+msgstr "Annuler"
+
+msgid "Reset crop"
+msgstr "Réinitialiser le recadrage"
+
+msgid "Save crop"
+msgstr "Enregistrer le recadrage"
+
+msgid "Loading crop editor..."
+msgstr "Chargement de l’éditeur de recadrage..."
+
+msgid "Could not load original photo."
+msgstr "Impossible de charger la photo originale."
+
+msgid "Preparing cropped photo..."
+msgstr "Préparation de la photo recadrée..."
+
+msgid "Crop saved."
+msgstr "Recadrage enregistré."
+
+msgid "Another crop is being prepared. Please wait."
+msgstr "Un autre recadrage est en cours de préparation. Veuillez patienter."
+
 #~ msgid "Hauteur utile de l'écran (% affiché) :"
 #~ msgstr ""
 
