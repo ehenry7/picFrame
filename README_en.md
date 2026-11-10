@@ -2,17 +2,15 @@
 
 PictureFrame is a Python application designed to turn a Raspberry Pi into a smart and customizable digital photo frame. It can display photos from multiple sources and be controlled through its web interface.
 
-PictureFrame is a fork of [Pimmich](https://github.com/gotenash/pimmich).
-Legacy internal names (the startup script, status files, logs, NGINX site and
-EXIF metadata prefix) are retained for existing-installation compatibility.
+The startup script is `start_pictureframe.sh`; logs use `logs/pictureframe.log`.
+After upgrading an existing installation, rerun `sudo ./setup.sh` and reboot.
+Setup migrates the old Sway launcher, NGINX site and sudoers filenames.
+Stop the old application before upgrading; old and new processes must not run
+together because runtime PID/status filenames have changed.
+The legacy EXIF metadata prefix is retained so existing prepared photos still work.
 
 <img src="static/pictureframe_logo.svg" alt="PictureFrame Logo" width="300">
 
-<p align="center">
-  <a href="https://ko-fi.com/pimmich">
-    <img src="https://img.shields.io/badge/Support%20on%20Ko--fi-F16061?logo=kofi&logoColor=white" alt="Support the original Pimmich project on Ko-fi">
-  </a>
-</p>
 
 ---
 
@@ -27,7 +25,6 @@ EXIF metadata prefix) are retained for existing-installation compatibility.
   - June 2025
   - July 2025
   - August 2025
-- 💖 Credits
 
 ---
 
@@ -123,16 +120,29 @@ Changing the configured font path tries the new font; restart to retry a repaire
 
 ### Switch between frame mode and the desktop
 
+Maintenance and developer helpers live in `scripts/`, including `add_photos.py`,
+`reset_admin_password.py`, `check_*.py`, `verify_he.py`, `test_babel.py`, and
+`_extract.py`. Run them as `python scripts/<name>.py` from the project root.
+They locate project resources relative to their file, so they also work when
+invoked by absolute path from another directory. `_extract.py` writes its
+temporary `_untranslated.json` beside itself in `scripts/`.
+Only the main app/runtime modules and `setup.sh` / `start_pictureframe.sh`
+remain at the root; importable runtime helpers remain in `utils/`.
+
 After running setup, use either command from the project directory:
 
 ```bash
-bash enable_auto_frame_start.sh   # Frame mode: console auto-login + Sway
-bash disable_auto_frame_start.sh  # Desktop mode: desktop auto-login
+bash scripts/enable_auto_frame_start.sh   # Frame mode: console auto-login + Sway
+bash scripts/disable_auto_frame_start.sh  # Desktop mode: desktop auto-login
 ```
 
 The scripts request sudo privileges and **reboot automatically** after successfully
 changing the boot mode. Save your work before running either script.
-Enabling requires the Sway auto-start configuration created by setup;
+Enabling checks for Sway/Python and repairs the console profile and Sway launcher
+for the current installation before rebooting. Existing virtual environments are
+activated by the startup script when present; otherwise it uses global Python.
+If startup fails, open a console with Ctrl+Alt+F2 and check
+`tail -n 100 logs/pictureframe.log` from the project directory.
 disabling requires Raspberry Pi OS Desktop, not Lite. Neither script removes
 PictureFrame or changes its settings.
 
@@ -166,7 +176,7 @@ For local development, run `python -u app.py` from the project directory and ope
 `http://127.0.0.1:7090`. Look for `HTTP server READY` in the console.
 
 Startup stages, worker failures, and HTTP request timings are recorded in
-`logs/pimmich.log`. If startup takes more than 30 seconds, thread stack traces
+`logs/pictureframe.log`. If startup takes more than 30 seconds, thread stack traces
 are written to `logs/startup_threads.log`. A request with `HTTP started` but no
 matching `HTTP finished` identifies an unfinished handler.
 
@@ -179,10 +189,10 @@ repository alone does not update the installed NGINX configuration.
 From the project directory on Raspberry Pi, run:
 
 ```bash
-sudo python3 reset_admin_password.py
+sudo python3 scripts/reset_admin_password.py
 ```
 
-On Windows, run `python reset_admin_password.py` instead.
+On Windows, run `python scripts\reset_admin_password.py` instead.
 Enter your chosen password twice at the hidden prompts, then log in as `admin`.
 No output-file argument or app restart is needed. The script uses the platform's
 credentials location, stores a password hash, and preserves other credential
@@ -196,10 +206,10 @@ Stop the app before importing. From the project directory on Raspberry Pi:
 
 ```bash
 # Prepare and enable photos already copied into static/photos/smartphone:
-./venv/bin/python add_photos.py
+python3 scripts/add_photos.py
 
 # Or copy photos from another folder, prepare them, and enable their source:
-./venv/bin/python add_photos.py "/home/pi/Pictures"
+python3 scripts/add_photos.py "/home/pi/Pictures"
 ```
 
 Use `python3` instead of `./venv/bin/python` for a global Python installation,

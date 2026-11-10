@@ -14,7 +14,7 @@ if __name__ == '__main__':
     _bootstrap_handlers = [
         logging.StreamHandler(),
         RotatingFileHandler(
-            _startup_log_dir / "pimmich.log",
+            _startup_log_dir / "pictureframe.log",
             maxBytes=10 * 1024 * 1024, backupCount=3, encoding="utf-8"
         ),
     ]
@@ -146,7 +146,7 @@ root_logger.setLevel(level)
 
 # Handler 1 : Fichier avec rotation (10 Mo max, 5 backups)
 file_handler = RotatingFileHandler(
-    LOGS_DIR / "pimmich.log",
+    LOGS_DIR / "pictureframe.log",
     maxBytes=10 * 1024 * 1024,
     backupCount=3,
     encoding="utf-8"
@@ -158,7 +158,7 @@ file_formatter = CleanWerkzeugFormatter(
 )
 file_handler.setFormatter(file_formatter)
 
-# Handler 2 : Console (stdout/stderr) - pour la compatibilité avec start_pimmich.sh [Pourra etre supprimé dans quelques temps]
+# Handler 2 : Console (stdout/stderr) - pour la compatibilité avec start_pictureframe.sh [Pourra etre supprimé dans quelques temps]
 console_handler = logging.StreamHandler()
 console_handler.setLevel(level)
 console_formatter = CleanWerkzeugFormatter(
@@ -175,9 +175,9 @@ root_logger.addHandler(file_handler)
 root_logger.addHandler(console_handler)
 
 # Logger spécifique pour app.py
-logger = logging.getLogger("pimmich.app")
+logger = logging.getLogger("pictureframe.app")
 logger.info("Startup: dependencies and logging initialized in %.2fs; log file: %s",
-            time.monotonic() - _startup_started, LOGS_DIR / "pimmich.log")
+            time.monotonic() - _startup_started, LOGS_DIR / "pictureframe.log")
 
 # Configuration spécifique pour Werkzeug
 werkzeug_logger = logging.getLogger('werkzeug')
@@ -268,16 +268,16 @@ FILTER_STATES_PATH = 'config/filter_states.json'
 FAVORITES_PATH = 'config/favorites.json'
 POLAROID_TEXTS_PATH = 'config/polaroid_texts.json'
 TEXT_STATES_PATH = 'config/text_states.json'
-CUSTOM_PLAYLIST_FILE = str(get_status_file("pimmich_custom_playlist.json"))
-CURRENT_PHOTO_FILE = str(get_status_file("pimmich_current_photo.txt"))
-SLIDESHOW_PID_FILE = get_status_file("pimmich_slideshow.pid")
-SLIDESHOW_STATUS_FILE = get_status_file("pimmich_slideshow_status.json")
+CUSTOM_PLAYLIST_FILE = str(get_status_file("pictureframe_custom_playlist.json"))
+CURRENT_PHOTO_FILE = str(get_status_file("pictureframe_current_photo.txt"))
+SLIDESHOW_PID_FILE = get_status_file("pictureframe_slideshow.pid")
+SLIDESHOW_STATUS_FILE = get_status_file("pictureframe_slideshow_status.json")
 CANCEL_FLAG_PATH = get_cancel_flag_path()
 PREPARED_DIR = BASE_DIR / "static" / "prepared"
 
 # Dictionnaire central pour les fichiers de log
 LOG_FILES_MAP = {
-    "app": {"path": "logs/pimmich.log", "name_key": "PictureFrame (Serveur Web & Supervisor)"},
+    "app": {"path": "logs/pictureframe.log", "name_key": "PictureFrame (Serveur Web & Supervisor)"},
 }
 
 
@@ -1631,11 +1631,11 @@ def system_reboot():
     """Affiche la page de redémarrage et lance le reboot après 1 seconde."""
     # Supprimer le fichier log si coché
     if request.form.get('delete_logs'):
-        log_file = BASE_DIR / 'logs' / 'pimmich.log'
+        log_file = BASE_DIR / 'logs' / 'pictureframe.log'
         if os.path.exists(log_file):
             try:
                 os.remove(log_file)
-                print("pimmich.log supprimé")
+                print("pictureframe.log supprimé")
             except Exception as e:
                 print(f"Erreur suppression log: {e}")    
     

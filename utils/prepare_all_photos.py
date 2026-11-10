@@ -61,7 +61,7 @@ class EmojiFormatter(logging.Formatter):
 config = load_config()
 
 # Créer un logger spécifique pour ce module
-logger = logging.getLogger("pimmich.prepare_all_photos")
+logger = logging.getLogger("pictureframe.prepare_all_photos")
 
 # Récupérer le niveau de log depuis la configuration
 level_name = config.get("level_log", "INFO")
@@ -71,7 +71,7 @@ logger.propagate = False
 
 # Handler fichier avec rotation (10 Mo max, 3 backups)
 file_handler = RotatingFileHandler(
-    LOGSDIR / "pimmich.log",
+    LOGSDIR / "pictureframe.log",
     maxBytes=10 * 1024 * 1024,
     backupCount=3,
     encoding="utf-8"

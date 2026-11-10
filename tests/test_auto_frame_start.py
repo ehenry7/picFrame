@@ -11,9 +11,15 @@ BASH = shutil.which("bash")
 @unittest.skipUnless(BASH, "Bash is required for shell script tests")
 class AutoFrameStartTests(unittest.TestCase):
     def run_script(self, filename, setup):
-        source = (ROOT / filename).read_text(encoding="utf-8")
+        source = (ROOT / "scripts" / filename).read_text(encoding="utf-8")
         return subprocess.run(
-            [BASH, "-c", setup + "\n" + source],
+            [BASH, "-c", """
+sway() { :; }
+python3() { :; }
+id() { echo frameuser; }
+getent() { echo 'frameuser:x:1000:1000::/home/frameuser:/bin/bash'; }
+unset SUDO_USER
+""" + setup + "\n" + source],
             capture_output=True, text=True, timeout=10,
         )
 
@@ -29,10 +35,11 @@ sudo() { printf 'COMMAND: %s\\n' "$*"; }
                 self.assertIn(f"COMMAND: raspi-config nonint do_boot_behaviour {mode}", result.stdout)
                 commands = [line for line in result.stdout.splitlines()
                             if line.startswith("COMMAND:")]
-                self.assertEqual(commands, [
-                    f"COMMAND: raspi-config nonint do_boot_behaviour {mode}",
-                    "COMMAND: reboot",
-                ])
+                self.assertEqual(commands[-2:], [
+                    f"COMMAND: raspi-config nonint do_boot_behaviour {mode}", "COMMAND: reboot"])
+                self.assertEqual(len(commands), 3 if mode == "B2" else 2)
+                if mode == "B2":
+                    self.assertIn("configure_auto_frame.py --home /home/frameuser", commands[0])
                 self.assertIn("Rebooting now...", result.stdout)
 
     def test_command_failure_does_not_report_success(self):
@@ -72,7 +79,7 @@ sudo() { echo "Unexpected sudo" >&2; return 99; }
 
     def test_scripts_use_lf_and_valid_bash_syntax(self):
         for filename in ("enable_auto_frame_start.sh", "disable_auto_frame_start.sh"):
-            data = (ROOT / filename).read_bytes()
+            data = (ROOT / "scripts" / filename).read_bytes()
             self.assertNotIn(b"\r\n", data)
             result = subprocess.run([BASH, "-n"], input=data,
                                     capture_output=True, timeout=10)

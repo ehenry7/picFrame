@@ -37,7 +37,7 @@ class EmojiFormatter(logging.Formatter):
 config = load_config()
 
 # Créer un logger spécifique pour ce module
-logger = logging.getLogger("pimmich.slideshow_manager")
+logger = logging.getLogger("pictureframe.slideshow_manager")
 
 # Récupérer le niveau de log depuis la configuration
 level_name = config.get("level_log", "INFO")
@@ -47,7 +47,7 @@ logger.propagate = False
 
 # Handler fichier avec rotation (10 Mo max, 3 backups)
 file_handler = RotatingFileHandler(
-    LOGSDIR / "pimmich.log",
+    LOGSDIR / "pictureframe.log",
     maxBytes=10 * 1024 * 1024,
     backupCount=3,
     encoding="utf-8"
@@ -71,7 +71,7 @@ logger.debug("----------------Initialisation Slideshow Manager----------------")
 # ============================================================
 # Constantes
 # ============================================================
-PID_FILE = get_status_file("pimmich_slideshow.pid")
+PID_FILE = get_status_file("pictureframe_slideshow.pid")
 
 # ============================================================
 # Fonctions

@@ -28,7 +28,7 @@ import tempfile
 import uuid
 from pathlib import Path
 
-logger = logging.getLogger("pimmich.platform_utils")
+logger = logging.getLogger("pictureframe.platform_utils")
 
 # ── Platform flags ──────────────────────────────────────────────
 IS_LINUX = platform.system() == "Linux"
@@ -59,7 +59,7 @@ def get_pid_file(name: str) -> Path:
     """Return a PID file path in the temp directory.
 
     Args:
-        name: e.g. 'pimmich_slideshow', 'pimmich_app'
+        name: e.g. 'pictureframe_slideshow', 'pictureframe_app'
     """
     return get_temp_dir() / f"{name}.pid"
 
@@ -68,7 +68,7 @@ def get_status_file(name: str) -> Path:
     """Return a status file path in the temp directory.
 
     Args:
-        name: e.g. 'pimmich_slideshow_status', 'pimmich_current_photo'
+        name: e.g. 'pictureframe_slideshow_status', 'pictureframe_current_photo'
     """
     return get_temp_dir() / name
 
@@ -98,12 +98,12 @@ def get_default_font_path() -> str:
 
 def get_cancel_flag_path() -> Path:
     """Return the import cancellation flag file path."""
-    return get_temp_dir() / "pimmich_cancel_import.flag"
+    return get_temp_dir() / "pictureframe_cancel_import.flag"
 
 
 def get_slideshow_command_dir() -> Path:
     """Return the cross-process command queue used when POSIX signals are unavailable."""
-    return get_temp_dir() / "pimmich_slideshow_commands"
+    return get_temp_dir() / "pictureframe_slideshow_commands"
 
 
 def enqueue_slideshow_command(command: str) -> None:
@@ -559,7 +559,7 @@ def find_and_mount_usb():
                         continue
                     if mountpoint:
                         return Path(mountpoint), device_path, False
-                    temp_mount_dir = tempfile.mkdtemp(prefix="pimmich_usb_")
+                    temp_mount_dir = tempfile.mkdtemp(prefix="pictureframe_usb_")
                     subprocess.run(
                         ["sudo", "-n", "/usr/bin/mount", device_path, temp_mount_dir],
                         check=True, capture_output=True, text=True, timeout=15

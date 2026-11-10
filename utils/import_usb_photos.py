@@ -47,7 +47,7 @@ def find_and_mount_usb():
                     print(f"Périphérique USB non monté détecté : {device_path}. Tentative de montage...")
                     
                     # Créer un répertoire de montage temporaire
-                    temp_mount_dir = tempfile.mkdtemp(prefix="pimmich_usb_")
+                    temp_mount_dir = tempfile.mkdtemp(prefix="pictureframe_usb_")
                     
                     # Monter le périphérique avec les droits sudo
                     mount_cmd = ['sudo', '-n', '/usr/bin/mount', device_path, temp_mount_dir]

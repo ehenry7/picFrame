@@ -48,16 +48,16 @@ def _(text, **kwargs):
 # Définition des chemins
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PREPARED_BASE_DIR = Path(BASE_DIR) / 'static' / 'prepared'
-STATUS_FILE = str(get_status_file("pimmich_slideshow_status.json"))
+STATUS_FILE = str(get_status_file("pictureframe_slideshow_status.json"))
 SOUNDS_DIR = Path(BASE_DIR) / 'static' / 'sounds'
-CUSTOM_PLAYLIST_FILE = str(get_status_file("pimmich_custom_playlist.json"))
+CUSTOM_PLAYLIST_FILE = str(get_status_file("pictureframe_custom_playlist.json"))
 ICONS_DIR = Path(BASE_DIR) / 'static' / 'icons'
-CURRENT_PHOTO_FILE = str(get_status_file("pimmich_current_photo.txt"))
+CURRENT_PHOTO_FILE = str(get_status_file("pictureframe_current_photo.txt"))
 CONFIG_PATH = os.path.join(BASE_DIR, 'config', 'config.json')
 FAVORITES_PATH = os.path.join(BASE_DIR, 'config', 'favorites.json')
 FILTER_STATES_PATH = os.path.join(BASE_DIR, 'config', 'filter_states.json')
 TIDES_CACHE_FILE = Path(BASE_DIR) / 'cache' / 'tides.json'
-MPV_LOG_FILE = get_status_file("mpv_pimmich.log")
+MPV_LOG_FILE = get_status_file("mpv_pictureframe.log")
 _icon_cache = {} # Cache pour les icônes météo chargées
 
 # --- Variables globales pour le contrôle du diaporama ---
@@ -94,7 +94,7 @@ class EmojiFormatter(logging.Formatter):
 config = load_config()
 
 file_handler = RotatingFileHandler(
-    LOGS_DIR / "pimmich.log",
+    LOGS_DIR / "pictureframe.log",
     maxBytes=10 * 1024 * 1024,
     backupCount=3,
     encoding="utf-8"

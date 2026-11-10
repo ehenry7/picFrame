@@ -39,7 +39,7 @@ class ImmichSyncRemovalTests(unittest.TestCase):
             self.assertIn(token, source)
 
     def test_no_setup_or_documentation_references_to_removed_worker(self):
-        for filename in ("setup.sh", "start_pimmich.sh", "AGENTS.md",
+        for filename in ("setup.sh", "start_pictureframe.sh", "AGENTS.md",
                          "README.md", "README_en.md", "FAQ.md", "FAQ_en.md"):
             text = (ROOT / filename).read_text(encoding="utf-8")
             for token in ("immich-sync", "immich_update_worker", "immich_auto_update",

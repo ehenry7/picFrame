@@ -79,8 +79,13 @@ if [ -f /etc/nginx/sites-enabled/default ]; then
     echo "⛔ Fichier de config par défaut supprimé"
 fi
 
+# Migrer les noms des anciennes installations avant de configurer NGINX.
+REAL_USER=${SUDO_USER:-$(logname)}
+USER_HOME=$(getent passwd "$REAL_USER" | cut -d: -f6)
+sudo python3 "$(dirname "$0")/utils/migrate_frame_names.py" --user-home "$USER_HOME" || exit 1
+
 # Créer une nouvelle config pour PictureFrame
-sudo tee /etc/nginx/sites-available/pimmich > /dev/null <<'EOL'
+sudo tee /etc/nginx/sites-available/pictureframe > /dev/null <<'EOL'
 server {
     listen 80;
     server_name _;
@@ -103,8 +108,8 @@ server {
 EOL
 
 # Activer la nouvelle config
-if [ ! -f /etc/nginx/sites-enabled/pimmich ]; then
-    sudo ln -s /etc/nginx/sites-available/pimmich /etc/nginx/sites-enabled/
+if [ ! -f /etc/nginx/sites-enabled/pictureframe ]; then
+    sudo ln -s /etc/nginx/sites-available/pictureframe /etc/nginx/sites-enabled/
     echo "✅ Configuration PictureFrame activée dans NGINX"
 fi
 
@@ -191,7 +196,7 @@ if [ ! -f "$CREDENTIALS_FILE" ]; then
     sudo -E "$VENV_PYTHON" utils/create_initial_user.py --output "$CREDENTIALS_FILE"
     
     echo "🔑 Configuration des droits sudo (Sécurité, Reboot, Shutdown)..."
-    SUDOERS_CONF="/etc/sudoers.d/pimmich-auth"
+    SUDOERS_CONF="/etc/sudoers.d/pictureframe-auth"
     # Autorisations NOPASSWD pour toutes les fonctions critiques (Réseau, Disques, Système)
     COMMANDS="/usr/bin/tee $CREDENTIALS_FILE, /usr/sbin/reboot, /usr/sbin/shutdown, /usr/bin/nmcli, /usr/bin/raspi-config, /usr/bin/mount, /usr/bin/umount, /usr/bin/timedatectl"
     echo "$REAL_USER ALL=(ALL) NOPASSWD: $COMMANDS" | sudo tee "$SUDOERS_CONF" > /dev/null
@@ -225,18 +230,13 @@ mkdir -p "$SWAY_CONFIG_DIR"
 
 # Chemin absolu vers le script de démarrage
 INSTALL_DIR=$(pwd)
-START_SCRIPT="$INSTALL_DIR/start_pimmich.sh"
+START_SCRIPT="$INSTALL_DIR/start_pictureframe.sh"
 
 # Rendre exécutable
 chmod +x "$START_SCRIPT"
 
 # Ajout de l'exec_always si absent
-if ! grep -q 'start_pimmich.sh' "$SWAY_CONFIG_FILE" 2>/dev/null; then
-    echo "exec_always --no-startup-id $START_SCRIPT" >> "$SWAY_CONFIG_FILE"
-    echo "Ajout de start_pimmich.sh dans la config sway"
-else
-    echo "✅ start_pimmich.sh déjà présent dans la config sway"
-fi
+sudo -u "$REAL_USER" python3 "$INSTALL_DIR/scripts/configure_auto_frame.py" --home "$USER_HOME" || exit 1
 
 # Configuration des règles de fenêtres pour assurer que les vidéos mpv passent au premier plan
 if ! grep -q 'app_id="mpv"' "$SWAY_CONFIG_FILE" 2>/dev/null; then

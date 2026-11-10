@@ -1506,18 +1506,6 @@ msgstr ""
 msgid "Effacer les logs"
 msgstr ""
 
-#: templates/configure.html.jinja:1969
-msgid "Crédits"
-msgstr ""
-
-#: templates/configure.html.jinja:1973
-msgid "Auteurs : Gotenash et Shenron"
-msgstr ""
-
-#: templates/configure.html.jinja:1978
-msgid "Projet réalisé dans le cadre du Gadgetaulab"
-msgstr ""
-
 #: templates/configure.html.jinja:1986
 msgid "Aperçu des photos préparées"
 msgstr ""

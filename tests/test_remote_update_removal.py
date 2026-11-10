@@ -28,7 +28,7 @@ class RemoteUpdateRemovalTests(unittest.TestCase):
         self.assertIn("immich-import-btn", source)
 
     def test_setup_and_supervisor_do_not_install_updater(self):
-        for filename in ("setup.sh", "start_pimmich.sh"):
+        for filename in ("setup.sh", "start_pictureframe.sh"):
             source = (ROOT / filename).read_text(encoding="utf-8")
             self.assertNotIn("update_script", source)
             self.assertNotIn("git reset", source)

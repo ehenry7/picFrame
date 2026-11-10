@@ -5,9 +5,11 @@ import os
 import shutil
 import sys
 from pathlib import Path
-from utils.photo_import import PHOTO_EXTENSIONS, photo_digest
 
-PROJECT_DIR = Path(__file__).resolve().parent
+PROJECT_DIR = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_DIR))
+
+from utils.photo_import import PHOTO_EXTENSIONS, photo_digest
 
 
 def main() -> int:

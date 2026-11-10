@@ -2,17 +2,15 @@
 
 PictureFrame est une application Python conçue pour transformer un Raspberry Pi en un cadre photo numérique intelligent et personnalisable. Il peut afficher des photos depuis de multiples sources et être contrôlé depuis son interface web.
 
-PictureFrame est un fork de [Pimmich](https://github.com/gotenash/pimmich).
-Les noms internes historiques (script de démarrage, fichiers de statut, journaux,
-site NGINX et préfixe EXIF) sont conservés pour la compatibilité des installations.
+Le script de démarrage est `start_pictureframe.sh` et les journaux utilisent
+`logs/pictureframe.log`. Après une mise à niveau, relancez `sudo ./setup.sh`
+et redémarrez. Setup migre le lanceur Sway et les noms des fichiers NGINX/sudoers.
+Arrêtez l'ancienne application avant la mise à niveau : les anciens et nouveaux
+processus ne doivent pas fonctionner ensemble car les fichiers PID/statut ont changé.
+Le préfixe EXIF historique est conservé pour les photos déjà préparées.
 
 <img src="static/pictureframe_logo.svg" alt="PictureFrame Logo" width="300" style="display: block; margin: auto;">
 
-<p align="center">
-  <a href="https://ko-fi.com/pimmich">
-    <img src="https://img.shields.io/badge/Support%20on%20Ko--fi-F16061?logo=kofi&logoColor=white" alt="Soutenir le projet original Pimmich sur Ko-fi">
-  </a>
-</p>
 
 ---
 
@@ -27,7 +25,6 @@ site NGINX et préfixe EXIF) sont conservés pour la compatibilité des installa
   - [Juin 2025](#-juin-2025-)
   - [Juillet 2025](#-juillet-2025---version-actuelle)
   - [Août 2025](#️-août-2025----sortie-prévue-le-15-aoüt)
-- [💖 Crédits](#-crédits)
 
 ---
 
@@ -124,17 +121,28 @@ Cette méthode est destinée aux utilisateurs avancés ou à ceux qui souhaitent
 
 ### Basculer entre le mode cadre et le bureau
 
+Les outils de maintenance et de contrôle (`add_photos.py`, `reset_admin_password.py`,
+`check_*.py`, `verify_he.py`, `test_babel.py`, `_extract.py`) sont dans `scripts/`.
+Lancez-les depuis la racine avec `python3 scripts/<nom>.py`. Ils trouvent les
+ressources du projet même depuis un autre dossier. `_extract.py` écrit son
+fichier temporaire `_untranslated.json` dans `scripts/`. Les points d'entrée
+principaux (`app.py`, `local_slideshow.py`, `setup.sh`, `start_pictureframe.sh`)
+restent à la racine ; les modules utilitaires restent dans `utils/`.
+
 Après l'installation, utilisez une de ces commandes depuis le dossier du projet :
 
 ```bash
-bash enable_auto_frame_start.sh   # Mode cadre : connexion console + Sway
-bash disable_auto_frame_start.sh  # Mode bureau : connexion automatique au bureau
+bash scripts/enable_auto_frame_start.sh   # Mode cadre : connexion console + Sway
+bash scripts/disable_auto_frame_start.sh  # Mode bureau : connexion automatique au bureau
 ```
 
 Ces scripts demandent les droits sudo et **redémarrent automatiquement** après
 avoir modifié le mode de démarrage avec succès. Enregistrez votre travail avant
 de les exécuter. L'activation nécessite la
-configuration Sway créée par setup ; la désactivation nécessite Raspberry Pi OS
+configuration console/Sway, réparée par le script d'activation avant le redémarrage.
+Le lanceur active le venv existant si présent, sinon utilise Python global.
+En cas d'échec, ouvrez une console avec Ctrl+Alt+F2 puis consultez
+`tail -n 100 logs/pictureframe.log` depuis le projet. La désactivation nécessite Raspberry Pi OS
 Desktop, pas Lite. PictureFrame et ses réglages sont conservés.
 
 ---

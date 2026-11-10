@@ -4,6 +4,10 @@ import json
 import secrets
 import sys
 from getpass import getpass
+from pathlib import Path
+
+PROJECT_DIR = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_DIR))
 
 from werkzeug.security import generate_password_hash
 
@@ -39,7 +43,7 @@ def main():
             file.write("\n")
     except PermissionError:
         print(
-            "Permission denied. On Raspberry Pi, run: sudo python3 reset_admin_password.py",
+            "Permission denied. On Raspberry Pi, run: sudo python3 scripts/reset_admin_password.py",
             file=sys.stderr,
         )
         return 1

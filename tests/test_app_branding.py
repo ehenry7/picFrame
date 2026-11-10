@@ -45,7 +45,7 @@ class AppBrandingTests(unittest.TestCase):
                 self.assertIn("PictureFrame", translated)
                 self.assertNotIn("Pimmich", translated)
 
-    def test_runtime_keeps_legacy_identifiers_and_uses_new_display_name(self):
+    def test_runtime_uses_new_identifiers_and_preserves_photo_metadata(self):
         app_source = (ROOT / "app.py").read_text(encoding="utf-8")
         slideshow = (ROOT / "local_slideshow.py").read_text(encoding="utf-8")
         self.assertIn("PictureFrame_backup_", app_source)
@@ -53,6 +53,6 @@ class AppBrandingTests(unittest.TestCase):
         self.assertIn('message_font.render("PictureFrame"', slideshow)
         self.assertNotIn("pimmich_logo.png", slideshow)
         for source in (app_source, slideshow):
-            self.assertIn("pimmich_slideshow_status.json", source)
+            self.assertIn("pictureframe_slideshow_status.json", source)
         self.assertIn("pimmich_bbox:", (ROOT / "utils" / "image_filters.py").read_text(encoding="utf-8"))
         self.assertIn("pimmich_bbox:", (ROOT / "utils" / "prepare_all_photos.py").read_text(encoding="utf-8"))

@@ -35,7 +35,7 @@ class EmojiFormatter(logging.Formatter):
 config = load_config()
 
 # Créer un logger spécifique pour ce module
-logger = logging.getLogger("pimmich.display_manager")
+logger = logging.getLogger("pictureframe.display_manager")
 
 # Récupérer le niveau de log depuis la configuration
 level_name = config.get("level_log", "INFO")
@@ -46,7 +46,7 @@ logger.propagate = False
 # Handler fichier avec rotation (10 Mo max, 3 backups)
 from logging.handlers import RotatingFileHandler
 file_handler = RotatingFileHandler(
-    LOGSDIR / "pimmich.log",
+    LOGSDIR / "pictureframe.log",
     maxBytes=10 * 1024 * 1024,
     backupCount=3,
     encoding="utf-8"
@@ -184,7 +184,7 @@ def set_display_power(on=True):
             time.sleep(delay)
             
             # Reboot pour HDMI stable
-            flag_path = LOGSDIR / "pimmich_reboot_flag.tmp"
+            flag_path = LOGSDIR / "pictureframe_reboot_flag.tmp"
             flag_path.parent.mkdir(exist_ok=True)
             flag_path.touch()
             logger.info("✅ ⏻ Reboot pour résolution HDMI...")

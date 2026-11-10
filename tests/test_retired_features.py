@@ -15,10 +15,10 @@ ROOT = Path(__file__).resolve().parents[1]
 class RetiredFeaturesTests(unittest.TestCase):
     def test_code_setup_and_documentation_have_no_removed_integrations(self):
         paths = [ROOT / name for name in (
-            "app.py", "local_slideshow.py", "setup.sh", "start_pimmich.sh",
+            "app.py", "local_slideshow.py", "setup.sh", "start_pictureframe.sh",
             "requirements.txt", "requirements-pi.txt", "README.md", "README_en.md",
             "FAQ.md", "FAQ_en.md", "AGENTS.md", "procedure_trad.md",
-            "enable_auto_frame_start.sh", "disable_auto_frame_start.sh",
+            "scripts/enable_auto_frame_start.sh", "scripts/disable_auto_frame_start.sh",
         )]
         paths += list((ROOT / "templates").glob("*.jinja"))
         paths += list((ROOT / "static").glob("*.js"))

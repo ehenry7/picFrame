@@ -19,7 +19,7 @@ PictureFrame is a multi-process application with two main runtime components, pl
 ```
 ┌─────────────────────────────────────────────────────────┐
 │  Sway (Wayland compositor) — auto-starts on boot        │
-│  └─ start_pimmich.sh (supervisor loop, exit 42 restart) │
+│  └─ start_pictureframe.sh (supervisor loop, exit 42 restart) │
 │     ├─ app.py            (Flask web server, port 7090)   │
 │     │   └─ Slideshow scheduler worker (daemon thread)    │
 │     ├─ local_slideshow.py  (Pygame fullscreen slideshow) │
@@ -29,8 +29,8 @@ PictureFrame is a multi-process application with two main runtime components, pl
 ```
 
 ### Process Communication
-- **Flask ↔ Slideshow:** via OS signals (`SIGUSR1` = next, `SIGUSR2` = previous, `SIGRTMIN` = pause toggle) and status files in `/tmp/` (`pimmich_slideshow_status.json`, `pimmich_current_photo.txt`, `pimmich_custom_playlist.json`).
-- **PID files:** `/tmp/pimmich_slideshow.pid`, `/tmp/pimmich_app.lock`.
+- **Flask ↔ Slideshow:** via OS signals (`SIGUSR1` = next, `SIGUSR2` = previous, `SIGRTMIN` = pause toggle) and status files in `/tmp/` (`pictureframe_slideshow_status.json`, `pictureframe_current_photo.txt`, `pictureframe_custom_playlist.json`).
+- **PID files:** `/tmp/pictureframe_slideshow.pid`, `/tmp/pictureframe_app.lock`.
 
 ---
 
@@ -41,6 +41,7 @@ pimmich/
 ├── app.py                    # Flask web application (3,780 lines) — main entry point
 ├── local_slideshow.py        # Pygame-based fullscreen slideshow engine (2,330 lines)
 ├── platform_utils.py         # OS-aware paths, platform detection, and hardware helpers — THIS FORK
+├── scripts/                 # Maintenance CLI tools, boot-mode toggles and temporary check_* helpers
 ├── text_drawer.py            # Empty stub (text drawing moved to utils/text_drawer.py)
 ├── requirements.txt          # Cross-platform Python dependencies (Windows + Linux)
 ├── requirements-pi.txt       # Linux/Pi-only dependencies (THIS FORK)
@@ -100,7 +101,7 @@ pimmich/
 │   └── import_status.json    # Import progress tracking
 │
 ├── setup.sh                  # Installation script (apt packages, venv, NGINX, Sway, sudoers)
-├── start_pimmich.sh          # Supervisor script (launched by Sway, restarts app on crash)
+├── start_pictureframe.sh          # Supervisor script (launched by Sway, restarts app on crash)
 ├── README.md / README_en.md  # Project documentation (French + English)
 ├── FAQ.md / FAQ_en.md        # FAQ (French + English)
 ├── procedure_trad.md / .pdf  # Translation procedure guide
@@ -118,7 +119,7 @@ pimmich/
 The central web server providing all configuration, photo management, and system control via a RESTful API and Jinja2 templates.
 
 **Key subsystems:**
-- **Logging:** Custom `EmojiFormatter` with emoji-per-level, rotating file handler (10MB, 3 backups) writing to `logs/pimmich.log`, plus console output.
+- **Logging:** Custom `EmojiFormatter` with emoji-per-level, rotating file handler (10MB, 3 backups) writing to `logs/pictureframe.log`, plus console output.
 - **Authentication:** Session-based login using `credentials.json` stored at `/boot/firmware/credentials.json` (on Pi). Passwords hashed with Werkzeug. `login_required` decorator protects all config routes.
 - **i18n:** Flask-Babel with locale auto-detection. Supports en, fr, and he; Hebrew pages use right-to-left document direction.
 - **Config management:** `load_config()` / `save_config()` via `utils/config_manager.py` with a 2-second cache and default-merge strategy.
@@ -284,7 +285,7 @@ Dependencies are split into two files for cross-platform development (see "Devel
   - `pybabel extract -F babel.cfg -o translations/messages.pot .`
   - `pybabel update -i translations/messages.pot -d translations`
   - `pybabel compile -d translations`
-- Deployment scripts (`setup.sh`, `start_pimmich.sh`) still reference `venv` — these need updating to use global Python (remove venv creation/activation lines, install deps globally).
+- Deployment scripts (`setup.sh`, `start_pictureframe.sh`) still reference `venv` — these need updating to use global Python (remove venv creation/activation lines, install deps globally).
 
 ---
 
@@ -298,7 +299,7 @@ chmod +x setup.sh
 sudo ./setup.sh
 ```
 
-> **Note (this fork):** The original `setup.sh` creates a Python virtual environment (`venv`). For this fork, **skip venv** and use the global Python instead. Modify `setup.sh` to remove the `python3 -m venv venv` and `source venv/bin/activate` steps, and install dependencies directly with `pip3 install -r requirements.txt` (or `pip install --break-system-packages -r requirements.txt` on newer Debian/Raspberry Pi OS that enforces PEP 668). Similarly, update `start_pimmich.sh` to remove the `source venv/bin/activate` line and run `python3 -u app.py` directly.
+> **Note (this fork):** The original `setup.sh` creates a Python virtual environment (`venv`). For this fork, **skip venv** and use the global Python instead. Modify `setup.sh` to remove the `python3 -m venv venv` and `source venv/bin/activate` steps, and install dependencies directly with `pip3 install -r requirements.txt` (or `pip install --break-system-packages -r requirements.txt` on newer Debian/Raspberry Pi OS that enforces PEP 668). Similarly, update `start_pictureframe.sh` to remove the `source venv/bin/activate` line and run `python3 -u app.py` directly.
 
 `setup.sh` performs 12 steps:
 1. `apt update`
@@ -316,8 +317,8 @@ sudo ./setup.sh
 
 ### Startup Flow
 1. Pi boots → console auto-login → `.bash_profile` → `exec sway`
-2. Sway starts → `exec_always start_pimmich.sh`
-3. `start_pimmich.sh` → runs `python3 -u app.py` directly (no venv activation — **this fork uses global Python**)
+2. Sway starts → `exec_always start_pictureframe.sh`
+3. `start_pictureframe.sh` → runs `python3 -u app.py` directly (no venv activation — **this fork uses global Python**)
 4. `app.py` → starts Flask on :7090, launches background workers
 5. Flask starts the slideshow process via `slideshow_manager.start_slideshow()`
 6. NGINX proxies :80 → :7090 for clean URL access. Existing installations must update the installed NGINX upstream and reload NGINX.
@@ -423,7 +424,7 @@ pip install -r requirements-pi.txt
 
 **Raspberry Pi 4 (hardware testing via SSH):**
 - Commit and push from Windows → pull on Pi (or use VS Code Remote-SSH directly).
-- On Pi: `git pull && python3 -u app.py` (or restart via `start_pimmich.sh`).
+- On Pi: `git pull && python3 -u app.py` (or restart via `start_pictureframe.sh`).
 - Test real hardware: HDMI standby, touchscreen/GPIO button, USB import, Wi-Fi management, CPU temperature, fan control, video playback with hardware acceleration.
 - Pygame runs in `FULLSCREEN | NOFRAME` kiosk mode.
 
@@ -467,9 +468,9 @@ pip install -r requirements-pi.txt
 
 ## Logging
 
-- Startup stages, named workers, HTTP request start/end timings, and uncaught exceptions are recorded in `logs/pimmich.log` and the console.
+- Startup stages, named workers, HTTP request start/end timings, and uncaught exceptions are recorded in `logs/pictureframe.log` and the console.
 - A localhost HTTP probe logs `HTTP server READY` once port 7090 responds. If startup stalls for 30 seconds, `logs/startup_threads.log` captures all Python thread stacks.
-- **Log file:** `logs/pimmich.log` (rotating, 10MB max, 3 backups, UTF-8).
+- **Log file:** `logs/pictureframe.log` (rotating, 10MB max, 3 backups, UTF-8).
 - **Format:** Emoji-prefixed lines with module color codes:
   - 🟨 = app.py
   - 🟦 = local_slideshow.py
@@ -502,7 +503,7 @@ Source (Immich/USB/Smartphone)
 - Compares source basenames against prepared basenames.
 - Deletes obsolete prepared files (and their polaroid/postcard/backups).
 - Skips smartphone source for deletion (user uploads are preserved).
-- Cancellation support via `/tmp/pimmich_cancel_import.flag`.
+- Cancellation support via `/tmp/pictureframe_cancel_import.flag`.
 
 ---
 
