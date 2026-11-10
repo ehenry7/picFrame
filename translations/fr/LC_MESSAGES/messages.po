@@ -2701,6 +2701,12 @@ msgstr ""
 msgid "Import ended before completion. Please try again."
 msgstr "L’importation s’est terminée avant la fin. Veuillez réessayer."
 
+msgid "Random"
+msgstr "Aléatoire"
+
+msgid "No Metadata"
+msgstr "Aucune métadonnée"
+
 #~ msgid "Hauteur utile de l'écran (% affiché) :"
 #~ msgstr ""
 

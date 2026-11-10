@@ -2697,3 +2697,9 @@ msgstr "הבחירה חורגת ממגבלת ההעלאה של 32 MB. ייבאו
 
 msgid "Import ended before completion. Please try again."
 msgstr "הייבוא הסתיים לפני שהושלם. נסו שוב."
+
+msgid "Random"
+msgstr "אקראי"
+
+msgid "No Metadata"
+msgstr "אין מטא-נתונים"

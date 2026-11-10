@@ -21,7 +21,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from utils.text_drawer import draw_text_with_outline
-from utils.metadata_utils import get_photo_metadata, load_photo_metadata_cache # Import from new utility
+from utils.metadata_utils import get_photo_metadata, load_photo_metadata_cache, format_photo_metadata
 from utils.config_manager import load_config
 from platform_utils import (
     IS_LINUX,
@@ -322,8 +322,34 @@ def fit_photo_to_screen(pil_image, screen_width, screen_height):
     return canvas
 
 
+def prepare_pan_zoom(pil_image, screen_width, screen_height, config):
+    zoom_factor = max(1.0, float(config.get("pan_zoom_factor", 1.15)))
+    scaled_width = max(screen_width, int(screen_width * zoom_factor))
+    scaled_height = max(screen_height, int(screen_height * zoom_factor))
+    scaled_image = pil_image.resize((scaled_width, scaled_height), Image.Resampling.LANCZOS)
+    max_x, max_y = scaled_width - screen_width, scaled_height - screen_height
+
+    def edge_point():
+        edge = random.choice(("top", "bottom", "left", "right"))
+        if edge == "top":
+            return random.randint(0, max_x), 0
+        if edge == "bottom":
+            return random.randint(0, max_x), max_y
+        if edge == "left":
+            return 0, random.randint(0, max_y)
+        return max_x, random.randint(0, max_y)
+
+    start = edge_point()
+    end = edge_point()
+    if end == start:
+        end = (max_x - start[0], max_y - start[1])
+    return scaled_image, start, end
+
+
 # New function to perform a transition between two images
-def perform_transition(screen, old_image_surface, new_image_path, duration, screen_width, screen_height, main_font, config, transition_type):
+def perform_transition(screen, old_image_surface, new_image_path, duration, screen_width, screen_height, main_font, config, transition_type, initial_image=None):
+    if transition_type == "random":
+        transition_type = random.choice(("fade", "slide_left", "slide_right", "slide_up", "slide_down"))
     clock = pygame.time.Clock()
     fps_config = config.get("transition_fps", "auto")
     if fps_config == "30":
@@ -343,8 +369,9 @@ def perform_transition(screen, old_image_surface, new_image_path, duration, scre
         logger.info(f"[Transition] ERREUR: Impossible de charger l'image '{new_image_path}': {e}")
         return None # Retourner None pour signaler l'échec
     new_pil_image = fit_photo_to_screen(new_pil_image, screen_width, screen_height)
+    transition_image = initial_image if initial_image is not None else new_pil_image
     new_surface_scaled = pygame.image.fromstring(
-        new_pil_image.tobytes(), new_pil_image.size, new_pil_image.mode
+        transition_image.tobytes(), transition_image.size, transition_image.mode
     ).convert()
 
     # Récupérer les métadonnées pour l'image en cours de transition
@@ -986,12 +1013,9 @@ def draw_overlay(screen, screen_width, screen_height, config, main_font, photo_m
         ])
 
     if photo_metadata and (has_any_date or config.get("show_photo_location", False)):
+        country = photo_metadata.get("country", "")
     
     
-    
-        metadata_elements = []
-        metadata_separator = "  •  "
-
         # Récupérer la police personnalisée pour les métadonnées
         metadata_font_path = config.get("photo_metadata_font_path", get_default_font_path())
         metadata_font_size = int(config.get("photo_metadata_font_size", 23))
@@ -1006,61 +1030,8 @@ def draw_overlay(screen, screen_width, screen_height, config, main_font, photo_m
         metadata_text_color = parse_color(config.get("photo_metadata_color", "#ffffff"))
         metadata_outline_color = parse_color(config.get("photo_metadata_outline_color", "#000000"))
         
-        # Extraction de la date de prise de vue (priorité 16 champs)
-        date_priority = [
-            "subSecDateTimeOriginal", "dateTimeOriginal", "SubSecDateTimeOriginal", "DateTimeOriginal",
-            "subSecCreateDate", "createDate", "SubSecCreateDate", "CreateDate",
-            "subSecModifyDate", "modifyDate", "SubSecModifyDate",
-            "mediaCreateDate", "dateTimeCreated", "MediaCreateDate", "DateTimeCreated",
-            "fileModifiedAt", "fileCreatedAt"
-        ]
-        date_candidates = [photo_metadata.get(field) for field in date_priority]
-        date_taken_str = next((d for d in date_candidates if d), None)
-
-        # Affichage de la date de prise de vue
-        if config.get("show_photo_date", False) and date_taken_str:
-            try:
-                photo_date = datetime.fromisoformat(date_taken_str.replace('Z', '+00:00'))
-                photo_date_format = config.get("photo_date_format", "%d %B %Y")
-                metadata_elements.append(photo_date.strftime(photo_date_format))
-            except Exception as e:
-                logger.info(f"[Display] Erreur formatage date : {e}")
-
-        # Mention "Anniversaire" (Il y a X ans)
-        if config.get("anniversary_boost_enabled", True) and date_taken_str:
-            try:
-                p_date = datetime.fromisoformat(date_taken_str.replace('Z', '+00:00'))
-                now = datetime.now()
-                if p_date.month == now.month and p_date.day == now.day:
-                    years_ago = now.year - p_date.year
-                    if years_ago > 0:
-                        msg = _("(Anniversaire) Il y a %(num)d an") if years_ago == 1 else _("(Anniversaire) Il y a %(num)d ans")
-                        metadata_elements.append(msg % {"num": years_ago})
-            except:
-                pass
-
-        # Localisation
-        if config.get("show_photo_location", False):
-            location_format = config.get("photo_location_format", "city_country")
-
-            if location_format == "city":
-                location_str = photo_metadata.get("city", "")
-            elif location_format == "country":
-                location_str = photo_metadata.get("country", "")
-            else:  # city_country (par défaut)
-                city = photo_metadata.get("city", "")
-                country = photo_metadata.get("country", "")
-                if city and country:
-                    location_str = f"{city}, {country}"
-                else:
-                    location_str = city or country
-
-            if location_str:
-                metadata_elements.append(location_str)
-
-        # Assembler et afficher les métadonnées
-        if metadata_elements:
-            metadata_text = metadata_separator.join(metadata_elements)
+        metadata_text = format_photo_metadata(photo_metadata, config, _)
+        if metadata_text:
             metadata_surface = metadata_font.render(metadata_text, True, metadata_text_color)
 
             # Offsets optionnels
@@ -1349,7 +1320,7 @@ def display_title_slide(screen, screen_width, screen_height, title, duration, co
 
 # Fonction pour afficher une image et l'heure                        
 
-def display_photo_with_pan_zoom(screen, pil_image, screen_width, screen_height, config, main_font, photo_path=None):
+def display_photo_with_pan_zoom(screen, pil_image, screen_width, screen_height, config, main_font, photo_path=None, pan_zoom_plan=None):
     """
     Affiche une image préparée avec un effet de pan/zoom et gère les contrôles (pause, suivant, précédent).
     """
@@ -1382,11 +1353,9 @@ def display_photo_with_pan_zoom(screen, pil_image, screen_width, screen_height, 
         display_duration = config.get("display_duration", 10)
         logger.info(f"⏳ Pause de {display_duration} secondes.") # Debug print
         
-        # Always blit the base image first (this will be overwritten by animation if enabled)
-        screen.blit(pygame_image_base, (0, 0))
-        
         if not pan_zoom_enabled: # If pan/zoom is disabled, just show static image
             # Affichage statique : blit une fois et attendre la durée
+            screen.blit(pygame_image_base, (0, 0))
             draw_overlay(screen, screen_width, screen_height, config, main_font, photo_metadata)
             pygame.display.flip()
             # Boucle d'attente pour rester réactif aux signaux
@@ -1415,45 +1384,16 @@ def display_photo_with_pan_zoom(screen, pil_image, screen_width, screen_height, 
 
                 time.sleep(0.1)
         else:
-            # Logique de l'effet Pan/Zoom
-            zoom_factor = float(config.get("pan_zoom_factor", 1.15)) # Récupérer le facteur de zoom de la config
-            
-            # Calculate scaled image dimensions
-            scaled_width = int(screen_width * zoom_factor)
-            scaled_height = int(screen_height * zoom_factor)
-
-            # Scale the image once using PIL for quality, then convert to Pygame surface
-            scaled_pil_image = pil_image.resize((scaled_width, scaled_height), Image.Resampling.LANCZOS)
+            if pan_zoom_plan is None:
+                pan_zoom_plan = prepare_pan_zoom(pil_image, screen_width, screen_height, config)
+            scaled_pil_image, start_offset, end_offset = pan_zoom_plan
             scaled_pygame_image = pygame.image.fromstring(scaled_pil_image.tobytes(), scaled_pil_image.size, scaled_pil_image.mode)
-
-            # --- NOUVELLE LOGIQUE DE PANNING AMÉLIORÉE ---
-            max_x_offset = scaled_width - screen_width
-            max_y_offset = scaled_height - screen_height
-
-            # S'assurer que les offsets ne sont pas négatifs (si l'image est plus petite que l'écran)
-            max_x_offset = max(0, max_x_offset)
-            max_y_offset = max(0, max_y_offset)
-
-            def get_random_edge_point(max_x, max_y):
-                """Génère un point aléatoire sur l'un des quatre bords du rectangle de rognage."""
-                edge = random.choice(['top', 'bottom', 'left', 'right'])
-                if edge == 'top':
-                    return (random.randint(0, max_x), 0)
-                elif edge == 'bottom':
-                    return (random.randint(0, max_x), max_y)
-                elif edge == 'left':
-                    return (0, random.randint(0, max_y))
-                else: # right
-                    return (max_x, random.randint(0, max_y))
-
-            # Générer un point de départ et un point d'arrivée qui ne sont pas identiques
-            start_offset = get_random_edge_point(max_x_offset, max_y_offset)
-            end_offset = get_random_edge_point(max_x_offset, max_y_offset)
-            while end_offset == start_offset:
-                end_offset = get_random_edge_point(max_x_offset, max_y_offset)
 
             start_x, start_y = start_offset
             end_x, end_y = end_offset
+            screen.blit(scaled_pygame_image, (0, 0), (start_x, start_y, screen_width, screen_height))
+            draw_overlay(screen, screen_width, screen_height, config, main_font, photo_metadata)
+            pygame.display.flip()
 
             clock = pygame.time.Clock()
             start_animation_time = time.time()
@@ -2075,18 +2015,23 @@ def start_slideshow():
                         time.sleep(0.5)
                 else: # C'est une image
                     current_pil_image = None # Initialize to None to ensure it's always defined
+                    pan_zoom_plan = None
                     try:
+                        with Image.open(photo_path) as image:
+                            current_pil_image = fit_photo_to_screen(image, SCREEN_WIDTH, SCREEN_HEIGHT)
+                        initial_image = None
+                        if config.get("pan_zoom_enabled", False):
+                            pan_zoom_plan = prepare_pan_zoom(current_pil_image, SCREEN_WIDTH, SCREEN_HEIGHT, config)
+                            scaled_image, (start_x, start_y), _ = pan_zoom_plan
+                            initial_image = scaled_image.crop((start_x, start_y, start_x + SCREEN_WIDTH, start_y + SCREEN_HEIGHT))
                         # Perform transition if it's not the first photo and transition is enabled
                         if previous_photo_surface is not None and transition_enabled and transition_duration > 0 and transition_type != "none": # Added transition_type check
-                            current_pil_image = perform_transition(screen, previous_photo_surface, photo_path, transition_duration, SCREEN_WIDTH, SCREEN_HEIGHT, main_font_loaded, config, transition_type)
+                            current_pil_image = perform_transition(screen, previous_photo_surface, photo_path, transition_duration, SCREEN_WIDTH, SCREEN_HEIGHT, main_font_loaded, config, transition_type, initial_image=initial_image)
                             # Si la transition a échoué (ex: fichier non trouvé), on passe au suivant
                             if current_pil_image is None:
                                 previous_photo_surface = None # Réinitialiser pour ne pas tenter de transitionner depuis une surface vide
                                 playlist_index += 1
                                 continue
-                        else:
-                            # The display function applies the same fit as the transition.
-                            current_pil_image = Image.open(photo_path)
                     except Exception as e:
                         logger.info(f"🖼️ Error loading or transitioning to photo {photo_path}: {e}")
                         traceback.print_exc()
@@ -2095,7 +2040,7 @@ def start_slideshow():
                         continue
 
                     if current_pil_image: # Only proceed if image was successfully loaded
-                        display_photo_with_pan_zoom(screen, current_pil_image, SCREEN_WIDTH, SCREEN_HEIGHT, config, main_font_loaded, photo_path)
+                        display_photo_with_pan_zoom(screen, current_pil_image, SCREEN_WIDTH, SCREEN_HEIGHT, config, main_font_loaded, photo_path, pan_zoom_plan=pan_zoom_plan)
                         previous_photo_surface = screen.copy()
                     else:
                         logger.info(f"🖼️ Skipping photo {photo_path} due to loading error.")

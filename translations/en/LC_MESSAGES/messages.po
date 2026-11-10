@@ -2943,6 +2943,12 @@ msgstr ""
 msgid "Import ended before completion. Please try again."
 msgstr "Import ended before completion. Please try again."
 
+msgid "Random"
+msgstr "Random"
+
+msgid "No Metadata"
+msgstr "No Metadata"
+
 #~ msgid "Favoris"
 #~ msgstr "Favorites"
 

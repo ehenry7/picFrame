@@ -34,7 +34,7 @@ Pimmich is packed with features to provide a complete and customizable experienc
 
 #### 🖼️ **Display & Slideshow**
 - **Multi-source:** Display photos from Immich, a network share (Samba/Windows), a USB drive, a smartphone, or via Telegram.
-- **Advanced Customization:** Set display duration, active hours, transitions (fade, slide), and enable a "Pan & Zoom" motion effect.
+- **Advanced Customization:** Set display duration, active hours, transitions (fade, slide, or Random to choose an effect for each photo change), and enable a "Pan & Zoom" motion effect.
 - **Creative Filters:** Apply filters to your photos (Black & White, Sepia, Vintage) and unique effects like **Polaroid** or **Postcard**.
 - **Format Handling:** Smart support for portrait photos (blurred background) and videos (with sound and optional hardware acceleration).
 
@@ -200,6 +200,15 @@ Here, you can set the display time per photo (minimum ~10s, due to background bl
 
 Photos are fitted and centered using the same framing during transitions and
 static display, including when prepared photos are larger than the Windows slideshow window.
+With Pan & Zoom enabled, transitions end at the animation's starting crop, so
+motion begins without a sudden change in framing.
+Photo metadata uses Immich's cached details for Immich photos and the original
+file's EXIF capture date / IPTC city and country for locally imported photos.
+Keep originals under `static/photos/{source}`. Missing dates or location names
+cannot be displayed; GPS coordinates alone are not converted into city names.
+Both live previews show the metadata text selected for display, or **No Metadata**
+if none is available under the saved settings. Hover over the single-line caption
+to read its full text when it is truncated.
 
 ### Photo Import Settings
 

@@ -34,7 +34,7 @@ Pimmich est riche en fonctionnalités pour offrir une expérience complète et p
 
 #### 🖼️ **Affichage & Diaporama**
 - **Multi-sources :** Affichez des photos depuis [Immich](https://immich.app/), un partage réseau (Samba/Windows), une clé USB, un smartphone ou via Telegram.
-- **Personnalisation avancée :** Réglez la durée d'affichage, les heures d'activité, les transitions (fondu, glissement), et activez un effet de mouvement "Pan & Zoom".
+- **Personnalisation avancée :** Réglez la durée d'affichage, les heures d'activité, les transitions (fondu, glissement ou aléatoire à chaque changement de photo), et activez un effet de mouvement "Pan & Zoom".
 - **Filtres créatifs :** Appliquez des filtres à vos photos (Noir & Blanc, Sépia, Vintage) et des effets uniques comme le **Polaroid** ou la **Carte Postale**.
 - **Gestion des formats :** Prise en charge intelligente des photos portraits (fond flou) et des vidéos (avec son et accélération matérielle optionnelle).
 

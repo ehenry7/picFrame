@@ -234,6 +234,7 @@
                         </button>
                     </div>
                 </div>
+                <p id="live-preview-metadata" class="hidden mt-2 w-64 truncate text-sm text-gray-600" dir="auto"></p>
             </div>
         </div>
 
@@ -412,6 +413,8 @@
                     <div class="flex items-center mt-2">
                         <label for="transition_type" class="w-52 flex-shrink-0">{{ _("Type de transition :") }}</label>
                         <select name="transition_type" id="transition_type">
+                            <option value="random" {% if config.get('transition_type')=='random' %}selected{% endif %}>{{
+                                _('Random') }}</option>
                             <option value="fade" {% if config.get('transition_type')=='fade' %}selected{% endif %}>{{
                                 _('Fondu enchaîné') }}</option>
                             <option value="slide_left" {% if config.get('transition_type')=='slide_left' %}selected{%
@@ -2039,6 +2042,7 @@
                                 arrêté.") }}</p>
                             <img id="playlist-live-preview-image" src="" alt="{{ _('Photo en cours') }}"
                                 class="hidden mt-2 mx-auto max-w-xs max-h-48 rounded shadow">
+                            <p id="playlist-live-preview-metadata" class="hidden mt-2 w-full truncate text-sm text-gray-600" dir="auto"></p>
                         </div>
                     </div>
                 </div>
@@ -4455,6 +4459,15 @@
                             throw new Error(`HTTP error! status: ${response.status}`);
                         }
                         const data = await response.json();
+                        ['live-preview-metadata', 'playlist-live-preview-metadata'].forEach(id => {
+                            const caption = document.getElementById(id);
+                            if (!caption) return;
+                            const visible = data.status !== 'stopped' && Boolean(data.current_photo);
+                            const text = visible ? (data.metadata_text || {{ _('No Metadata') | tojson }}) : '';
+                            caption.textContent = text;
+                            caption.title = text;
+                            caption.classList.toggle('hidden', !visible);
+                        });
 
                         // Function to update a specific set of live preview elements
                         function updateElements(statusElement, imageElement, controlsElement, boxElement) {
@@ -4490,6 +4503,14 @@
                         updateElements(playlistLivePreviewStatus, playlistLivePreviewImage);
                     } catch (error) {
                         console.error('Erreur de mise à jour de l\'aperçu en direct:', error);
+                        ['live-preview-metadata', 'playlist-live-preview-metadata'].forEach(id => {
+                            const caption = document.getElementById(id);
+                            if (caption) {
+                                caption.textContent = '';
+                                caption.title = '';
+                                caption.classList.add('hidden');
+                            }
+                        });
                         // Handle error for both sets of elements
                         if (actionsLivePreviewStatus && actionsLivePreviewImage) {
                             actionsLivePreviewStatus.textContent = "{{ _('Erreur de connexion.') }}";

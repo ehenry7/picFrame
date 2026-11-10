@@ -69,7 +69,7 @@ from utils.display_manager import get_display_output_name, set_display_power
 logging.getLogger(__name__).info("Startup: loading photo preparation and import utilities")
 from utils.prepare_all_photos import prepare_all_photos_with_progress
 from utils.import_usb_photos import import_usb_photos  # Déplacé dans utils
-from utils.metadata_utils import get_photo_metadata # Import get_photo_metadata
+from utils.metadata_utils import get_photo_metadata, format_photo_metadata
 from utils.import_samba import import_samba_photos
 from utils.photo_import import PHOTO_EXTENSIONS, photo_digest, stream_digest
 from utils.image_filters import apply_filter_to_image, add_text_to_polaroid, add_text_to_image, create_polaroid_effect
@@ -2755,7 +2755,7 @@ def get_current_resolution_route():
 def current_photo_status():
     """Retourne le chemin de la photo en cours d'affichage."""
     if not is_slideshow_running():
-        return jsonify({"current_photo": None, "status": "stopped"})
+        return jsonify({"current_photo": None, "status": "stopped", "metadata_text": ""})
 
     try:
         if os.path.exists(CURRENT_PHOTO_FILE):
@@ -2763,11 +2763,14 @@ def current_photo_status():
                 photo_path = f.read().strip()
             if photo_path:
                 # Construire l'URL complète pour l'attribut src de l'image
-                return jsonify({"current_photo": url_for('static', filename=photo_path), "status": "running"})
+                metadata_path = BASE_DIR / "static" / photo_path
+                metadata_text = format_photo_metadata(get_photo_metadata(metadata_path), load_config(), _)
+                return jsonify({"current_photo": url_for('static', filename=photo_path),
+                                "status": "running", "metadata_text": metadata_text or _("No Metadata")})
     except Exception as e:
         logger.info(f"Erreur lecture fichier photo actuelle : {e}")
         
-    return jsonify({"current_photo": None, "status": "running"})
+    return jsonify({"current_photo": None, "status": "running", "metadata_text": ""})
 
 @app.route('/save_wifi_settings', methods=['POST'])
 @login_required
