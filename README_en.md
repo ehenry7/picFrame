@@ -153,6 +153,20 @@ Existing Raspberry Pi installations using NGINX must change their
 `proxy_pass` upstream from port 5000 to 7090 and reload NGINX; updating the
 repository alone does not update the installed NGINX configuration.
 
+### Set or reset the admin password
+
+From the project directory on Raspberry Pi, run:
+
+```bash
+sudo python3 reset_admin_password.py
+```
+
+On Windows, run `python reset_admin_password.py` instead.
+Enter your chosen password twice at the hidden prompts, then log in as `admin`.
+No output-file argument or app restart is needed. The script uses the platform's
+credentials location, stores a password hash, and preserves other credential
+settings. It can also create the credentials file if it is missing.
+
 ---
 
 ## ⚙️ Configuration Interface
