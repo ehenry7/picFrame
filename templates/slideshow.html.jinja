@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="{{ get_locale() }}" dir="{{ 'rtl' if get_locale() == 'he' else 'ltr' }}">
+
+<head>
+    <title>Diaporama - Pimmich</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: black;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        img {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transition: opacity 1s ease-in-out;
+        }
+    </style>
+</head>
+
+<body>
+    <img id="slideshow" src="" alt="Diaporama">
+    <script>
+        const photos = {{ photo_previews | tojson }};
+        let index = 0;
+        const img = document.getElementById('slideshow');
+
+        function showNext() {
+            img.style.opacity = 0;
+            setTimeout(() => {
+                img.src = "/static/photos/" + photos[index];
+                img.style.opacity = 1;
+                index = (index + 1) % photos.length;
+            }, 1000);
+        }
+
+        if (photos.length > 0) {
+            img.src = "/static/photos/" + photos[0];
+            setInterval(showNext, 5000); // 5 secondes entre les photos
+        } else {
+            document.body.innerHTML = "<p style='color:white;text-align:center;margin-top:20%'>Aucune photo à afficher.</p>";
+        }
+    </script>
+</body>
+
+</html>

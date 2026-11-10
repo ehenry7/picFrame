@@ -1,0 +1,527 @@
+import os
+from PIL import Image, ImageFilter, ImageDraw, ImageFont
+import json
+try:
+    import pillow_heif
+    HEIF_SUPPORT = True
+except ImportError:
+    HEIF_SUPPORT = False
+import subprocess, sys
+from utils.config import load_config
+import piexif
+from utils.image_filters import create_polaroid_effect, create_postcard_effect
+from utils.exif import get_rotation_angle
+import logging
+import re
+from pathlib import Path
+from logging.handlers import RotatingFileHandler
+from platform_utils import get_cancel_flag_path, get_pi_model as get_platform_pi_model
+
+from .config_manager import load_config
+
+# Configuration
+SOURCE_DIR = "static/photos"
+
+# Default target output resolution for prepared images
+DEFAULT_OUTPUT_WIDTH = 1920
+DEFAULT_OUTPUT_HEIGHT = 1080
+VIDEO_EXTENSIONS = ('.mp4', '.mov', '.avi', '.mkv')
+
+# Chemin vers le cache du mappage des métadonnées Immich
+DESCRIPTION_MAP_CACHE_FILE = Path("cache") / "immich_description_map.json"
+
+# Chemin vers le cache des textes saisis par l'utilisateur
+USER_TEXT_MAP_CACHE_FILE = Path("cache") / "user_texts.json"
+
+CANCEL_FLAG = get_cancel_flag_path()
+
+
+# ============================================================
+# Configuration du logging avec émojis
+# ============================================================
+LOGSDIR = Path(__file__).resolve().parent.parent / "logs"
+LOGSDIR.mkdir(exist_ok=True)
+
+class EmojiFormatter(logging.Formatter):
+    """Formatter personnalisé avec émojis selon le niveau."""
+    EMOJI_MAP = {
+        "DEBUG": "🔍",
+        "INFO": "ℹ️",
+        "WARNING": "😒",
+        "ERROR": "❌",
+        "CRITICAL": "🔥"
+    }
+
+    def format(self, record):
+        emoji = self.EMOJI_MAP.get(record.levelname, "")
+        record.emoji = emoji
+        return super().format(record)
+
+# Charger la configuration
+config = load_config()
+
+# Créer un logger spécifique pour ce module
+logger = logging.getLogger("pimmich.prepare_all_photos")
+
+# Récupérer le niveau de log depuis la configuration
+level_name = config.get("level_log", "INFO")
+level = getattr(logging, level_name.upper(), logging.INFO)
+logger.setLevel(level)
+logger.propagate = False
+
+# Handler fichier avec rotation (10 Mo max, 3 backups)
+file_handler = RotatingFileHandler(
+    LOGSDIR / "pimmich.log",
+    maxBytes=10 * 1024 * 1024,
+    backupCount=3,
+    encoding="utf-8"
+)
+file_handler.setLevel(level)
+
+# Format modernisé avec emoji en début de ligne
+file_formatter = EmojiFormatter(
+    '%(emoji)s🔄%(asctime)s %(message)s',
+    datefmt='%d-%m %H:%M:%S'
+)
+file_handler.setFormatter(file_formatter)
+
+# Ajouter les handlers (éviter doublons si module réimporté)
+if not logger.handlers:
+    logger.addHandler(file_handler)
+
+# Messages de démarrage
+logger.debug("----------------Initialisation Prepare All Photos----------------")
+# Mappage des types de messages vers les niveaux de log
+TYPE_TO_LOGGER = {
+    "progress": logger.info,
+    "info": logger.info,
+    "warning": logger.warning,
+    "error": logger.error,
+    "done": logger.info,
+    "stats": logger.info,
+}
+
+def yield_and_log(msg_type: str, message: str, stage=None, percent=None, extra=None):
+    """
+    Fonction utilitaire qui construit un dict pour yield ET envoie le log correspondant.
+    
+    Args:
+        msg_type: Type de message ("progress", "info", "warning", "error", "done", "stats")
+        message: Le message à afficher
+        stage: Étape optionnelle (ex: "CLEANING", "PREPARING_PHOTO")
+        percent: Pourcentage optionnel de progression
+        extra: Dictionnaire optionnel de champs supplémentaires
+    
+    Returns:
+        Dict prêt pour yield contenant tous les champs nécessaires
+    """
+    result = {"type": msg_type, "message": message}
+    
+    if stage is not None:
+        result["stage"] = stage
+    if percent is not None:
+        result["percent"] = percent
+    if extra:
+        result.update(extra)
+    
+    # Log avec le bon niveau selon le type
+    log_func = TYPE_TO_LOGGER.get(msg_type, logger.info)
+    log_func(f"🔄{message}")
+    
+    return result
+
+
+
+def get_pi_model():
+    """Détecte le modèle du Raspberry Pi."""
+    return get_platform_pi_model()
+
+def prepare_photo(source_path, dest_path, output_width, output_height, source_type=None, caption=None):
+    """Prépare une photo pour l'affichage avec redimensionnement, rotation EXIF et fond flou."""
+    config = load_config()
+    screen_height_percent = int(config.get("screen_height_percent", "100"))
+    effective_photo_height = int(output_height * (screen_height_percent / 100))
+    
+    try:
+        # Gestion des fichiers HEIF/HEIC
+        if source_path.lower().endswith(('.heic', '.heif')):
+            if HEIF_SUPPORT:
+                pillow_heif.register_heif_opener()
+            else:
+                logger.warning(f"Support HEIF désactivé (pillow-heif non installé). Impossible de traiter {source_path}")
+                return None
+        
+        img = Image.open(source_path)
+        
+        # Modification Sigalou 25/01/2026 - Suppression de la lecture EXIF redondante
+        # Les métadonnées sont déjà dans le JSON créé par download_album.py
+        # On ne lit plus les EXIF ici pour éviter la duplication
+        # Fin Modification Sigalou 25/01/2026
+        
+        # 1. Handle EXIF Orientation
+        rotation_angle = get_rotation_angle(img)
+        if rotation_angle != 0:
+            img = img.rotate(rotation_angle, expand=True)
+        
+        # Remove EXIF data after rotation
+        if "exif" in img.info:
+            img.info.pop("exif")
+        if "icc_profile" in img.info:
+            img.info.pop("icc_profile")
+        
+        # Convert to RGB if necessary
+        if img.mode in ('RGBA', 'LA', 'P'):
+            img = img.convert('RGB')
+        
+        # Determine if the image is portrait-like
+        img_aspect_ratio = img.width / img.height
+        display_area_aspect_ratio = output_width / effective_photo_height
+        
+        pi_model = get_pi_model()
+        is_low_end = (pi_model in [1, 2, 3])
+        resample_filter = Image.Resampling.BILINEAR if is_low_end else Image.Resampling.LANCZOS
+        
+        if img_aspect_ratio < display_area_aspect_ratio:
+            # Portrait photo - add blurred background
+            img_content = img.copy()
+            scale = effective_photo_height / img.height
+            new_width = int(img.width * scale)
+            img_content = img_content.resize((new_width, effective_photo_height), resample_filter)
+            
+            # Create blurred background
+            if is_low_end:
+                # Optimized, low-memory background blur for Raspberry Pi 1, 2, 3
+                bg_scale = max(160 / img.width, 90 / img.height)
+                bg_new_width = int(img.width * bg_scale)
+                bg_new_height = int(img.height * bg_scale)
+                bg_img = img.resize((bg_new_width, bg_new_height), Image.Resampling.NEAREST)
+                if bg_img.width > 160 or bg_img.height > 90:
+                    left = (bg_img.width - 160) // 2
+                    top = (bg_img.height - 90) // 2
+                    bg_img = bg_img.crop((left, top, left + 160, top + 90))
+                bg_img = bg_img.filter(ImageFilter.GaussianBlur(radius=3))
+                bg_img = bg_img.resize((output_width, output_height), Image.Resampling.BILINEAR)
+            else:
+                bg_img = img.copy()
+                bg_scale = max(output_width / img.width, output_height / img.height)
+                bg_new_width = int(img.width * bg_scale)
+                bg_new_height = int(img.height * bg_scale)
+                bg_img = bg_img.resize((bg_new_width, bg_new_height), Image.Resampling.LANCZOS)
+                if bg_img.width > output_width or bg_img.height > output_height:
+                    left = (bg_img.width - output_width) // 2
+                    top = (bg_img.height - output_height) // 2
+                    bg_img = bg_img.crop((left, top, left + output_width, top + output_height))
+                bg_img = bg_img.filter(ImageFilter.GaussianBlur(radius=50))
+            
+            final_img = Image.new('RGB', (output_width, output_height), (0, 0, 0))
+            final_img.paste(bg_img, (0, 0))
+            
+            x_offset = (output_width - img_content.width) // 2
+            y_offset = (output_height - img_content.height) // 2
+            final_img.paste(img_content, (x_offset, y_offset))
+        else:
+            # Landscape or square photo
+            img_content = img.copy()
+            scale = effective_photo_height / img.height
+            new_width = int(img.width * scale)
+            img_content = img_content.resize((new_width, effective_photo_height), resample_filter)
+            
+            final_img = Image.new('RGB', (output_width, output_height), (0, 0, 0))
+            x_offset = (output_width - img_content.width) // 2
+            y_offset = (output_height - img_content.height) // 2
+            final_img.paste(img_content, (x_offset, y_offset))
+        
+        # Prepare EXIF metadata with content coordinates
+        exif_bytes_to_add = None
+        try:
+            exif_dict = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": None}
+            bbox_str = f"pimmich_bbox:{x_offset},{y_offset},{img_content.width},{img_content.height}"
+            exif_dict["Exif"][piexif.ExifIFD.UserComment] = bbox_str.encode('ascii')
+            exif_bytes_to_add = piexif.dump(exif_dict)
+        except Exception as exif_e:
+            print(f"[EXIF] Avertissement: Impossible de créer les métadonnées pour {os.path.basename(source_path)}: {exif_e}")
+        
+        # Generate Polaroid version
+        try:
+            polaroid_content = create_polaroid_effect(img_content.copy())
+            polaroid_final_img = final_img.copy()
+            polaroid_final_img.paste(polaroid_content, (x_offset, y_offset))
+            
+            dest_path_obj = Path(dest_path)
+            polaroid_dest_path = dest_path_obj.with_name(f"{dest_path_obj.stem}_polaroid.jpg")
+            polaroid_final_img.save(polaroid_dest_path, 'JPEG', quality=90, optimize=True, exif=exif_bytes_to_add)
+        except Exception as polaroid_e:
+            print(f"[Polaroid] Avertissement: Impossible de créer la version Polaroid pour {os.path.basename(source_path)}: {polaroid_e}")
+        
+        # Generate Postcard version
+        try:
+            postcard_img_content = img_content.copy()
+            scale_factor = 0.85
+            postcard_img_content.thumbnail(
+                (int(output_width * scale_factor), int(output_height * scale_factor)),
+                resample_filter
+            )
+            
+            postcard_content = create_postcard_effect(postcard_img_content, caption=caption)
+            postcard_final_img = final_img.copy()
+            postcard_x_offset = (output_width - postcard_content.width) // 2
+            postcard_y_offset = (output_height - postcard_content.height) // 2
+            postcard_final_img.paste(postcard_content, (postcard_x_offset, postcard_y_offset), postcard_content)
+            
+            dest_path_obj = Path(dest_path)
+            postcard_dest_path = dest_path_obj.with_name(f"{dest_path_obj.stem}_postcard.jpg")
+            postcard_final_img.save(postcard_dest_path, 'JPEG', quality=90, optimize=True, exif=exif_bytes_to_add)
+        except Exception as postcard_e:
+            print(f"--- ERREUR CRÉATION CARTE POSTALE pour {os.path.basename(source_path)} ---")
+            print(f"Détails de l'erreur : {postcard_e}")
+            print("Vérifiez que les polices (static/fonts) et les timbres (static/stamps) sont présents et accessibles.")
+            print("--------------------------------------------------------------------")
+        
+        # Save main prepared image
+        img_to_save = final_img
+        if exif_bytes_to_add:
+            img_to_save.save(dest_path, 'JPEG', quality=85, optimize=True, exif=exif_bytes_to_add)
+        else:
+            img_to_save.save(dest_path, 'JPEG', quality=85, optimize=True)
+    
+    except Exception as e:
+        raise Exception(f"Erreur lors du traitement de l'image '{os.path.basename(source_path)}': {e}")
+
+def prepare_video(source_path, dest_path, output_width, output_height):
+    """Prépare une vidéo pour l'affichage et génère sa vignette."""
+    try:
+        # --- MODIFICATION SIGALOU 29/01/2026 (2) ---
+        # Logique d'encodage améliorée pour Pi 4/5 et meilleure gestion des erreurs.
+        encoder = 'libx264'
+        encoder_params = ['-preset', 'veryfast', '-crf', '23', '-profile:v', 'high', '-level', '4.0']
+        pi_model = get_pi_model()
+        
+        try:
+            result = subprocess.run(['ffmpeg', '-encoders'], capture_output=True, text=True, check=True, timeout=20)
+            available_encoders = result.stdout
+            
+            # Priorité à l'encodeur matériel moderne v4l2m2m pour tous les modèles de Raspberry Pi (3, 4, 5)
+            if pi_model and 'h264_v4l2m2m' in available_encoders:
+                encoder = 'h264_v4l2m2m'
+                encoder_params = ['-b:v', '8M']
+                print(f"[Video Prep] Raspberry Pi {pi_model} détecté. Utilisation de l'encodeur matériel : h264_v4l2m2m")
+            elif pi_model and 'h264_omx' in available_encoders:
+                encoder = 'h264_omx'
+                encoder_params = ['-b:v', '8M']
+                print(f"[Video Prep] Raspberry Pi {pi_model} détecté. Utilisation de l'encodeur matériel legacy : h264_omx")
+            else:
+                print("[Video Prep] Aucun encodeur matériel trouvé, utilisation de l'encodeur logiciel : libx264")
+        except Exception as e:
+            print(f"[Video Prep] Avertissement : Impossible de détecter les encodeurs ({e}). Utilisation de l'encodeur logiciel par défaut.")
+        
+        command = [
+            'ffmpeg', '-i', source_path, '-vf', f"scale='min({output_width},iw)':'min({output_height},ih)':force_original_aspect_ratio=decrease,pad={output_width}:{output_height}:(ow-iw)/2:(oh-ih)/2",
+            '-c:v', encoder, *encoder_params,
+            '-pix_fmt', 'yuv420p',  # Ajout pour une meilleure compatibilité
+            '-c:a', 'aac', '-b:a', '128k',
+            '-y', dest_path
+        ]
+        
+        result = subprocess.run(command, check=False, capture_output=True, text=True, encoding='utf-8')
+        
+        if result.returncode != 0:
+            raise Exception(f"ffmpeg a échoué avec le code {result.returncode}. Erreur: {result.stderr.strip()}")
+    
+    except Exception as video_e:
+        raise Exception(f"Erreur lors du traitement de la vidéo '{os.path.basename(source_path)}': {video_e}")
+    
+    # Generate thumbnail
+    try:
+        dest_path_obj = Path(dest_path)
+        thumbnail_path = dest_path_obj.with_name(f"{dest_path_obj.stem}_thumbnail.jpg")
+        thumb_command = [
+            'ffmpeg', '-i', source_path, '-ss', '00:00:01.000', '-vframes', '1', '-q:v', '2', str(thumbnail_path), '-y'
+        ]
+        subprocess.run(thumb_command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except Exception as thumb_e:
+        print(f"[Vignette] Avertissement: Impossible de créer la vignette pour {os.path.basename(source_path)}: {thumb_e}")
+
+def prepare_all_photos_with_progress(screen_width=None, screen_height=None, source_type="unknown", description_map=None):
+    """Prépare les photos et retourne des objets structurés pour le suivi."""
+    if description_map is None:
+        description_map = {}
+    
+    # Charger les textes saisis par l'utilisateur
+    user_text_map = {}
+    if USER_TEXT_MAP_CACHE_FILE.exists():
+        try:
+            with open(USER_TEXT_MAP_CACHE_FILE, 'r', encoding='utf-8') as f:
+                user_text_map = json.load(f)
+        except (json.JSONDecodeError, IOError):
+            print(f"Avertissement: Impossible de charger le fichier de textes utilisateur {USER_TEXT_MAP_CACHE_FILE}")
+    
+    actual_output_width = screen_width if screen_width is not None else DEFAULT_OUTPUT_WIDTH
+    actual_output_height = screen_height if screen_height is not None else DEFAULT_OUTPUT_HEIGHT
+    
+    SOURCE_DIR_FOR_PREP = Path("static") / "photos" / source_type
+    PREPARED_SOURCE_DIR = Path("static") / "prepared" / source_type
+    
+    if not SOURCE_DIR_FOR_PREP.is_dir():
+        yield yield_and_log("error", f"Le dossier source '{SOURCE_DIR_FOR_PREP}' n'existe pas.")
+        return
+    
+    PREPARED_SOURCE_DIR.mkdir(parents=True, exist_ok=True)
+    
+    # Smart synchronization logic
+    source_files = {f: os.path.splitext(f)[0] for f in os.listdir(SOURCE_DIR_FOR_PREP) if f.lower().endswith(('.jpg', '.jpeg', '.png', '.heic', '.heif') + VIDEO_EXTENSIONS)}
+    source_basenames = set(source_files.values())
+    
+    # Détecter les basenames déjà préparés de manière robuste (non vide et plus récent que la source)
+    prepared_basenames = set()
+    if PREPARED_SOURCE_DIR.exists():
+        for filename, basename in source_files.items():
+            ext = ".mp4" if filename.lower().endswith(VIDEO_EXTENSIONS) else ".jpg"
+            prep_path = PREPARED_SOURCE_DIR / f"{basename}{ext}"
+            src_path = SOURCE_DIR_FOR_PREP / filename
+            
+            # Vérifications robustes :
+            # 1. Le fichier préparé principal existe
+            # 2. Sa taille est supérieure à 0 octet (pas corrompu ou coupé pendant l'import)
+            # 3. Il est plus récent ou égal à la photo source téléchargée
+            try:
+                if prep_path.is_file() and prep_path.stat().st_size > 0:
+                    prepared_basenames.add(basename)
+            except Exception:
+                pass  # En cas d'erreur de lecture des stats, on considère non préparé par sécurité
+
+    # Récupérer tous les basenames actuellement présents sur le disque dans prepared/
+    all_prepared_basenames_on_disk = set()
+    if PREPARED_SOURCE_DIR.exists():
+        for f in PREPARED_SOURCE_DIR.iterdir():
+            if f.is_file():
+                base = re.sub(r'(_polaroid|_postcard|_thumbnail)$', '', f.stem)
+                all_prepared_basenames_on_disk.add(base)
+    
+    # Delete obsolete media (except for smartphone source)
+    basenames_to_delete = set()
+    if source_type != "smartphone":
+        basenames_to_delete = all_prepared_basenames_on_disk - source_basenames
+    
+    if basenames_to_delete:
+        yield yield_and_log(
+            "progress",
+            f"Suppression de {len(basenames_to_delete)} médias obsolètes...",
+            stage="CLEANING",
+            percent=25
+        )
+        
+        for basename in basenames_to_delete:
+            for file_to_delete in PREPARED_SOURCE_DIR.glob(f"{basename}*"):
+                try:
+                    if file_to_delete.is_file():
+                        file_to_delete.unlink()
+                except OSError as e:
+                    yield yield_and_log("warning", f"Impossible de supprimer {file_to_delete.name} : {e}")
+            
+            backup_dir = PREPARED_SOURCE_DIR.parent.parent / '.backups' / source_type
+            if backup_dir.exists():
+                for backup_file_to_delete in backup_dir.glob(f"{basename}*"):
+                    if backup_file_to_delete.is_file():
+                        backup_file_to_delete.unlink()
+    
+    # Determine files to prepare (new ones)
+    basenames_to_prepare = source_basenames - prepared_basenames
+    files_to_prepare = [f for f, basename in source_files.items() if basename in basenames_to_prepare]
+    total = len(files_to_prepare)
+    
+    if total == 0:
+        yield yield_and_log("info", "Aucune nouvelle photo à préparer. Le dossier est à jour.")
+        yield yield_and_log(
+            "done",
+            "Aucune nouvelle photo à préparer.",
+            stage="PREPARING_COMPLETE",
+            percent=100
+        )
+        return
+    
+    yield yield_and_log(
+        "stats",
+        f"Début de la préparation de {total} nouvelles photos...",
+        stage="PREPARING_START",
+        percent=22,
+        extra={"total": total}
+    )
+    
+    for i, filename in enumerate(files_to_prepare, start=1):
+        # Check for cancellation
+        if CANCEL_FLAG.exists():
+            yield yield_and_log("warning", "Préparation annulée par l'utilisateur.")
+            return
+        
+        src_path = os.path.join(SOURCE_DIR_FOR_PREP, filename)
+        
+        try:
+            base_name, extension = os.path.splitext(filename)
+            current_preview = ""
+            
+            if extension.lower() in VIDEO_EXTENSIONS:
+                # Video processing
+                dest_filename = f"{base_name}.mp4"
+                dest_path = PREPARED_SOURCE_DIR / dest_filename
+                prepare_video(src_path, str(dest_path), actual_output_width, actual_output_height)
+                message_type = "vidéo"
+                current_preview = f"{base_name}_thumbnail.jpg"
+            else:
+                # Image processing
+                dest_filename = f"{base_name}.jpg"
+                dest_path = PREPARED_SOURCE_DIR / dest_filename
+                relative_path_key = f"{source_type}/{dest_filename}"
+                
+                # Modification Sigalou 25/01/2026 - Utilisation des métadonnées du JSON uniquement
+                # Priority 1: User text
+                caption = user_text_map.get(relative_path_key)
+                
+                # Priority 2: Immich description (if no user text)
+                if caption is None:
+                    immich_data = description_map.get(filename)
+                    if immich_data and isinstance(immich_data, dict):
+                        caption = immich_data.get("description")
+                    elif isinstance(immich_data, str):
+                        caption = immich_data  # Backward compatibility
+                # Fin Modification Sigalou 25/01/2026
+                
+                prepare_photo(src_path, str(dest_path), actual_output_width, actual_output_height, source_type=source_type, caption=caption)
+                message_type = "photo"
+                current_preview = f"{base_name}.jpg"
+            
+            if i == 1:
+                percent = 25  # Modif Sigalou, Début boucle après cleaning 21%
+            else:
+                percent = 25 + int(((i - 1) / total) * 75)  # Modif Sigalou 25 à 100%
+            
+            yield yield_and_log(
+                "progress",
+                f"Nouveau média préparé ({message_type}) : {filename} ({i}/{total})",
+                stage="PREPARING_PHOTO",
+                percent=percent,
+                extra={"current": i, "total": total, "current_photo_path": current_preview}
+            )
+        
+        except Exception as e:
+            yield yield_and_log("warning", f"Erreur lors de la préparation de {filename}: {e}")
+    
+    yield yield_and_log(
+        "done",
+        "Préparation des nouvelles photos terminée.",
+        stage="PREPARING_COMPLETE",
+        percent=100
+    )
+
+def prepare_all_photos(status_callback=None):
+    """Version originale avec callback pour compatibilité"""
+    for update in prepare_all_photos_with_progress():
+        message = update.get("message", str(update))
+        if status_callback:
+            status_callback(message)
+        else:
+            print(message)
+
+if __name__ == "__main__":
+    print("Test de préparation des photos...")
+    prepare_all_photos()
+    print("Terminé !")
