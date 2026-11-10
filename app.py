@@ -3283,11 +3283,33 @@ def apply_filter_api():
     # Le chemin relatif est de la forme 'source/nom_photo.jpg'
     photo_full_path = PREPARED_DIR / photo_relative_path
 
+    if not photo_full_path.resolve().is_relative_to(PREPARED_DIR.resolve()):
+        logger.warning("Filter rejected: invalid photo path")
+        return jsonify({"success": False, "message": "Invalid photo path."}), 400
+
     if not photo_full_path.is_file():
         return jsonify({"success": False, "message": f"Photo non trouvée : {photo_full_path}"}), 404
 
     try:
-        apply_filter_to_image(str(photo_full_path), filter_name)
+        from utils.photo_edits import EDIT_LOCK, filter_strength, update_edit, validate_strength
+        strength = validate_strength(data.get('strength', filter_strength(photo_full_path)))
+        with EDIT_LOCK:
+            previous_image = photo_full_path.read_bytes()
+            previous_states = load_filter_states()
+            try:
+                apply_filter_to_image(str(photo_full_path), filter_name, strength,
+                                      caption=load_text_states().get(photo_relative_path, ""))
+                states = dict(previous_states)
+                if filter_name in {'none', 'original'}:
+                    states.pop(photo_relative_path, None)
+                else:
+                    states[photo_relative_path] = filter_name
+                save_filter_states(states)
+                update_edit(photo_relative_path, {"strength": strength})
+            except Exception:
+                photo_full_path.write_bytes(previous_image)
+                save_filter_states(previous_states)
+                raise
         # Le chemin ne change pas, mais on le renvoie pour forcer le rafraîchissement du cache du navigateur
         new_url = url_for('static', filename=f'prepared/{photo_relative_path}')
         return jsonify({"success": True, "message": "Filtre appliqué !", "new_path": new_url})
@@ -3355,7 +3377,7 @@ def photo_crop():
                 stage_backup = Path(directory) / "static" / ".backups" / original.parent.name / prepared.name
                 if stage_backup.exists():
                     stage_backup.unlink()
-                apply_filter_to_image(str(stage), selected_filter)
+                apply_filter_to_image(str(stage), selected_filter, caption=caption)
             targets = [prepared, prepared.with_name(outputs[1].name), prepared.with_name(outputs[2].name),
                        BASE_DIR / "static" / ".backups" / original.parent.name / prepared.name]
             replacements = [*outputs, clean_backup]
@@ -3394,6 +3416,9 @@ def photo_crop():
         if crop_locked:
             CROP_LOCK.release()
 
+
+from utils.photo_edit_routes import register_photo_edit_routes
+register_photo_edit_routes(app, PREPARED_DIR, _)
 
 @app.route('/api/set_photo_filter', methods=['POST'])
 @login_required
@@ -3495,6 +3520,9 @@ def set_image_text():
 
         # Appeler la fonction pour ajouter le texte
         add_text_to_image(str(photo_full_path), text)
+        selected_filter = load_filter_states().get(photo_relative_path, "none")
+        if selected_filter not in {"none", "original", "polaroid", "postcard"}:
+            apply_filter_to_image(str(photo_full_path), selected_filter, caption=text)
 
         # Sauvegarder le texte dans le fichier de config
         texts = load_text_states()

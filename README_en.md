@@ -261,6 +261,20 @@ line with available city/country names and a country flag emoji. Missing data
 is labeled **No location metadata**. This line is independent of the slideshow
 overlay settings; flag appearance depends on the browser/system emoji font.
 
+The enlarged photo toolbar also provides:
+- **Filter strength** (0–100%), saved per photo for color/effect filters.
+  Original, Polaroid and Postcard do not use strength. Saved strength is reused
+  when changing effects and when regenerating a crop.
+- **Before/After** (half-circle icon): hold the button, Space or Enter to see
+  the clean prepared photo with its saved crop; release to return to the edit.
+- **Edit location** (map-pin icon): enter a city and choose a country. These
+  app-only overrides are saved in `config/photo_edits.json`; originals are
+  never modified. **Use original location** removes the manual override.
+
+Photo grids and enlarged views use shared editing operations, with filter
+requests queued per photo. Slideshow country flags are cached and fetched
+outside rendering so unavailable network access does not block drawing.
+
 ### Photo Import Settings
 
 Choose between importing from an Immich album or a USB stick, and manage downloaded files.

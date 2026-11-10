@@ -216,12 +216,38 @@ def create_polaroid_effect(image_content):
     
     return content_with_frame
 
-def apply_filter_to_image(image_path_str, filter_name):
+def _caption_image(image, text):
+    if not text or not text.strip():
+        return image.convert('RGB')
+    image = image.convert('RGBA')
+    overlay = Image.new('RGBA', image.size, (255, 255, 255, 0))
+    draw = ImageDraw.Draw(overlay)
+    width, height = image.size
+    font_size = max(1, int(height * 0.05))
+    try:
+        font = ImageFont.truetype(str(POLAROID_FONT_PATH), font_size)
+    except IOError:
+        font = ImageFont.load_default()
+    _, top, _, bottom = font.getbbox(text)
+    padding = int(font_size * 0.4)
+    box_width = font.getlength(text) + 2 * padding
+    box_height = bottom - top + 2 * padding
+    x = (width - box_width) / 2
+    y = height - box_height - height * 0.03
+    _draw_rounded_rectangle(draw, (x, y, x + box_width, y + box_height),
+                            int(font_size * 0.3), fill=(255, 255, 255, 180))
+    draw.text((width / 2, y + box_height / 2), text, font=font, fill=(0, 0, 0, 255), anchor="mm")
+    return Image.alpha_composite(image, overlay).convert('RGB')
+
+
+def apply_filter_to_image(image_path_str, filter_name, strength=None, caption=""):
     """
     Applique un filtre à une image et la sauvegarde.
     Utilise un système de backup pour ne pas appliquer de filtres sur une image déjà filtrée.
     """
     image_path = Path(image_path_str)
+    from utils.photo_edits import filter_strength, validate_strength
+    strength = filter_strength(image_path) if strength is None else validate_strength(strength)
     
     # Détermine le chemin de la sauvegarde. Ex: static/prepared/samba/img.jpg -> static/.backups/samba/img.jpg
     try:
@@ -419,6 +445,9 @@ def apply_filter_to_image(image_path_str, filter_name):
     else:
         raise ValueError(f"Filtre inconnu : '{filter_name}'")
 
+    if filter_name != 'original' and strength < 1:
+        img_to_save = Image.blend(img, img_to_save, strength)
+    img_to_save = _caption_image(img_to_save, caption)
     # Sauvegarde l'image modifiée dans le dossier 'prepared'
     if exif_bytes:
         img_to_save.save(image_path, 'JPEG', quality=90, optimize=True, exif=exif_bytes)
@@ -504,41 +533,7 @@ def add_text_to_image(image_path_str, text):
             print(f"--- ERREUR MISE À JOUR CARTE POSTALE pour {image_path.name}: {e} ---")
 
     # --- 2b. Mettre à jour l'image de base ---
-    if not text or not text.strip():
-        img_to_save = base_image_from_backup.convert('RGB')
-    else:
-        img_rgba = base_image_from_backup.copy()
-        if img_rgba.mode != 'RGBA':
-            img_rgba = img_rgba.convert('RGBA')
-
-        overlay = Image.new('RGBA', img_rgba.size, (255, 255, 255, 0))
-        draw = ImageDraw.Draw(overlay)
-        width, height = img_rgba.size
-
-        try:
-            font_path = str(POLAROID_FONT_PATH)
-            font_size = int(height * 0.05)
-            font = ImageFont.truetype(font_path, font_size)
-        except IOError:
-            font = ImageFont.load_default()
-
-        text_width = font.getlength(text)
-        _, text_top, _, text_bottom = font.getbbox(text)
-        text_height = text_bottom - text_top
-
-        rect_padding = int(font_size * 0.4)
-        rect_height = text_height + (rect_padding * 2)
-        rect_width = text_width + (rect_padding * 2)
-        rect_x1 = (width - rect_width) / 2
-        rect_y1 = height - rect_height - (height * 0.03)
-        rect_x2 = rect_x1 + rect_width
-        rect_y2 = rect_y1 + rect_height
-        
-        _draw_rounded_rectangle(draw, (rect_x1, rect_y1, rect_x2, rect_y2), int(font_size * 0.3), fill=(255, 255, 255, 180))
-        draw.text((rect_x1 + rect_width / 2, rect_y1 + rect_height / 2), text, font=font, fill=(0, 0, 0, 255), anchor="mm")
-        
-        img_composited = Image.alpha_composite(img_rgba, overlay)
-        img_to_save = img_composited.convert('RGB')
+    img_to_save = _caption_image(base_image_from_backup, text)
 
     if exif_bytes:
         img_to_save.save(image_path, 'JPEG', quality=90, optimize=True, exif=exif_bytes)

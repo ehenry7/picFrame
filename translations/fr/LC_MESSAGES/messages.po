@@ -2861,6 +2861,27 @@ msgstr "Vignettage - Bords sombres"
 msgid "No location metadata"
 msgstr "Aucune métadonnée de localisation"
 
+msgid "Filter strength"
+msgstr "Intensité du filtre"
+
+msgid "Hold to view Before"
+msgstr "Maintenir pour voir avant"
+
+msgid "Edit location"
+msgstr "Modifier le lieu"
+
+msgid "City"
+msgstr "Ville"
+
+msgid "Country"
+msgstr "Pays"
+
+msgid "Save"
+msgstr "Enregistrer"
+
+msgid "Use original location"
+msgstr "Utiliser le lieu d’origine"
+
 #~ msgid "Hauteur utile de l'écran (% affiché) :"
 #~ msgstr ""
 

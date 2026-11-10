@@ -3103,6 +3103,27 @@ msgstr "Vignette - Dark Edges"
 msgid "No location metadata"
 msgstr "No location metadata"
 
+msgid "Filter strength"
+msgstr "Filter strength"
+
+msgid "Hold to view Before"
+msgstr "Hold to view Before"
+
+msgid "Edit location"
+msgstr "Edit location"
+
+msgid "City"
+msgstr "City"
+
+msgid "Country"
+msgstr "Country"
+
+msgid "Save"
+msgstr "Save"
+
+msgid "Use original location"
+msgstr "Use original location"
+
 #~ msgid "Favoris"
 #~ msgstr "Favorites"
 

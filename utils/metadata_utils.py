@@ -107,6 +107,17 @@ def load_photo_metadata_cache():
         return {}
 
 def get_photo_metadata(photo_path):
+    from utils.photo_edits import location_override
+    metadata = dict(_get_photo_metadata(photo_path))
+    override = location_override(photo_path)
+    if override is not None:
+        metadata.pop("countryCode", None)
+        metadata.pop("country_code", None)
+        metadata.update(override)
+    return metadata
+
+
+def _get_photo_metadata(photo_path):
     """
     Récupère les métadonnées d'une photo depuis le cache.
     Retourne un dictionnaire avec : date_taken, city, country, location, latitude, longitude

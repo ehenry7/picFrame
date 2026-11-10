@@ -394,3 +394,12 @@ button:hover {
 .photo-lightbox-actions button:hover {
     background: #f3f4f6;
 }
+
+.photo-lightbox-actions > label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    white-space: nowrap;
+    font-size: 12px;
+}

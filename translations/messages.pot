@@ -2850,3 +2850,24 @@ msgstr ""
 
 msgid "No location metadata"
 msgstr ""
+
+msgid "Filter strength"
+msgstr ""
+
+msgid "Hold to view Before"
+msgstr ""
+
+msgid "Edit location"
+msgstr ""
+
+msgid "City"
+msgstr ""
+
+msgid "Country"
+msgstr ""
+
+msgid "Save"
+msgstr ""
+
+msgid "Use original location"
+msgstr ""

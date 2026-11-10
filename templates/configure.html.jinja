@@ -2465,6 +2465,7 @@
             });
         </script>
         <script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
+        <script src="{{ url_for('static', filename='photo_editor.js') }}"></script>
         <script src="{{ url_for('static', filename='photo_lightbox.js') }}"></script>
         <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
         <script>
@@ -2472,6 +2473,16 @@
                 selector: '.glightbox'
             });
             attachPhotoLightboxActions(lightbox);
+            window.photoEditLabels = {
+                strength: {{ _('Filter strength') | tojson }},
+                before: {{ _('Hold to view Before') | tojson }},
+                location: {{ _('Edit location') | tojson }},
+                city: {{ _('City') | tojson }},
+                country: {{ _('Country') | tojson }},
+                save: {{ _('Save') | tojson }},
+                clear: {{ _('Use original location') | tojson }},
+                cancel: {{ _('Cancel') | tojson }}
+            };
 
             // Translations for JavaScript
             const i18n = {
@@ -3257,14 +3268,12 @@
                     if (!confirmDelete) return;
 
                     try {
-                        const response = await fetch(`/delete_photo/${photo}`, { method: 'DELETE' });
+                        await photoEditor.remove(photo);
 
-                        if (response.ok) {
+                        {
                             // Suppression réussie - recharger la page
                             // L'onglet actif sera automatiquement restauré grâce au localStorage
                             location.reload();
-                        } else {
-                            alert("Erreur lors de la suppression.");
                         }
                     } catch (error) {
                         console.error('Erreur:', error);
@@ -3300,72 +3309,10 @@
             // Script pour appliquer les filtres
             document.querySelectorAll('.filter-select').forEach(select => {
                 select.addEventListener('change', async (event) => {
-                    const filter = event.target.value;
-                    const photo = select.dataset.photo;
-
-                    const tileElement = select.closest('.photo-tile');
-                    if (!tileElement) return;
-
-                    const spinnerOverlay = tileElement.querySelector('.spinner-overlay');
-                    const imgElement = tileElement.querySelector('img');
-                    const glightboxLink = tileElement.querySelector('a.glightbox');
-
-                    // --- 1. Sauvegarder la préférence de filtre ---
                     try {
-                        await fetch('/api/set_photo_filter', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ photo: photo, filter: filter })
-                        });
-                    } catch (e) {
-                        alert('Erreur lors de la sauvegarde de la préférence.');
-                        return;
-                    }
-
-                    // --- 2. Mettre à jour l'aperçu ---
-                    if (filter === 'none') {
-                        // Ne rien faire à l'aperçu si l'utilisateur sélectionne "Filtre..."
-                        // Pour réinitialiser, l'utilisateur doit choisir "Original".
-                        return;
-                    }
-
-                    if (filter === 'polaroid') {
-                        // Afficher instantanément la version pré-générée
-                        const polaroidPath = photo.replace('.jpg', '_polaroid.jpg');
-                        const newSrc = `/static/prepared/${polaroidPath}?v=${new Date().getTime()}`;
-                        imgElement.src = newSrc;
-                        if (glightboxLink) glightboxLink.href = newSrc;
-                    } else if (filter === 'postcard') {
-                        const postcardPath = photo.replace('.jpg', '_postcard.jpg');
-                        const newSrc = `/static/prepared/${postcardPath}?v=${new Date().getTime()}`;
-                        imgElement.src = newSrc;
-                        if (glightboxLink) glightboxLink.href = newSrc;
-                    } else {
-                        // Pour les autres filtres (y compris 'original'), les appliquer en direct
-                        if (spinnerOverlay) spinnerOverlay.classList.remove('hidden');
-
-                        try {
-                            const response = await fetch('/api/apply_filter', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ photo: photo, filter: filter })
-                            });
-                            const result = await response.json();
-
-                            if (result.success) {
-                                imgElement.onload = () => { if (spinnerOverlay) spinnerOverlay.classList.add('hidden'); imgElement.onload = null; };
-                                imgElement.onerror = () => { if (spinnerOverlay) spinnerOverlay.classList.add('hidden'); alert("Erreur chargement image."); imgElement.onerror = null; };
-                                const newSrc = `${result.new_path}?v=${new Date().getTime()}`;
-                                imgElement.src = newSrc;
-                                if (glightboxLink) glightboxLink.href = newSrc;
-                            } else {
-                                alert(`Erreur : ${result.message}`);
-                                if (spinnerOverlay) spinnerOverlay.classList.add('hidden');
-                            }
-                        } catch (error) {
-                            alert("Erreur de communication avec le serveur.");
-                            if (spinnerOverlay) spinnerOverlay.classList.add('hidden');
-                        }
+                        await photoEditor.applyFilter(select.dataset.photo, event.target.value);
+                    } catch (error) {
+                        alert(error.message);
                     }
                 });
             });
@@ -3419,12 +3366,7 @@
                         btn.disabled = true; // Empêcher les clics multiples
 
                         try {
-                            const response = await fetch('/api/toggle_favorite', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ photo: photo })
-                            });
-                            const result = await response.json();
+                            const result = await photoEditor.favorite(photo);
                             if (result.success) {
                                 // Mettre à jour tous les boutons correspondants (un dans l'aperçu, un dans les favoris)
                                 document.querySelectorAll(`.favorite-btn[data-photo="${photo}"]`).forEach(b => {
@@ -3473,43 +3415,17 @@
                     const photoPath = container.dataset.photo;
                     const statusSpan = container.querySelector('.generic-text-status');
                     const tile = input.closest('.photo-tile');
-                    const imgElement = tile.querySelector('img');
-                    const glightboxLink = tile.querySelector('a.glightbox');
-
                     if (statusSpan) statusSpan.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
                     // Trouver le filtre actif pour savoir quelle API appeler
                     const filterSelect = tile.querySelector('.filter-select');
                     const activeFilter = filterSelect ? filterSelect.value : 'none';
 
-                    let apiUrl, bodyData;
-                    if (activeFilter === 'polaroid') {
-                        apiUrl = '/api/set_polaroid_text';
-                        bodyData = { photo: photoPath, text: text };
-                    } else {
-                        apiUrl = '/api/set_image_text';
-                        bodyData = { photo: photoPath, text: text };
-                    }
-
                     try {
-                        const response = await fetch(apiUrl, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(bodyData)
-                        });
-                        const result = await response.json();
+                        const result = await photoEditor.caption(photoPath, text, activeFilter);
                         if (result.success) {
                             if (statusSpan) { statusSpan.innerHTML = '<i class="fas fa-check text-green-500"></i>'; setTimeout(() => { statusSpan.innerHTML = ''; }, 2000); }
 
-                            let newSrc;
-                            if (activeFilter === 'polaroid') {
-                                const polaroidFilename = photoPath.replace(/\.[^/.]+$/, "") + '_polaroid.jpg';
-                                newSrc = `/static/prepared/${polaroidFilename}?v=${new Date().getTime()}`;
-                            } else {
-                                newSrc = `/static/prepared/${photoPath}?v=${new Date().getTime()}`;
-                            }
-                            imgElement.src = newSrc;
-                            if (glightboxLink) glightboxLink.href = newSrc;
                         } else { if (statusSpan) statusSpan.innerHTML = `<i class="fas fa-times text-red-500" title="${result.message}"></i>`; }
                     } catch (error) { if (statusSpan) statusSpan.innerHTML = `<i class="fas fa-exclamation-triangle text-red-500" title="${error}"></i>`; }
                 };

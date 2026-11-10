@@ -13,6 +13,8 @@ import subprocess, sys
 import glob
 import collections
 import math
+import queue
+import threading
 from datetime import datetime, timedelta
 import json
 import qrcode
@@ -23,6 +25,7 @@ from pathlib import Path
 from utils.text_drawer import draw_text_with_outline
 from utils.metadata_utils import get_photo_metadata, load_photo_metadata_cache, format_photo_metadata
 from utils.config_manager import load_config
+from utils.country_flags import country_flags
 from platform_utils import (
     IS_LINUX,
     consume_slideshow_commands,
@@ -827,18 +830,101 @@ def control_fan(temperature, threshold=55, pin=14):
     else:
         set_gpio_output(pin, False)
 
+class OverlayDataCache:
+    """Keep weather/tide acquisition off the rendering thread.
+
+    One worker and one pending job bound resource use. Existing getters retain
+    their refresh intervals, persistent tide cache, and API cooldown behavior.
+    """
+
+    KEYS = (
+        "show_weather", "show_clock", "show_tides", "weather_api_key",
+        "weather_city", "weather_units", "weather_update_interval_minutes",
+        "stormglass_api_key", "tide_latitude", "tide_longitude",
+    )
+
+    def __init__(self, weather_loader=None, tide_loader=None, clock=time.monotonic):
+        self._weather_loader = weather_loader or get_weather_and_forecast
+        self._tide_loader = tide_loader or get_tides
+        self._clock = clock
+        self._lock = threading.Lock()
+        self._queue = queue.Queue(maxsize=1)
+        self._worker = None
+        self._pending = False
+        self._key = None
+        self._snapshot = (None, None)
+        self._next_check = 0
+        self._closed = False
+
+    def get(self, config):
+        """Return memory-only snapshots and schedule a background refresh."""
+        selected = {name: config.get(name) for name in self.KEYS}
+        key = tuple(selected.values())
+        with self._lock:
+            snapshot = self._snapshot if key == self._key else (None, None)
+            if self._closed or self._pending:
+                return snapshot
+            if key == self._key and self._clock() < self._next_check:
+                return snapshot
+            self._pending = True
+            self._queue.put_nowait((key, dict(config)))
+            if self._worker is None:
+                self._worker = threading.Thread(
+                    target=self._run, name="overlay-data", daemon=True)
+                self._worker.start()
+            return snapshot
+
+    def close(self):
+        with self._lock:
+            self._closed = True
+            worker = self._worker
+        if worker is not None:
+            self._queue.join()
+            self._queue.put(None)
+            worker.join()
+            self._worker = None
+
+    def _run(self):
+        while True:
+            job = self._queue.get()
+            try:
+                if job is None:
+                    return
+                key, config = job
+                weather, tides = None, None
+                for enabled, loader, kind in (
+                    (config.get("show_weather", False), self._weather_loader, "weather"),
+                    (config.get("show_clock", False) and config.get("show_tides", False),
+                     self._tide_loader, "tides"),
+                ):
+                    if enabled:
+                        try:
+                            value = loader(config)
+                            if kind == "weather":
+                                weather = value
+                            else:
+                                tides = value
+                        except Exception:
+                            logger.warning("Background %s overlay acquisition failed", kind)
+                with self._lock:
+                    self._key = key
+                    self._snapshot = (weather, tides)
+                    self._next_check = self._clock() + 1
+            finally:
+                with self._lock:
+                    self._pending = False
+                self._queue.task_done()
+
+
+overlay_data = OverlayDataCache()
+
+
 # New function to draw the overlay elements (clock, date, weather)
 def draw_overlay(screen, screen_width, screen_height, config, main_font, photo_metadata=None):
     now = datetime.now()
     text_color = parse_color(config.get("clock_color", "#FFFFFF"))
     outline_color = parse_color(config.get("clock_outline_color", "#000000"))
-    country_codes = load_country_codes()
-
-
-    # --- Météo et Prévisions ---
-    weather_and_forecast = None
-    if config.get("show_weather", False):
-        weather_and_forecast = get_weather_and_forecast(config)
+    weather_and_forecast, tides_data = overlay_data.get(config)
 
     if config.get("show_clock", False):
         separator = "  |  "
@@ -950,7 +1036,6 @@ def draw_overlay(screen, screen_width, screen_height, config, main_font, photo_m
 
         # --- Bloc du bas pour les marées ---
         if config.get("show_tides", False):
-            tides_data = get_tides(config)
             tide_text = None
             font_to_use = main_font
 
@@ -1027,9 +1112,6 @@ def draw_overlay(screen, screen_width, screen_height, config, main_font, photo_m
         ])
 
     if photo_metadata and (has_any_date or config.get("show_photo_location", False)):
-        country = photo_metadata.get("country", "")
-    
-    
         # Récupérer la police personnalisée pour les métadonnées
         metadata_font_path = config.get("photo_metadata_font_path", get_default_font_path())
         metadata_font_size = int(config.get("photo_metadata_font_size", 23))
@@ -1112,65 +1194,32 @@ def draw_overlay(screen, screen_width, screen_height, config, main_font, photo_m
             )
     # --- Fin Modification Sigalou 25/01/2026 ---
 
-        # --- DRAPEAU PAYS en haut à droite (ajout Sigalou 29/01/2026) ---
-        if photo_metadata and config.get("show_country_flag", True):
-            
-            if country:
-                iso_code = country_codes.get(country.lower())
-                iso_code_country_flag_url = None   
+    # Flag display is independent of the date/location text settings.
+    if photo_metadata and config.get("show_country_flag", True):
+        country = (photo_metadata.get("countryCode") or photo_metadata.get("country_code")
+                   or photo_metadata.get("country", ""))
+        flag_pil = country_flags.get(country, config.get("country_flag_size", "128x96"))
+        if flag_pil is not None:
+            opacity = config.get("country_flag_opacity", 0.7)
+            r, g, b, a = flag_pil.split()
+            a = a.point(lambda p: int(p * opacity))
+            flag_pil = Image.merge('RGBA', (r, g, b, a))
+            flag_surf = pygame.image.fromstring(
+                flag_pil.tobytes(), flag_pil.size, flag_pil.mode
+            )
+            flag_position = config.get("country_flag_position", "top_right")
+            flag_offset_x = int(config.get("country_flag_offset_x", 15))
+            flag_offset_y = int(config.get("country_flag_offset_y", 15))
 
-                if iso_code:
-                    iso_code_country_flag_url = f"{iso_code}.png"
-                #else:
-                    #flag_url = None A VOIR SI ON AJOUTE UN DRAPEAU QUI DIT QUE C EST INCONNU
-                    try:
-                        import requests
-                        from PIL import Image
-                        from io import BytesIO
-                        
-                        flag_size = config.get("country_flag_size", "128x96")
-                        flag_url = f"https://flagcdn.com/{flag_size}/{iso_code_country_flag_url}"
-                            
-                        response = requests.get(flag_url, timeout=1.5)
-                        if response.status_code == 200:
-                            flag_pil = Image.open(BytesIO(response.content)).convert('RGBA')
-                            
-                            
-                            # --- AJOUT : Appliquer une opacité au drapeau ---
-                            opacity = config.get("country_flag_opacity", 0.7)
-                            # Séparer les canaux RGBA
-                            r, g, b, a = flag_pil.split()
-                            # Réduire l'opacité du canal alpha
-                            a = a.point(lambda p: int(p * opacity))
-                            # Recombiner les canaux
-                            flag_pil = Image.merge('RGBA', (r, g, b, a))
-                            # --- FIN AJOUT ---
-                            
-                            flag_surf = pygame.image.fromstring(
-                                flag_pil.tobytes(), flag_pil.size, flag_pil.mode
-                            )
-                            
-                            # Positionnement du drapeau
-                            flag_position = config.get("country_flag_position", "top_right")
-                            flag_offset_x = int(config.get("country_flag_offset_x", 15))
-                            flag_offset_y = int(config.get("country_flag_offset_y", 15))
-
-                            if flag_position == "top_left":
-                                flag_rect = flag_surf.get_rect(topleft=(flag_offset_x, flag_offset_y))
-                            elif flag_position == "bottom_left":
-                                flag_rect = flag_surf.get_rect(bottomleft=(flag_offset_x, screen_height - flag_offset_y))
-                            elif flag_position == "bottom_right":
-                                flag_rect = flag_surf.get_rect(bottomright=(screen_width - flag_offset_x, screen_height - flag_offset_y))
-                            else: # top_right (default)
-                                flag_rect = flag_surf.get_rect(topright=(screen_width - flag_offset_x, flag_offset_y))
-                            
-                            screen.blit(flag_surf, flag_rect)
-                            
-                    except ImportError:
-                        logger.info(f"[Display] pip install requests pillow")
-                    except Exception as e:
-                        pass  # Silencieux
-        # --- Fin DRAPEAU ---
+            if flag_position == "top_left":
+                flag_rect = flag_surf.get_rect(topleft=(flag_offset_x, flag_offset_y))
+            elif flag_position == "bottom_left":
+                flag_rect = flag_surf.get_rect(bottomleft=(flag_offset_x, screen_height - flag_offset_y))
+            elif flag_position == "bottom_right":
+                flag_rect = flag_surf.get_rect(bottomright=(screen_width - flag_offset_x, screen_height - flag_offset_y))
+            else:  # top_right (default)
+                flag_rect = flag_surf.get_rect(topright=(screen_width - flag_offset_x, flag_offset_y))
+            screen.blit(flag_surf, flag_rect)
 
 def display_title_slide(screen, screen_width, screen_height, title, duration, config, photos_for_slide=None):
     """Affiche un écran titre avec le nom de la playlist et un pêle-mêle de photos."""

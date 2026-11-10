@@ -2856,3 +2856,24 @@ msgstr "וינייטה - שוליים כהים"
 
 msgid "No location metadata"
 msgstr "אין נתוני מיקום"
+
+msgid "Filter strength"
+msgstr "עוצמת המסנן"
+
+msgid "Hold to view Before"
+msgstr "לחיצה ממושכת להצגת המקור"
+
+msgid "Edit location"
+msgstr "עריכת מיקום"
+
+msgid "City"
+msgstr "עיר"
+
+msgid "Country"
+msgstr "מדינה"
+
+msgid "Save"
+msgstr "שמירה"
+
+msgid "Use original location"
+msgstr "שימוש במיקום המקורי"
