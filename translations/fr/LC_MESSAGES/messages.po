@@ -2788,6 +2788,13 @@ msgstr "Recadrage enregistré."
 msgid "Another crop is being prepared. Please wait."
 msgstr "Un autre recadrage est en cours de préparation. Veuillez patienter."
 
+msgid ""
+"Increase selection size to include the full photo. Extra space uses a "
+"blurred background."
+msgstr ""
+"Augmentez la taille de la sélection pour inclure toute la photo. L’espace "
+"supplémentaire utilise un fond flou."
+
 #~ msgid "Hauteur utile de l'écran (% affiché) :"
 #~ msgstr ""
 

@@ -157,6 +157,25 @@ class PhotoCropTests(unittest.TestCase):
         self.assertEqual(response.status_code, 409)
         self.assertEqual(self.prepared.read_bytes(), self.original_bytes)
 
+    def test_portrait_full_selection_has_blurred_padding(self):
+        image = Image.new("RGB", (200, 400), "red")
+        image.paste("blue", (0, 0, 200, 30))
+        image.paste("green", (0, 370, 200, 400))
+        image.save(self.original)
+        self.config.update(display_width=640, display_height=360)
+        width = (16 / 9) * 2
+        crop = {"x": (1 - width) / 2, "y": 0, "width": width, "height": 1}
+        photo_crop.validate_crop(crop, image.size, (640, 360))
+        result = photo_crop.apply_crop(image, crop)
+        self.assertAlmostEqual(result.width / result.height, 16 / 9, places=2)
+        self.assertEqual(result.getpixel((result.width // 2, 5)), (0, 0, 255))
+        self.assertEqual(result.getpixel((result.width // 2, result.height - 5)), (0, 128, 0))
+        self.assertNotEqual(result.getpixel((10, result.height // 2)), (0, 0, 0))
+        self.login()
+        response = self.client.post("/api/photo_crop", json={"photo": self.photo, "crop": crop})
+        self.assertEqual(response.status_code, 200, response.json)
+        self.assertEqual(photo_crop.load_crops()[self.photo], crop)
+
     def test_exif_orientation_matches_preparation(self):
         self.login()
         exif = piexif.dump({"0th": {piexif.ImageIFD.Orientation: 6}})

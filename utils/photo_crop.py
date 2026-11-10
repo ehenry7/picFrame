@@ -6,7 +6,7 @@ import os
 import threading
 from pathlib import Path
 
-from PIL import Image, ImageOps
+from PIL import Image, ImageOps, ImageFilter
 
 from utils.photo_import import PHOTO_EXTENSIONS
 
@@ -73,9 +73,19 @@ def validate_crop(crop, image_size, screen_size):
            or not math.isfinite(value) for value in crop.values()):
         raise ValueError("Crop coordinates must be finite numbers.")
     x, y, width, height = (crop[key] for key in ("x", "y", "width", "height"))
-    if (x < 0 or y < 0 or width <= 0 or height <= 0 or x + width > 1.000001
-            or y + height > 1.000001):
-        raise ValueError("Crop must be inside the image.")
+    ratio = screen_size[0] / screen_size[1]
+    max_width = max(1, ratio * image_size[1] / image_size[0])
+    max_height = max(1, image_size[0] / (ratio * image_size[1]))
+    if (width <= 0 or height <= 0 or width > max_width + 0.000001
+            or height > max_height + 0.000001):
+        raise ValueError("Crop exceeds the full-photo selection.")
+    for offset, extent in ((x, width), (y, height)):
+        if extent <= 1:
+            valid = offset >= -0.000001 and offset + extent <= 1.000001
+        else:
+            valid = math.isclose(offset, (1 - extent) / 2, abs_tol=0.000001)
+        if not valid:
+            raise ValueError("Crop must stay within the photo or center its padded edges.")
     pixel_width, pixel_height = width * image_size[0], height * image_size[1]
     if min(pixel_width, pixel_height) < 2:
         raise ValueError("Crop is too small.")
@@ -88,10 +98,20 @@ def apply_crop(image, crop):
     if crop is None:
         return image
     width, height = image.size
-    left = max(0, round(crop["x"] * width))
-    top = max(0, round(crop["y"] * height))
-    right = min(width, round((crop["x"] + crop["width"]) * width))
-    bottom = min(height, round((crop["y"] + crop["height"]) * height))
+    left = round(crop["x"] * width)
+    top = round(crop["y"] * height)
+    right = round((crop["x"] + crop["width"]) * width)
+    bottom = round((crop["y"] + crop["height"]) * height)
     if right <= left or bottom <= top:
         raise ValueError("Saved crop is empty.")
-    return image.crop((left, top, right, bottom))
+    if left >= 0 and top >= 0 and right <= width and bottom <= height:
+        return image.crop((left, top, right, bottom))
+    output_width, output_height = right - left, bottom - top
+    scale = min(1.0, 4096 / max(output_width, output_height))
+    size = (max(1, round(output_width * scale)), max(1, round(output_height * scale)))
+    background = ImageOps.fit(image.convert("RGB"), size, method=Image.Resampling.LANCZOS)
+    background = background.filter(ImageFilter.GaussianBlur(radius=max(size) * 0.03))
+    foreground = image.convert("RGB").resize(
+        (max(1, round(width * scale)), max(1, round(height * scale))), Image.Resampling.LANCZOS)
+    background.paste(foreground, (round(-left * scale), round(-top * scale)))
+    return background

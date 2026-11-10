@@ -225,7 +225,10 @@ expandable reference with codes and examples (such as `%d/%m/%Y` for 15/06/2020)
 
 Use **Crop photo** on a Preview or Favorites tile to select which part is displayed.
 Drag the selection and adjust **Selection size**; its aspect ratio always matches
-the configured slideshow width and height. **Save crop** regenerates that photo's
+the configured slideshow width and height. Increase the size beyond the photo's
+edges to include more of a portrait (up to the entire photo); extra space is filled
+with a blurred background, while the original stays centered on the padded axis.
+**Save crop** regenerates that photo's
 prepared image, Polaroid and postcard versions, keeps saved filters/captions, and
 reloads a running slideshow. **Reset crop** restores the uncropped preparation.
 Originals are never modified and must remain in `static/photos/{source}`.

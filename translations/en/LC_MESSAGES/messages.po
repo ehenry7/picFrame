@@ -3030,6 +3030,13 @@ msgstr "Crop saved."
 msgid "Another crop is being prepared. Please wait."
 msgstr "Another crop is being prepared. Please wait."
 
+msgid ""
+"Increase selection size to include the full photo. Extra space uses a "
+"blurred background."
+msgstr ""
+"Increase selection size to include the full photo. Extra space uses a "
+"blurred background."
+
 #~ msgid "Favoris"
 #~ msgstr "Favorites"
 

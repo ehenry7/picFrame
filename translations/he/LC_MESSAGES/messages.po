@@ -2784,3 +2784,9 @@ msgstr "החיתוך נשמר."
 
 msgid "Another crop is being prepared. Please wait."
 msgstr "חיתוך אחר בהכנה. נא להמתין."
+
+msgid ""
+"Increase selection size to include the full photo. Extra space uses a "
+"blurred background."
+msgstr ""
+"הגדילו את הבחירה כדי לכלול את כל התמונה. השטח הנוסף מתמלא ברקע מטושטש."

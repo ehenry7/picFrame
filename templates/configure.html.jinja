@@ -1966,6 +1966,13 @@
                                 </select>
                                 {% endif %}
                                 <div class="flex justify-end items-center w-full gap-x-2">
+                                    {% if media.type == 'image' %}
+                                    <button type="button"
+                                        class="crop-photo-btn text-gray-400 hover:text-blue-500 text-xs rounded py-1 px-2 inline-flex items-center justify-center"
+                                        data-photo="{{ photo_path }}" title="{{ _('Crop photo') }}" aria-label="{{ _('Crop photo') }}">
+                                        <i class="fas fa-cut" aria-hidden="true"></i>
+                                    </button>
+                                    {% endif %}
                                     <button type="button"
                                         class="add-to-playlist-btn text-gray-400 hover:text-blue-500 text-xs rounded py-1 px-2 inline-flex items-center justify-center"
                                         data-photo="{{ photo_path }}" title="{{ _('Ajouter à une playlist') }}"><i
@@ -2000,8 +2007,6 @@
                                 <!-- Le menu des playlists sera injecté ici -->
                             </div>
                             {% if media.type == 'image' %}
-                            <button type="button" class="crop-photo-btn mt-2 text-xs text-blue-600 underline"
-                                data-photo="{{ photo_path }}">{{ _("Crop photo") }}</button>
                             <div class="generic-text-input-container mt-2" data-photo="{{ photo_path }}">
                                 <input type="text" class="generic-text-input w-full text-xs p-1 border rounded"
                                     placeholder="{{ _('Ajouter une légende...') }}" value="{{ media.text or '' }}">
@@ -2198,6 +2203,13 @@
                             </select>
                             {% endif %}
                             <div class="flex justify-end items-center w-full gap-x-2">
+                                {% if media.type == 'image' %}
+                                <button type="button"
+                                    class="crop-photo-btn text-gray-400 hover:text-blue-500 text-xs rounded py-1 px-2 inline-flex items-center justify-center"
+                                    data-photo="{{ photo_path }}" title="{{ _('Crop photo') }}" aria-label="{{ _('Crop photo') }}">
+                                    <i class="fas fa-cut" aria-hidden="true"></i>
+                                </button>
+                                {% endif %}
                                 <button type="button"
                                     class="add-to-playlist-btn text-gray-400 hover:text-blue-500 text-xs rounded py-1 px-2 inline-flex items-center justify-center"
                                     data-photo="{{ photo_path }}" title="{{ _('Ajouter à une playlist') }}"><i
@@ -2232,8 +2244,6 @@
                             <!-- Le menu des playlists sera injecté ici -->
                         </div>
                         {% if media.type == 'image' %}
-                        <button type="button" class="crop-photo-btn mt-2 text-xs text-blue-600 underline"
-                            data-photo="{{ photo_path }}">{{ _("Crop photo") }}</button>
                         <div class="generic-text-input-container mt-2" data-photo="{{ photo_path }}">
                             <input type="text" class="generic-text-input w-full text-xs p-1 border rounded"
                                 placeholder="{{ _('Ajouter une légende...') }}" value="{{ media.text or '' }}">
@@ -2258,6 +2268,7 @@
             <label class="block mt-3">{{ _("Selection size") }}
                 <input id="photo-crop-size" type="range" min="10" max="100" step="1" value="100" class="w-full">
             </label>
+            <p class="text-sm">{{ _("Increase selection size to include the full photo. Extra space uses a blurred background.") }}</p>
             <p id="photo-crop-status" role="status" class="text-sm my-2"></p>
             <div class="flex justify-end gap-3">
                 <button id="photo-crop-cancel" type="button">{{ _("Cancel") }}</button>
@@ -2277,18 +2288,42 @@
                 const cancel = document.getElementById('photo-crop-cancel');
                 let photo, image, crop, maxWidth, maxHeight, drag, busy = false;
                 let loadVersion = 0;
+                let viewport = {x: 0, y: 0, width: 1, height: 1};
+                function positionValue(value, extent) {
+                    return extent > 1 ? (1 - extent) / 2 : Math.max(0, Math.min(1 - extent, value));
+                }
                 function draw() {
+                    viewport = {x: Math.min(0, crop.x), y: Math.min(0, crop.y),
+                                width: Math.max(1, crop.x + crop.width) - Math.min(0, crop.x),
+                                height: Math.max(1, crop.y + crop.height) - Math.min(0, crop.y)};
+                    const scale = Math.min(700 / (image.naturalWidth * viewport.width),
+                                           420 / (image.naturalHeight * viewport.height), 1);
+                    canvas.width = Math.max(1, Math.round(image.naturalWidth * viewport.width * scale));
+                    canvas.height = Math.max(1, Math.round(image.naturalHeight * viewport.height * scale));
+                    const ix = -viewport.x / viewport.width * canvas.width;
+                    const iy = -viewport.y / viewport.height * canvas.height;
+                    const iw = canvas.width / viewport.width, ih = canvas.height / viewport.height;
                     context.clearRect(0, 0, canvas.width, canvas.height);
-                    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+                    context.fillStyle = '#555';
+                    context.fillRect(0, 0, canvas.width, canvas.height);
+                    context.drawImage(image, ix, iy, iw, ih);
                     context.fillStyle = 'rgba(0,0,0,0.55)';
                     context.fillRect(0, 0, canvas.width, canvas.height);
-                    const x = crop.x * canvas.width, y = crop.y * canvas.height;
-                    const width = crop.width * canvas.width, height = crop.height * canvas.height;
+                    const x = (crop.x - viewport.x) / viewport.width * canvas.width;
+                    const y = (crop.y - viewport.y) / viewport.height * canvas.height;
+                    const width = crop.width / viewport.width * canvas.width;
+                    const height = crop.height / viewport.height * canvas.height;
                     context.save();
                     context.beginPath();
                     context.rect(x, y, width, height);
                     context.clip();
-                    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+                    context.fillStyle = '#555';
+                    context.fillRect(x, y, width, height);
+                    context.save();
+                    context.filter = 'blur(12px)';
+                    context.drawImage(image, x - 12, y - 12, width + 24, height + 24);
+                    context.restore();
+                    context.drawImage(image, ix, iy, iw, ih);
                     context.restore();
                     context.strokeStyle = '#ffffff';
                     context.lineWidth = 2;
@@ -2300,10 +2335,10 @@
                     cancel.disabled = value;
                 }
                 function resizeSelection() {
-                    const fraction = Number(slider.value) / 100;
+                    const fraction = Math.min(Number(slider.value) / 100, Math.max(1 / maxWidth, 1 / maxHeight));
                     const width = maxWidth * fraction, height = maxHeight * fraction;
-                    crop = {x: Math.max(0, Math.min(1 - width, crop.x + (crop.width - width) / 2)),
-                            y: Math.max(0, Math.min(1 - height, crop.y + (crop.height - height) / 2)),
+                    crop = {x: positionValue(crop.x + (crop.width - width) / 2, width),
+                            y: positionValue(crop.y + (crop.height - height) / 2, height),
                             width, height};
                     draw();
                 }
@@ -2333,11 +2368,12 @@
                         canvas.height = Math.max(1, Math.round(data.height * scale));
                         maxWidth = Math.min(1, data.aspect_ratio * data.height / data.width);
                         maxHeight = maxWidth * data.width / (data.aspect_ratio * data.height);
+                        slider.max = Math.ceil(100 * Math.max(1 / maxWidth, 1 / maxHeight));
                         crop = data.crop || {x: (1 - maxWidth) / 2, y: (1 - maxHeight) / 2,
                                              width: maxWidth, height: maxHeight};
                         // Refit saved selections if the configured screen ratio has changed.
-                        const fraction = Math.min(1, crop.width / maxWidth, crop.height / maxHeight);
-                        slider.value = Math.max(10, Math.round(fraction * 100));
+                        const fraction = Math.min(crop.width / maxWidth, crop.height / maxHeight);
+                        slider.value = Math.max(10, Math.floor(fraction * 100));
                         resizeSelection();
                         status.textContent = '';
                         setBusy(false);
@@ -2349,8 +2385,8 @@
                 slider.addEventListener('input', () => { if (!busy && crop) resizeSelection(); });
                 function point(event) {
                     const bounds = canvas.getBoundingClientRect();
-                    return {x: (event.clientX - bounds.left) / bounds.width,
-                            y: (event.clientY - bounds.top) / bounds.height};
+                    return {x: viewport.x + (event.clientX - bounds.left) / bounds.width * viewport.width,
+                            y: viewport.y + (event.clientY - bounds.top) / bounds.height * viewport.height};
                 }
                 canvas.addEventListener('pointerdown', event => {
                     if (busy || !crop) return;
@@ -2363,8 +2399,8 @@
                 canvas.addEventListener('pointermove', event => {
                     if (!drag || busy) return;
                     const position = point(event);
-                    crop.x = Math.max(0, Math.min(1 - crop.width, position.x - drag.x));
-                    crop.y = Math.max(0, Math.min(1 - crop.height, position.y - drag.y));
+                    crop.x = positionValue(position.x - drag.x, crop.width);
+                    crop.y = positionValue(position.y - drag.y, crop.height);
                     draw();
                 });
                 canvas.addEventListener('pointerup', () => { drag = null; });
