@@ -209,6 +209,9 @@ cannot be displayed; GPS coordinates alone are not converted into city names.
 Both live previews show the metadata text selected for display, or **No Metadata**
 if none is available under the saved settings. Hover over the single-line caption
 to read its full text when it is truncated.
+The Preview and Favorites photo tiles also show this caption below each image,
+next to its filter and caption controls. Both date-format fields include an
+expandable reference with codes and examples (such as `%d/%m/%Y` for 15/06/2020).
 
 ### Photo Import Settings
 

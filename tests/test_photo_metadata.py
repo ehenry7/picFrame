@@ -118,12 +118,68 @@ class PhotoMetadataTests(unittest.TestCase):
         client = Client(app, Response)
         response = client.get("/current_photo_status")
         self.assertEqual(response.json["metadata_text"], "2020-06-15")
+        config["photo_date_format"] = "%d/%m/%Y - %H:%M"
+        self.assertEqual(client.get("/current_photo_status").json["metadata_text"],
+                         "15/06/2020 - 12:34")
         config["show_photo_date"] = False
         self.assertEqual(client.get("/current_photo_status").json["metadata_text"], "No Metadata")
         status_file.write_text("")
         self.assertEqual(client.get("/current_photo_status").json["metadata_text"], "")
         running[0] = False
         self.assertEqual(client.get("/current_photo_status").json["status"], "stopped")
+
+    def test_preview_tiles_include_formatted_metadata(self):
+        self.original("smartphone", "photo.jpg")
+        prepared = self.prepared("smartphone", "photo.jpg")
+        prepared.parent.mkdir(parents=True)
+        Image.new("RGB", (20, 15)).save(prepared)
+        Image.new("RGB", (20, 15)).save(prepared.with_name("empty.jpg"))
+        config = {"show_photo_date": True, "photo_date_format": "%Y-%m-%d",
+                  "anniversary_boost_enabled": False}
+        namespace = {
+            "PREPARED_DIR": prepared.parent.parent, "load_config": lambda: config,
+            "load_filter_states": lambda: {}, "load_favorites": lambda: ["smartphone/photo.jpg"],
+            "load_polaroid_texts": lambda: {}, "load_text_states": lambda: {},
+            "VIDEO_EXTENSIONS": (".mp4",), "get_photo_metadata": metadata_utils.get_photo_metadata,
+            "format_photo_metadata": metadata_utils.format_photo_metadata,
+            "_": lambda message: message,
+        }
+        source = Path(__file__).resolve().parents[1] / "app.py"
+        tree = ast.parse(source.read_text(encoding="utf-8"))
+        function = next(node for node in tree.body if isinstance(node, ast.FunctionDef)
+                        and node.name == "get_prepared_photos_by_source")
+        exec(compile(ast.Module(body=[function], type_ignores=[]), str(source), "exec"), namespace)
+        media = namespace["get_prepared_photos_by_source"]()["smartphone"]
+        by_name = {item["path"]: item for item in media}
+        self.assertEqual(by_name["smartphone/photo.jpg"]["metadata_text"], "2020-06-15")
+        self.assertTrue(by_name["smartphone/photo.jpg"]["is_favorite"])
+        self.assertEqual(by_name["smartphone/empty.jpg"]["metadata_text"], "No Metadata")
+
+    def test_photo_date_format_save_and_reload(self):
+        from flask import request
+        from utils import config_manager
+        source = Path(__file__).resolve().parents[1] / "app.py"
+        tree = ast.parse(source.read_text(encoding="utf-8"))
+        saving = next(node for node in ast.walk(tree) if isinstance(node, ast.For)
+                      and isinstance(node.iter, ast.List)
+                      and any(isinstance(value, ast.Constant) and value.value == "photo_date_format"
+                              for value in node.iter.elts))
+        app = Flask(__name__)
+        config = {}
+        namespace = {"config": config, "request": request}
+        with app.test_request_context(method="POST", data={"photo_date_format": "%d/%m/%Y - %H:%M"}):
+            exec(compile(ast.Module(body=[saving], type_ignores=[]), str(source), "exec"), namespace)
+        with patch.object(config_manager, "CONFIG_PATH", str(self.root / "config.json")), \
+             patch.object(config_manager, "_config_cache", None), \
+             patch.object(config_manager, "_last_config_load", 0):
+            config_manager.save_config(config)
+            config_manager._config_cache = None
+            reloaded = config_manager.load_config()
+        self.assertEqual(reloaded["photo_date_format"], "%d/%m/%Y - %H:%M")
+        self.assertEqual(metadata_utils.format_photo_metadata(
+            {"dateTimeOriginal": "2020-06-15T12:34:56"},
+            {**reloaded, "show_photo_date": True, "anniversary_boost_enabled": False},
+            lambda message: message), "15/06/2020 - 12:34")
 
 
 if __name__ == "__main__":

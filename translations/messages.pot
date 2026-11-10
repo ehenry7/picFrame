@@ -2702,3 +2702,38 @@ msgstr ""
 
 msgid "No Metadata"
 msgstr ""
+
+msgid "Date format reference"
+msgstr ""
+
+msgid ""
+"Combine these codes with spaces or punctuation. Month and weekday names "
+"follow the slideshow's system locale."
+msgstr ""
+
+msgid "Four-digit year"
+msgstr ""
+
+msgid "Two-digit year"
+msgstr ""
+
+msgid "Month number"
+msgstr ""
+
+msgid "Day of month"
+msgstr ""
+
+msgid "Full / abbreviated month name"
+msgstr ""
+
+msgid "Full / abbreviated weekday name"
+msgstr ""
+
+msgid "Hour (24-hour / 12-hour)"
+msgstr ""
+
+msgid "Minute / second"
+msgstr ""
+
+msgid "Examples (15 June 2020):"
+msgstr ""

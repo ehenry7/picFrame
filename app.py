@@ -510,10 +510,11 @@ def get_prepared_photos_by_source():
                         "is_favorite": media_relative_path in favorites,
                         "is_anniversary": False # Default to False
                     }
+                    photo_metadata = get_photo_metadata(media_path_obj) if media_type == 'image' else {}
+                    media_item["metadata_text"] = format_photo_metadata(photo_metadata, config, _) or _("No Metadata")
 
                     # Vérifier si c'est une photo anniversaire
                     if anniversary_boost_enabled and media_type == 'image':
-                        photo_metadata = get_photo_metadata(media_path_obj)
                         if photo_metadata:
                             date_priority = [
                                 "subSecDateTimeOriginal", "dateTimeOriginal", "SubSecDateTimeOriginal", "DateTimeOriginal",

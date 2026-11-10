@@ -1,4 +1,27 @@
 <!DOCTYPE html>
+{% macro date_format_help() %}
+<details class="text-xs text-gray-600 mt-2">
+    <summary class="cursor-pointer">{{ _("Date format reference") }}</summary>
+    <p class="mt-1">{{ _("Combine these codes with spaces or punctuation. Month and weekday names follow the slideshow's system locale.") }}</p>
+    <ul class="list-disc ml-5 mt-1">
+        <li><code>%Y</code> — {{ _("Four-digit year") }} (2026); <code>%y</code> — {{ _("Two-digit year") }} (26)</li>
+        <li><code>%m</code> — {{ _("Month number") }} (01–12); <code>%d</code> — {{ _("Day of month") }} (01–31)</li>
+        <li><code>%B</code> / <code>%b</code> — {{ _("Full / abbreviated month name") }}</li>
+        <li><code>%A</code> / <code>%a</code> — {{ _("Full / abbreviated weekday name") }}</li>
+        <li><code>%H</code> / <code>%I</code> — {{ _("Hour (24-hour / 12-hour)") }}; <code>%p</code> — AM/PM</li>
+        <li><code>%M</code> / <code>%S</code> — {{ _("Minute / second") }}; <code>%%</code> — %</li>
+    </ul>
+    <p class="mt-1">{{ _("Examples (15 June 2020):") }}</p>
+    <ul class="list-disc ml-5">
+        <li><code>%Y</code> → 2020</li>
+        <li><code>%d/%m/%Y</code> → 15/06/2020</li>
+        <li><code>%m/%d/%Y</code> → 06/15/2020</li>
+        <li><code>%Y-%m-%d</code> → 2020-06-15</li>
+        <li><code>%d %B %Y</code> → 15 June 2020</li>
+        <li><code>%B %Y</code> → June 2020</li>
+    </ul>
+</details>
+{% endmacro %}
 <html lang="{{ get_locale() }}" dir="{{ 'rtl' if get_locale() == 'he' else 'ltr' }}">
 
 <head>
@@ -679,6 +702,7 @@
                     <div style="display: flex; align-items: center; margin-bottom: 8px;">
                         <label for="date_format" style="min-width: 200px;">{{ _("Format de la date :") }}</label>
                         <input type="text" name="date_format" value="{{ config.get('date_format', '%A %d %B %Y') }}">
+                        {{ date_format_help() }}
                     </div>
                 </fieldset>
 
@@ -1166,6 +1190,7 @@
                             value="{{ config.get('photo_date_format', '%Y') }}"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
                         <p class="text-xs text-gray-500 mt-1">{{ _("Utilise les codes de formatage Python (ex: %%d/%%m/%%Y, %%B %%Y).") }}</p>
+                        {{ date_format_help() }}
                     </div>
 
                     <!-- Location -->
@@ -1903,6 +1928,10 @@
                                 {% endif %}
                             </a>
                             <!-- Actions alignées avec "justify-between" pour pousser la poubelle à droite -->
+                            {% if media.type == 'image' %}
+                            <p class="photo-metadata mt-1 w-32 truncate text-xs text-gray-600" dir="auto"
+                                title="{{ media.metadata_text }}">{{ media.metadata_text }}</p>
+                            {% endif %}
                             <div class="photo-actions mt-1 flex flex-col w-full gap-y-1">
                                 {% if media.type == 'image' %}
                                 <select class="filter-select text-xs rounded border-gray-300 py-1 w-full"
@@ -2129,6 +2158,10 @@
                             </div>
                             {% endif %}
                         </a>
+                        {% if media.type == 'image' %}
+                        <p class="photo-metadata mt-1 w-32 truncate text-xs text-gray-600" dir="auto"
+                            title="{{ media.metadata_text }}">{{ media.metadata_text }}</p>
+                        {% endif %}
                         <div class="photo-actions mt-1 flex flex-col w-full gap-y-1">
                             {% if media.type == 'image' %}
                             <select class="filter-select text-xs rounded border-gray-300 py-1 w-full"

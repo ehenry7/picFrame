@@ -2703,3 +2703,40 @@ msgstr "אקראי"
 
 msgid "No Metadata"
 msgstr "אין מטא-נתונים"
+
+msgid "Date format reference"
+msgstr "מדריך לתבניות תאריך"
+
+msgid ""
+"Combine these codes with spaces or punctuation. Month and weekday names "
+"follow the slideshow's system locale."
+msgstr ""
+"שלבו קודים עם רווחים או סימני פיסוק. שמות חודשים וימים מוצגים לפי הגדרות "
+"השפה של מערכת המצגת."
+
+msgid "Four-digit year"
+msgstr "שנה בארבע ספרות"
+
+msgid "Two-digit year"
+msgstr "שנה בשתי ספרות"
+
+msgid "Month number"
+msgstr "מספר חודש"
+
+msgid "Day of month"
+msgstr "יום בחודש"
+
+msgid "Full / abbreviated month name"
+msgstr "שם חודש מלא / מקוצר"
+
+msgid "Full / abbreviated weekday name"
+msgstr "שם יום מלא / מקוצר"
+
+msgid "Hour (24-hour / 12-hour)"
+msgstr "שעה (24 שעות / 12 שעות)"
+
+msgid "Minute / second"
+msgstr "דקה / שנייה"
+
+msgid "Examples (15 June 2020):"
+msgstr "דוגמאות (15 ביוני 2020):"

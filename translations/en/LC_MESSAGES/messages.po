@@ -2949,6 +2949,43 @@ msgstr "Random"
 msgid "No Metadata"
 msgstr "No Metadata"
 
+msgid "Date format reference"
+msgstr "Date format reference"
+
+msgid ""
+"Combine these codes with spaces or punctuation. Month and weekday names "
+"follow the slideshow's system locale."
+msgstr ""
+"Combine these codes with spaces or punctuation. Month and weekday names "
+"follow the slideshow's system locale."
+
+msgid "Four-digit year"
+msgstr "Four-digit year"
+
+msgid "Two-digit year"
+msgstr "Two-digit year"
+
+msgid "Month number"
+msgstr "Month number"
+
+msgid "Day of month"
+msgstr "Day of month"
+
+msgid "Full / abbreviated month name"
+msgstr "Full / abbreviated month name"
+
+msgid "Full / abbreviated weekday name"
+msgstr "Full / abbreviated weekday name"
+
+msgid "Hour (24-hour / 12-hour)"
+msgstr "Hour (24-hour / 12-hour)"
+
+msgid "Minute / second"
+msgstr "Minute / second"
+
+msgid "Examples (15 June 2020):"
+msgstr "Examples (15 June 2020):"
+
 #~ msgid "Favoris"
 #~ msgstr "Favorites"
 
@@ -3309,6 +3346,330 @@ msgstr "No Metadata"
 #~ msgstr ""
 #~ "Language\n"
 #~ "                            voice control"
+
+#~ msgid "État de la prise : Inconnu"
+#~ msgstr "Outlet status: Unreachable"
+
+#~ msgid "URL pour ALLUMER la prise :"
+#~ msgstr ""
+#~ "URL\n"
+#~ "                                to TURN ON the socket:"
+
+#~ msgid "URL pour ÉTEINDRE la prise :"
+#~ msgstr ""
+#~ "URL\n"
+#~ "                                to TURN OFF the socket:"
+
+#~ msgid "URL de Statut (Optionnel) :"
+#~ msgstr "Password (optional) :"
+
+#~ msgid ""
+#~ "Activer la mise à jour\n"
+#~ "                            automatique"
+#~ msgstr ""
+#~ "Activate update\n"
+#~ "                            automatic"
+
+#~ msgid "Langue du contrôle vocal"
+#~ msgstr "Voice control"
+
+#~ msgid ""
+#~ "Voici toutes vos photos marquées comme favorites. Vous pouvez les gérer ici."
+#~ msgstr ""
+#~ "Here are all your photos marked as favorites. You can manage them here."
+
+#~ msgid "Sources des photos"
+#~ msgstr "Photo sources"
+
+#~ msgid "Prochaine Pleine Mer :"
+#~ msgstr "Next High Seas:"
+
+#~ msgid "Prochaine Basse Mer :"
+#~ msgstr "Next Low Sea:"
+
+#~ msgid "Lancement de la playlist '%(name)s'..."
+#~ msgstr "Launching the playlist '%(name)s'..."
+
+#~ msgid "Heure, Météo et Marées"
+#~ msgstr "Time, Weather and Tides"
+
+#~ msgid "app.py (Serveur Web)"
+#~ msgstr "app.py (WebServer)"
+
+#~ msgid "local_slideshow.py (Diaporama - Sortie Standard)"
+#~ msgstr "local_slideshow.py (Slideshow - Standard Output)"
+
+#~ msgid "local_slideshow.py (Diaporama - Erreurs)"
+#~ msgstr "local_slideshow.py (Slideshow - Errors)"
+
+#~ msgid "Sauvegarde de l'ordre..."
+#~ msgstr "Saving the order..."
+
+#~ msgid "Configuration enregistrée et diaporama relancé"
+#~ msgstr "Configuration saved and slideshow restarted"
+
+#~ msgid "Configuration du cadre photo connecté"
+#~ msgstr "Configuring the connected photo frame"
+
+#~ msgid "SSID (Nom du réseau)"
+#~ msgstr "SSID (Network Name)"
+
+#~ msgid "Nouveau mot de passe"
+#~ msgstr "New Password"
+
+#~ msgid "Êtes-vous sûr de vouloir REDÉMARRER le système ?"
+#~ msgstr "Are you sure you want to RESTART the system?"
+
+#~ msgid ""
+#~ "Mise à jour terminée. L'application va redémarrer. La page se rechargera "
+#~ "dans quelques instants..."
+#~ msgstr ""
+#~ "Update completed. The application will restart. The page will reload in a "
+#~ "few moments..."
+
+#~ msgid "Redémarrage en cours..."
+#~ msgstr "Reboot in progress..."
+
+#~ msgid "La page va se recharger automatiquement."
+#~ msgstr "The page will reload automatically."
+
+#~ msgid "Erreur de connexion au serveur pour la mise à jour."
+#~ msgstr "Error connecting to server for update."
+
+#~ msgid "Erreur de communication"
+#~ msgstr "Communication error"
+
+#~ msgid "Heure de début d'activité (HH:MM) :"
+#~ msgstr "Activity start time (HH:MM):"
+
+#~ msgid "Heure de fin d'activité (HH:MM) :"
+#~ msgstr "Activity end time (HH:MM):"
+
+#~ msgid "Vérifier les mises à jour"
+#~ msgstr "Check for updates"
+
+#~ msgid ""
+#~ "Êtes-vous sûr de vouloir lancer la mise à jour ? L'application sera "
+#~ "indisponible pendant le processus et redémarrera automatiquement."
+#~ msgstr ""
+#~ "Are you sure you want to start the update? The application will be "
+#~ "unavailable during the process and will restart automatically."
+
+#~ msgid "Mise à jour terminée. Redirection..."
+#~ msgstr "Update completed. Redirection..."
+
+#~ msgid "Usage:"
+#~ msgstr "Usage:"
+
+#~ msgid "{value!r} is not a valid boolean. Recognized values: {states}"
+#~ msgstr "{value!r} is not a valid boolean. Recognized values: {states}"
+
+#~ msgid "{editor}: Editing failed"
+#~ msgstr "{editor}: Editing failed"
+
+#~ msgid "{editor}: Editing failed: {e}"
+#~ msgstr "{editor}: Editing failed: {e}"
+
+#~ msgid "{text} {deprecated_message}"
+#~ msgstr "{text} {deprecated_message}"
+
+#~ msgid "Options"
+#~ msgstr "Options"
+
+#~ msgid "Got unexpected extra argument ({args})"
+#~ msgid_plural "Got unexpected extra arguments ({args})"
+#~ msgstr[0] ""
+#~ msgstr[1] ""
+
+#~ msgid "DeprecationWarning: The command {name!r} is deprecated.{extra_message}"
+#~ msgstr ""
+#~ "DeprecationWarning: The command {name!r} is deprecated.{extra_message}"
+
+#~ msgid "Aborted!"
+#~ msgstr "Aborted!"
+
+#~ msgid "Commands"
+#~ msgstr "Commands"
+
+#~ msgid "Missing command."
+#~ msgstr "Missing command."
+
+#~ msgid "No such command {name!r}."
+#~ msgstr "No such command {name!r}."
+
+#~ msgid "Value must be an iterable."
+#~ msgstr "Value must be an iterable."
+
+#~ msgid "Takes {nargs} values but 1 was given."
+#~ msgid_plural "Takes {nargs} values but {len} were given."
+#~ msgstr[0] ""
+#~ msgstr[1] ""
+
+#~ msgid ""
+#~ "DeprecationWarning: The {param_type} {name!r} is deprecated.{extra_message}"
+#~ msgstr ""
+#~ "DeprecationWarning: The {param_type} {name!r} is deprecated.{extra_message}"
+
+#~ msgid "env var: {var}"
+#~ msgstr "env var: {var}"
+
+#~ msgid "default: {default}"
+#~ msgstr "default: {default}"
+
+#~ msgid "required"
+#~ msgstr "required"
+
+#~ msgid "(dynamic)"
+#~ msgstr "(dynamic)"
+
+#~ msgid "%(prog)s, version %(version)s"
+#~ msgstr "%(prog)s, version %(version)s"
+
+#~ msgid "Show the version and exit."
+#~ msgstr "Show the version and exit."
+
+#~ msgid "Show this message and exit."
+#~ msgstr "Show this message and exit."
+
+#~ msgid "Error: {message}"
+#~ msgstr "Error: {message}"
+
+#~ msgid "Try '{command} {option}' for help."
+#~ msgstr "Try '{command} {option}' for help."
+
+#~ msgid "Invalid value: {message}"
+#~ msgstr "Invalid value: {message}"
+
+#~ msgid "Invalid value for {param_hint}: {message}"
+#~ msgstr "Invalid value for {param_hint}: {message}"
+
+#~ msgid "Missing argument"
+#~ msgstr "Missing argument"
+
+#~ msgid "Missing option"
+#~ msgstr "Missing option"
+
+#~ msgid "Missing parameter"
+#~ msgstr "Missing parameter"
+
+#~ msgid "Missing {param_type}"
+#~ msgstr "Missing {param_type}"
+
+#~ msgid "Missing parameter: {param_name}"
+#~ msgstr "Missing parameter: {param_name}"
+
+#~ msgid "No such option: {name}"
+#~ msgstr "No such option: {name}"
+
+#~ msgid "Did you mean {possibility}?"
+#~ msgid_plural "(Possible options: {possibilities})"
+#~ msgstr[0] ""
+#~ msgstr[1] ""
+
+#~ msgid "unknown error"
+#~ msgstr "unknown error"
+
+#~ msgid "Could not open file {filename!r}: {message}"
+#~ msgstr "Could not open file {filename!r}: {message}"
+
+#~ msgid "Argument {name!r} takes {nargs} values."
+#~ msgstr "Argument {name!r} takes {nargs} values."
+
+#~ msgid "Option {name!r} does not take a value."
+#~ msgstr "Option {name!r} does not take a value."
+
+#~ msgid "Option {name!r} requires an argument."
+#~ msgid_plural "Option {name!r} requires {nargs} arguments."
+#~ msgstr[0] ""
+#~ msgstr[1] ""
+
+#~ msgid "Shell completion is not supported for Bash versions older than 4.4."
+#~ msgstr "Shell completion is not supported for Bash versions older than 4.4."
+
+#~ msgid "Couldn't detect Bash version, shell completion is not supported."
+#~ msgstr "Couldn't detect Bash version, shell completion is not supported."
+
+#~ msgid "Repeat for confirmation"
+#~ msgstr "Repeat for confirmation"
+
+#~ msgid "Error: The value you entered was invalid."
+#~ msgstr "Error: The value you entered was invalid."
+
+#~ msgid "Error: {e.message}"
+#~ msgstr "Error: {e.message}"
+
+#~ msgid "Error: The two entered values do not match."
+#~ msgstr "Error: The two entered values do not match."
+
+#~ msgid "Error: invalid input"
+#~ msgstr "Error: invalid input"
+
+#~ msgid "Press any key to continue..."
+#~ msgstr "Press any key to continue..."
+
+#~ msgid ""
+#~ "Choose from:\n"
+#~ "\t{choices}"
+#~ msgstr ""
+#~ "Choose from:\n"
+#~ "\t{choices}"
+
+#~ msgid "{value!r} is not {choice}."
+#~ msgid_plural "{value!r} is not one of {choices}."
+#~ msgstr[0] ""
+#~ msgstr[1] ""
+
+#~ msgid "{value!r} does not match the format {format}."
+#~ msgid_plural "{value!r} does not match the formats {formats}."
+#~ msgstr[0] ""
+#~ msgstr[1] ""
+
+#~ msgid "{value!r} is not a valid {number_type}."
+#~ msgstr "{value!r} is not a valid {number_type}."
+
+#~ msgid "{value} is not in the range {range}."
+#~ msgstr "{value} is not in the range {range}."
+
+#~ msgid "{value!r} is not a valid boolean."
+#~ msgstr "{value!r} is not a valid boolean."
+
+#~ msgid "{value!r} is not a valid UUID."
+#~ msgstr "{value!r} is not a valid UUID."
+
+#~ msgid "file"
+#~ msgstr "file"
+
+#~ msgid "directory"
+#~ msgstr "directory"
+
+#~ msgid "path"
+#~ msgstr "path"
+
+#~ msgid "{name} {filename!r} does not exist."
+#~ msgstr "{name} {filename!r} does not exist."
+
+#~ msgid "{name} {filename!r} is a file."
+#~ msgstr "{name} {filename!r} is a file."
+
+#~ msgid "{name} {filename!r} is a directory."
+#~ msgstr "{name} {filename!r} is a directory."
+
+#~ msgid "{name} {filename!r} is not readable."
+#~ msgstr "{name} {filename!r} is not readable."
+
+#~ msgid "{name} {filename!r} is not writable."
+#~ msgstr "{name} {filename!r} is not writable."
+
+#~ msgid "{name} {filename!r} is not executable."
+#~ msgstr "{name} {filename!r} is not executable."
+
+#~ msgid "{len_type} values are required, but {len_value} was given."
+#~ msgid_plural "{len_type} values are required, but {len_value} were given."
+#~ msgstr[0] ""
+#~ msgstr[1] ""
+
+#~ msgid "Activer le contrôle par prise connectée"
+#~ msgstr "Activate smart socket control"
 
 #~ msgid "État de la prise : Inconnu"
 #~ msgstr "Outlet status: Unreachable"
