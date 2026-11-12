@@ -35,7 +35,7 @@ PictureFrame runs in one of two top-level modes (config key `app_mode`, see
 | Mode | Process | Output |
 |---|---|---|
 | `picture_frame` (default) | `local_slideshow.py` | Fullscreen Pygame kiosk slideshow (Pi target) |
-| `background_updater` | `background_updater.py` | Composes photo + overlays into `cache/desktop_background.png` and sets it as the desktop wallpaper on **all monitors** (Windows/Linux desktops) |
+| `background_updater` | `background_updater.py` | Composes photo + overlays into per-monitor wallpaper images and sets them via OS wallpaper APIs (Windows/Linux desktops) |
 
 - Mode resolution: `utils/app_mode.py::get_app_mode()` — `PICTUREFRAME_APP_MODE`
   env var overrides config; invalid values fall back to `picture_frame`.
@@ -48,23 +48,50 @@ PictureFrame runs in one of two top-level modes (config key `app_mode`, see
   `build_media_playlist`, `fit_photo_to_style`, `warm_up_overlays`). It never calls
   `pygame.display.set_mode()` — only fonts and off-screen Surfaces, so it works headless.
   `SDL_VIDEODRIVER=dummy` is set defensively before pygame imports.
+- **Weather icon in headless mode:** `load_icon()` in `local_slideshow.py` guards
+  `.convert_alpha()` with `pygame.display.get_surface() is not None` — in background
+  mode (no display surface), the raw surface is used directly, which still blits
+  correctly onto the off-screen composition surface.
 - **Wallpaper placement styles:** `fit_photo_to_style()` in `render_pipeline.py`
   supports six placement modes selected by the `background_display_style` config key:
   `fill` (cover + center-crop), `fit` (letterbox, default), `stretch` (distort),
   `span` (fill, sized for all screens), `center` (1:1, black canvas), `tile` (repeat).
-- **Alternating output paths:** `wallpaper_output_path()` alternates between
-  `cache/desktop_background.png` and `cache/desktop_background_alt.png` on each
-  render cycle. Windows caches the wallpaper by file path and silently ignores
-  re-applying the same path — alternating forces a real refresh on every platform.
-- **Clock repaint:** when `show_clock` is enabled, the updater repaints the wallpaper
-  every 60 seconds (without rotating the photo) so the clock never goes stale,
-  even when `background_update_interval` is much longer.
+- **Per-monitor rendering (Windows):** the updater renders a **separate wallpaper
+  image per monitor** at each monitor's native resolution and DPI scaling. Each
+  image gets its own `bottom_inset` (taskbar height for that monitor) so overlays
+  sit exactly above the taskbar on every screen. Uses the `IDesktopWallpaper` COM
+  API via `comtypes` to set per-monitor wallpapers with `SetPosition(2)` (Stretch,
+  1:1 pixel mapping at native resolution). Falls back to legacy
+  `SystemParametersInfoW` when COM is unavailable.
+  - `get_monitor_details(config)` returns per-monitor `{id, width, height, taskbar_inset}`.
+  - `_monitor_taskbar_inset()` matches COM monitor rects against `EnumDisplayMonitors`
+    work areas for DPI-aware per-monitor taskbar height.
+  - `set_wallpaper_per_monitor([(id, path), ...])` applies each image to its monitor.
+- **Per-monitor alternating output paths:** `wallpaper_output_path()` uses
+  per-monitor filenames (e.g. `desktop_background_mon0.png` / `desktop_background_mon0_alt.png`)
+  so each monitor has a stable pair of alternating paths across repaints. Windows
+  caches wallpaper by file path — alternating prevents stale images.
+- **Content-change clock detection:** instead of a fixed timer, the updater polls
+  every 1 second and only re-renders when the overlay text actually changes (clock
+  minute, weather update, tide update) or the photo rotation deadline is reached.
+  `_overlay_snapshot()` returns a lightweight string of current overlay state for
+  comparison. This means the clock updates within ~1 second of the minute change.
 - **Overlay warm-up:** `warm_up_overlays()` blocks briefly (≤8 s) on first boot so
   weather/tide data is ready before the first wallpaper is composed.
+- **Schedule skip in background mode:** the `schedule_worker` in `app.py` skips
+  active-hours gating when `app_mode == "background_updater"` — the desktop wallpaper
+  should update regardless of time of day. Pi-specific wake code (DPMS, resolution
+  forcing via `swaymsg`) is also guarded to `picture_frame` mode only. At boot, the
+  display process starts immediately in background mode regardless of active hours.
+- **Overlay positioning:** `draw_overlay()` in `local_slideshow.py` accepts a
+  `bottom_inset` parameter applied to all bottom-anchored elements: weather
+  (bottom-right), tides (bottom-center), photo metadata/shooting date (bottom_left,
+  bottom_right, bottom_center, fallback), and country flag (bottom_left, bottom_right).
 - Wallpaper backends live in `utils/wallpaper_manager.py`:
-  Windows `SystemParametersInfoW` (all monitors, "Fit" style), GNOME/MATE/Cinnamon
-  `gsettings`, KDE `plasma-apply-wallpaper`, XFCE `xfconf-query` (all monitor
-  properties), `feh` fallback. Unsupported environments log and return `False`.
+  Windows `IDesktopWallpaper` COM (per-monitor, via `comtypes`) with
+  `SystemParametersInfoW` fallback, GNOME/MATE/Cinnamon `gsettings`, KDE
+  `plasma-apply-wallpaper`, XFCE `xfconf-query` (all monitor properties), `feh`
+  fallback. Unsupported environments log and return `False`.
 - The web UI switches modes via `POST /api/app_mode` (stops the active process,
   persists the mode, starts the new one; display power is never touched).
 
@@ -167,8 +194,10 @@ The central web server providing all configuration, photo management, and system
 - **Authentication:** Session-based login using `credentials.json` stored at `/boot/firmware/credentials.json` (on Pi). Passwords hashed with Werkzeug. `login_required` decorator protects all config routes.
 - **i18n:** Flask-Babel with locale auto-detection. Supports en, fr, and he; Hebrew pages use right-to-left document direction.
 - **Config management:** `load_config()` / `save_config()` via `utils/config_manager.py` with a 2-second cache and default-merge strategy.
+- **Upload limit:** `MAX_CONTENT_LENGTH` is set to 500 MB for photo imports (was 32 MB).
+- **Timezone dropdown:** `get_available_timezones()` uses `zoneinfo.available_timezones()` (requires `tzdata` on Windows). Falls back to a built-in `_FALLBACK_TIMEZONES` list (~80 common IANA zones including `Asia/Jerusalem`) when the system tz database is empty.
 - **Background workers (daemon threads):**
-  - `schedule_worker` — manages active hours (starts/stops slideshow based on configured time window).
+  - `schedule_worker` — manages active hours (starts/stops slideshow based on configured time window). In `background_updater` mode, active-hours gating is skipped (desktop wallpaper updates regardless of time).
 
 **Major route groups (70+ routes):**
 | Group | Routes | Purpose |
@@ -388,6 +417,8 @@ Dependencies are split into two files for cross-platform development (see "Devel
 | qrcode[pil] | QR code generation |
 | deep-translator | Auto-translation of .po files |
 | polib | .po file parsing |
+| tzdata | IANA timezone database — needed by `zoneinfo` on Windows for the timezone dropdown |
+| comtypes (Windows only) | COM interop for `IDesktopWallpaper` per-monitor wallpaper API |
 
 ### `requirements-pi.txt` — Linux / Raspberry Pi only
 | Package | Purpose |
