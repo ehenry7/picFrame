@@ -146,6 +146,30 @@ If startup fails, open a console with Ctrl+Alt+F2 and check
 disabling requires Raspberry Pi OS Desktop, not Lite. Neither script removes
 PictureFrame or changes its settings.
 
+### Run as a desktop background updater (Windows/Linux desktops)
+
+Besides the fullscreen picture frame, PictureFrame can run as a **desktop
+background updater**: it composes a photo with the usual overlays (clock, date,
+weather, tides, photo metadata) into a single image and sets it as the desktop
+wallpaper — on **all screens/monitors**.
+
+- **Picture frame mode** (default): the fullscreen Pygame slideshow on the
+  Raspberry Pi.
+- **Background updater mode**: a headless process renders the same slideshow
+  content into `cache/desktop_background.png` and applies it via the OS
+  wallpaper API (Windows: `SystemParametersInfoW`; Linux: `gsettings`,
+  `plasma-apply-wallpaper`, `xfconf-query`, or `feh` depending on the desktop).
+
+Switch modes from the web interface (**Display tab → Run mode**) or set
+`"app_mode": "background_updater"` in `config/config.json`. The
+`PICTUREFRAME_APP_MODE` environment variable overrides the config value.
+Background-specific settings: update interval (`background_update_interval`,
+default 3600 s), image format (PNG/JPEG) and render resolution (automatic =
+largest monitor, or the configured display size). Playlists, favorites,
+filters and captions are shared between both modes; active hours control when
+updates run, exactly like the slideshow.
+
+
 ---
 
 ### Connect to PictureFrame
@@ -306,6 +330,6 @@ files and **Import folder** selects a folder on the device running your browser
 (including its subfolders). Photos are added to the Smartphone source, prepared,
 and enabled automatically. Identical file contents are skipped, including renamed
 duplicates; different photos with matching names are preserved with numeric suffixes.
-Each selection is limited to 32 MB including upload overhead; use smaller selections
-or the command-line importer for large folders. Folder selection requires a browser
+Each selection is limited to 500 MB including upload overhead; use smaller selections
+or the command-line importer for very large folders. Folder selection requires a browser
 that supports directory uploads.

@@ -14,7 +14,8 @@
 
 ## Architecture Overview
 
-PictureFrame is a multi-process application with two main runtime components, plus several background worker threads:
+PictureFrame runs in one of two top-level modes (config key `app_mode`, see
+[Run modes](#run-modes) below):
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -23,14 +24,54 @@ PictureFrame is a multi-process application with two main runtime components, pl
 │     ├─ app.py            (Flask web server, port 7090)   │
 │     │   └─ Slideshow scheduler worker (daemon thread)    │
 │     ├─ local_slideshow.py  (Pygame fullscreen slideshow) │
+│     └─ background_updater.py (desktop wallpaper updater) │
 │                                                           │
 │  NGINX reverse proxy (:80 → :7090)                       │
 └─────────────────────────────────────────────────────────┘
 ```
 
+### Run Modes
+
+| Mode | Process | Output |
+|---|---|---|
+| `picture_frame` (default) | `local_slideshow.py` | Fullscreen Pygame kiosk slideshow (Pi target) |
+| `background_updater` | `background_updater.py` | Composes photo + overlays into `cache/desktop_background.png` and sets it as the desktop wallpaper on **all monitors** (Windows/Linux desktops) |
+
+- Mode resolution: `utils/app_mode.py::get_app_mode()` — `PICTUREFRAME_APP_MODE`
+  env var overrides config; invalid values fall back to `picture_frame`.
+- Process lifecycle: `utils/slideshow_manager.py` exposes mode-aware functions
+  (`start_display_process`, `stop_display_process`, `is_display_process_running`,
+  `restart_display_process`, `restart_display_process_for_update`,
+  `switch_app_mode`) plus the legacy slideshow-specific API.
+- The background updater reuses the slideshow's rendering through
+  `utils/render_pipeline.py` (`compose_background`, `save_surface_atomic`,
+  `build_media_playlist`, `fit_photo_to_style`, `warm_up_overlays`). It never calls
+  `pygame.display.set_mode()` — only fonts and off-screen Surfaces, so it works headless.
+  `SDL_VIDEODRIVER=dummy` is set defensively before pygame imports.
+- **Wallpaper placement styles:** `fit_photo_to_style()` in `render_pipeline.py`
+  supports six placement modes selected by the `background_display_style` config key:
+  `fill` (cover + center-crop), `fit` (letterbox, default), `stretch` (distort),
+  `span` (fill, sized for all screens), `center` (1:1, black canvas), `tile` (repeat).
+- **Alternating output paths:** `wallpaper_output_path()` alternates between
+  `cache/desktop_background.png` and `cache/desktop_background_alt.png` on each
+  render cycle. Windows caches the wallpaper by file path and silently ignores
+  re-applying the same path — alternating forces a real refresh on every platform.
+- **Clock repaint:** when `show_clock` is enabled, the updater repaints the wallpaper
+  every 60 seconds (without rotating the photo) so the clock never goes stale,
+  even when `background_update_interval` is much longer.
+- **Overlay warm-up:** `warm_up_overlays()` blocks briefly (≤8 s) on first boot so
+  weather/tide data is ready before the first wallpaper is composed.
+- Wallpaper backends live in `utils/wallpaper_manager.py`:
+  Windows `SystemParametersInfoW` (all monitors, "Fit" style), GNOME/MATE/Cinnamon
+  `gsettings`, KDE `plasma-apply-wallpaper`, XFCE `xfconf-query` (all monitor
+  properties), `feh` fallback. Unsupported environments log and return `False`.
+- The web UI switches modes via `POST /api/app_mode` (stops the active process,
+  persists the mode, starts the new one; display power is never touched).
+
 ### Process Communication
-- **Flask ↔ Slideshow:** via OS signals (`SIGUSR1` = next, `SIGUSR2` = previous, `SIGRTMIN` = pause toggle) and status files in `/tmp/` (`pictureframe_slideshow_status.json`, `pictureframe_current_photo.txt`, `pictureframe_custom_playlist.json`).
-- **PID files:** `/tmp/pictureframe_slideshow.pid`, `/tmp/pictureframe_app.lock`.
+- **Flask ↔ Slideshow/Background:** via OS signals (`SIGUSR1` = next, `SIGUSR2` = previous, `SIGTSTP` = pause toggle) and status files in the OS temp dir (`pictureframe_slideshow_status.json`, `pictureframe_current_photo.txt`, `pictureframe_custom_playlist.json`). On Windows (no POSIX signals), commands are enqueued to a per-process command directory (`pictureframe_slideshow_commands/` or `pictureframe_background_commands/`) via `platform_utils.enqueue_slideshow_command(process=…)`.
+- **Mode-aware dispatch in app.py:** `_display_pid_file()`, `_display_status_file()`, and `_send_slideshow_command()` resolve the correct PID/status file and command queue based on `get_app_mode()`, so the existing `/api/slideshow/*` routes work unchanged in both modes.
+- **PID files:** `pictureframe_slideshow.pid`, `pictureframe_background.pid`, `pictureframe_app.lock` (all in the OS temp dir).
 
 ---
 
@@ -40,7 +81,9 @@ PictureFrame is a multi-process application with two main runtime components, pl
 picFrame/
 ├── app.py                    # Flask web application (3,780 lines) — main entry point
 ├── local_slideshow.py        # Pygame-based fullscreen slideshow engine (2,330 lines)
+├── background_updater.py     # Desktop wallpaper updater process (background_updater mode)
 ├── platform_utils.py         # OS-aware paths, platform detection, and hardware helpers — THIS FORK
+├── stop.py                   # CLI process stopper: gracefully kills app + slideshow + background updater
 ├── scripts/                 # Maintenance CLI tools, boot-mode toggles and temporary check_* helpers
 ├── text_drawer.py            # Empty stub (text drawing moved to utils/text_drawer.py)
 ├── requirements.txt          # Cross-platform Python dependencies (Windows + Linux)
@@ -48,6 +91,7 @@ picFrame/
 ├── babel.cfg                 # Babel i18n configuration
 │
 ├── utils/                    # Utility modules (23 Python files)
+│   ├── app_mode.py           # Run-mode resolution (picture_frame | background_updater)
 │   ├── auth.py               # Flask login_required decorator
 │   ├── auth_manager.py       # Password change (writes to /boot/firmware/credentials.json)
 │   ├── config.py             # Legacy config loader (superseded by config_manager.py)
@@ -62,9 +106,11 @@ picFrame/
 │   ├── network_manager.py    # Network interface status/control via nmcli
 │   ├── playlist_manager.py   # Playlist JSON load/save
 │   ├── prepare_all_photos.py # Image/video preparation pipeline (resize, blur bg, polaroid, postcard)
-│   ├── slideshow_manager.py  # Slideshow process lifecycle (start/stop/restart via PID files)
+│   ├── render_pipeline.py    # Headless photo + overlay composition (shared by both modes)
+│   ├── slideshow_manager.py  # Display process lifecycle (start/stop/restart via PID files)
 │   ├── text_drawer.py        # Pygame text rendering with outline
 │   ├── translate_po.py       # Auto-translate .po files via Google Translate
+│   ├── wallpaper_manager.py  # Desktop wallpaper backend (Windows ctypes + Linux DE matrix)
 │   └── wifi_manager.py       # Wi-Fi configuration via nmcli + raspi-config
 │
 ├── templates/                # Jinja2 HTML templates
@@ -129,7 +175,8 @@ The central web server providing all configuration, photo management, and system
 |-------|--------|---------|
 | Pages | `/`, `/login`, `/logout`, `/configure`, `/slideshow`, `/upload`, `/rebooting` | Web UI pages |
 | Import | `/import-usb`, `/import-smartphone`, `/prepare-photos` | Photo import pipelines (streaming responses) |
-| Slideshow API | `/api/slideshow/next`, `/previous`, `/toggle_pause`, `/status`, `/restart_standard`, `/set_duration` | Slideshow control via signals |
+| Slideshow API | `/api/slideshow/next`, `/previous`, `/toggle_pause`, `/status`, `/restart_standard`, `/set_duration` | Slideshow/background control via signals or command queue (mode-aware) |
+| Run mode | `/api/app_mode` (GET current, POST switch) | Switch between picture_frame and background_updater modes |
 | Display | `/api/display/power`, `/api/get_available_resolutions`, `/api/set_resolution` | Screen power + resolution |
 | Sources | `/api/sources/play/<name>`, `/api/sources/toggle` | Display source management |
 | Playlists | `/api/playlists` (CRUD), `/api/playlists/<id>/photos`, `/reorder`, `/rename`, `/update_music` | Playlist management |
@@ -147,13 +194,13 @@ A fullscreen Pygame application that displays photos with transitions, overlays,
 - **Photo display:** Resizes photos to screen resolution, adds blurred background for portrait images.
 - **Transitions:** Fade and slide transitions between photos (configurable duration/FPS).
 - **Pan & Zoom:** Ken Burns-style motion effect on photos.
-- **Overlays:** Clock, date, weather (OpenWeatherMap), tides (Stormglass), photo metadata (date, location, country flag).
+- **Overlays:** Clock, date, weather (OpenWeatherMap/Open-Meteo), tides (Stormglass), photo metadata (date, location, country flag).
 - **Video playback:** Uses `mpv` as an external player for video files (with optional hardware acceleration).
 - **Special effects:** Polaroid frames, postcard effects (with stamps and postmarks), creative filters.
 - **Playlists:** Supports custom playlists with title slides (corkboard background with photo jumble), background music.
 - **GPIO:** Fan control based on CPU temperature (pin 14, threshold 55°C) — Raspberry Pi only.
-- **Signal handling:** `SIGUSR1` (next), `SIGUSR2` (previous), `SIGRTMIN` (pause toggle) from Flask.
-- **Status reporting:** Writes current photo path and pause state to `/tmp/` files for Flask to read.
+- **Signal handling:** `SIGUSR1` (next), `SIGUSR2` (previous), `SIGTSTP` (pause toggle) from Flask.
+- **Status reporting:** Writes current photo path and pause state to status files for Flask to read.
 - **Active hours:** Checks config for active time window; sleeps (display off) outside active hours.
 
 **Key functions:**
@@ -165,6 +212,85 @@ A fullscreen Pygame application that displays photos with transitions, overlays,
 - `display_title_slide()` — renders a playlist title screen with photo jumble on corkboard.
 - `get_weather_and_forecast()` — fetches weather from OpenWeatherMap API.
 - `get_tides()` — fetches tide data from Stormglass API.
+- `OverlayDataCache` — async background fetcher for weather/tide data, shared by both modes via `render_pipeline.warm_up_overlays()`.
+
+### 2b. `background_updater.py` — Headless Wallpaper Updater Process
+
+A standalone script (sibling to `local_slideshow.py`) that composes photos with overlays
+into a single image file and sets it as the desktop wallpaper on all monitors. Runs when
+`app_mode == "background_updater"`.
+
+**Key design:**
+- **Headless pygame:** never calls `pygame.display.set_mode()` — only `pygame.font` and
+  off-screen `pygame.Surface` blits. `SDL_VIDEODRIVER=dummy` is set before pygame imports.
+- **Render loop:** (re)load config → resolve render size → pick next photo from playlist →
+  `compose_background()` → `save_surface_atomic()` → `set_wallpaper()` → update status file →
+  sleep `background_update_interval` (interruptible by next/previous/pause commands).
+- **Playlist reuse:** `build_media_playlist()` mirrors the slideshow's playlist logic
+  (scan prepared sources, apply filter variants, expand favorites/anniversary boosts, shuffle).
+  Videos use their prepared `video_thumbnail.jpg`. Playlist rebuilds only on full pass or
+  when a custom playlist file appears.
+- **Not applicable in background mode** (skipped): transitions, pan/zoom, background music,
+  playlist title slides, pause icon, GPIO fan, video playback.
+- **Single-instance guard:** checks PID file on startup; exits if another live instance exists.
+- **Signal handling:** `SIGUSR1` (next), `SIGUSR2` (previous), `SIGTSTP` (pause toggle).
+  On Windows, commands arrive via the `pictureframe_background_commands/` queue.
+- **Status file:** `pictureframe_background_status.json` with `current_photo`, `photo_index`,
+  `playlist_size`, `paused`, `last_wallpaper_update`, `monitors`, `last_error`.
+
+### 2c. `stop.py` — Process Stopper CLI
+
+A standalone CLI utility to cleanly stop all PictureFrame processes. Useful for maintenance
+and development when the web UI is unreachable.
+
+**Usage:**
+- `python stop.py` — graceful stop (SIGTERM, then SIGKILL after 5 s)
+- `python stop.py --force` — immediate SIGKILL
+- `python stop.py --dry-run` — list what would be killed without killing
+
+Targets: `app.py`, `local_slideshow.py`, `background_updater.py`, `utils/display_message.py`,
+`utils/render_pipeline.py`, `utils/wallpaper_manager.py`, any process listening on port 7090,
+and any ffmpeg child processes. Cleans up PID and lock files in the OS temp dir afterward.
+
+### 2d. `utils/render_pipeline.py` — Headless Composition Facade
+
+The single import boundary between the background updater and `local_slideshow`'s rendering
+code. Imports proven functions (`draw_overlay`, `build_playlist`, `get_path_to_display`,
+`load_filter_states`, `load_favorites`) and exposes a small facade:
+
+| Function | Purpose |
+|---|---|
+| `compose_background(photo_path, w, h, config, font, metadata)` | Photo + overlays → off-screen `pygame.Surface` (no display required) |
+| `save_surface_atomic(surface, path)` | Atomic write: temp file → `os.replace`, so the OS never reads a half-written image |
+| `build_media_playlist(config)` | Scan prepared sources, apply filters/favorites, shuffle; videos → thumbnails |
+| `fit_photo_to_style(pil_image, w, h, style)` | Place photo on canvas using wallpaper style: fill/fit/stretch/span/center/tile |
+| `load_main_font(config)` | Return the clock/metadata font |
+| `ensure_font_init()` | Initialize `pygame.font` only (no display) |
+| `warm_up_overlays(config, timeout=8)` | Block briefly until first weather/tide snapshot is ready |
+| `collect_video_thumbnail(video_path)` | Return prepared thumbnail path for a video, or None |
+
+### 2e. `utils/wallpaper_manager.py` — Desktop Wallpaper Backend
+
+Applies a single image file as the wallpaper on **all monitors**. Follows the `platform_utils`
+contract: safe to call on any OS, never raises, reports unavailability with `False` + log.
+
+| Function | Purpose |
+|---|---|
+| `set_wallpaper(image_path)` | Apply file to all monitors (Windows ctypes / Linux DE matrix) |
+| `get_monitors(config)` | Return `[(w, h), …]` via OS enumeration → config fallback → `(1920, 1080)` |
+| `largest_monitor_size(config)` | Return the largest monitor by pixel count |
+| `desktop_environment()` | Detect GNOME/MATE/Cinnamon/KDE/XFCE (returns `""` on Windows) |
+
+**Platform matrix:**
+| Platform | Mechanism |
+|---|---|
+| Windows | `SystemParametersInfoW(SPI_SETDESKWALLPAPER)` + registry "Fit" style |
+| GNOME | `gsettings` (picture-uri + picture-uri-dark, picture-options=zoom) |
+| MATE | `gsettings` (picture-filename) |
+| Cinnamon | `gsettings` (picture-uri) |
+| KDE Plasma | `plasma-apply-wallpaper` (≥5.25) |
+| XFCE | `xfconf-query` (every `last-image` property) |
+| Any X11 fallback | `feh --bg-fill` when available |
 
 ### 3. `utils/` — Utility Modules
 
@@ -189,11 +315,19 @@ A fullscreen Pygame application that displays photos with transitions, overlays,
 - Backup system: originals saved to `static/.backups/` before filter application.
 
 #### `slideshow_manager.py`
-- Process lifecycle management for `local_slideshow.py`.
-- `start_slideshow()` — cleans zombies, checks PID file, launches subprocess.
-- `stop_slideshow()` — terminates process, kills zombies, turns off display.
-- `restart_slideshow_process()` — restarts for config changes (shows message on screen).
-- `restart_slideshow_for_update()` — restarts after content update (no display power cycle).
+- Process lifecycle management for both display processes.
+- `ProcessSpec` descriptor: `SLIDESHOW = ProcessSpec("local_slideshow.py", …)` and `BACKGROUND = ProcessSpec("background_updater.py", …)`.
+- **Legacy slideshow API** (unchanged, delegates to `SLIDESHOW`):
+  - `start_slideshow()`, `stop_slideshow()`, `is_slideshow_running()`,
+    `restart_slideshow_process()`, `restart_slideshow_for_update()`.
+- **Background updater API:** `start_background_updater()`, `stop_background_updater()`,
+  `is_background_updater_running()`, `restart_background_updater_for_update()`.
+  Stopping the background updater never touches display power (it's a desktop, not a frame).
+- **Mode-aware API** (used by `app.py`'s `schedule_worker` and API routes):
+  - `start_display_process()`, `stop_display_process()`, `is_display_process_running()`,
+    `restart_display_process()`, `restart_display_process_for_update()`,
+    `switch_app_mode(new_mode)` — validates, stops both processes (quietly, no display
+    power change), persists config, starts the newly selected one.
 
 #### `display_manager.py`
 - `get_display_output_name()` — detects active HDMI output via `wlr-randr` or `swaymsg`.
@@ -231,6 +365,7 @@ Configuration is stored in `config/config.json` (gitignored). The full default s
 | Photo metadata | `show_photo_date`, `show_photo_location`, `show_country_flag`, `photo_metadata_*` | On-screen photo info |
 | Smart plug | `smart_plug_enabled`, `smart_plug_on_url`, `smart_plug_off_url`, `smart_plug_on_delay` | HTTP-controlled power plug |
 | Sources | `display_sources` (list) | Active photo sources |
+| Run mode | `app_mode`, `background_update_interval`, `background_output_format`, `background_resolution_mode`, `background_display_style` | Top-level run mode + background updater settings |
 | System | `timezone`, `level_log`, `favorite_boost_factor`, `anniversary_boost_enabled` | Misc system settings |
 
 ---
@@ -427,6 +562,8 @@ pip install -r requirements-pi.txt
 | Image processing (Pillow) | ✅ Full | ✅ Full |
 | Playlists management | ✅ Full | ✅ Full |
 | Pygame slideshow | ⚠️ Windowed 1280×720 | ✅ Fullscreen kiosk |
+| Background updater mode | ✅ Full (Windows wallpaper API) | ⚠️ Works but not the primary use case |
+| Desktop wallpaper (all monitors) | ✅ `SystemParametersInfoW` | ✅ `gsettings`/`plasma-apply-wallpaper`/`xfconf-query`/`feh` |
 | Display power (DPMS) | ❌ Unavailable | ✅ wlr-randr/swaymsg |
 | System reboot/shutdown | ❌ Unavailable | ✅ sudo |
 | CPU temperature | ❌ None | ✅ /sys/class/thermal |
