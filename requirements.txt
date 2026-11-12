@@ -16,3 +16,5 @@ piexif
 qrcode[pil]
 deep-translator
 polib
+tzdata  # IANA timezone database — needed by zoneinfo on Windows
+comtypes; sys_platform == "win32"  # COM interop for per-monitor wallpaper on Windows

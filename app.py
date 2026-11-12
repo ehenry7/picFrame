@@ -58,7 +58,18 @@ import traceback
 
 logging.getLogger(__name__).info("Startup: loading photo download and slideshow managers")
 from utils.auth import login_required # type: ignore
-from utils.slideshow_manager import is_slideshow_running, start_slideshow, stop_slideshow, restart_slideshow_process, restart_slideshow_for_update
+# Mode-aware display process control: these resolve to the Pygame
+# slideshow in picture_frame mode and to background_updater.py in
+# background_updater mode.
+from utils.slideshow_manager import (
+    is_display_process_running,
+    start_display_process,
+    stop_display_process,
+    restart_display_process,
+    restart_display_process_for_update,
+    switch_app_mode,
+)
+from utils.app_mode import get_app_mode
 from utils.config_manager import load_config, save_config
 from utils.playlist_manager import load_playlists, save_playlists
 logging.getLogger(__name__).info("Startup: loading authentication, network, and display utilities")
@@ -74,6 +85,7 @@ from utils.photo_import import PHOTO_EXTENSIONS, photo_digest, stream_digest
 from utils.photo_crop import original_photo, oriented_image, validate_crop, load_crops, save_crops, CROP_LOCK
 from utils.image_filters import apply_filter_to_image, add_text_to_polaroid, add_text_to_image, create_polaroid_effect
 from utils.weather_cities import CITIES as WEATHER_CITIES
+from utils.path_utils import to_static_url_path
 import secrets
 from platform_utils import (
     IS_LINUX,
@@ -201,6 +213,10 @@ def log_request_finished(response):
     log = logger.warning if elapsed >= 2 else logger.info
     log("HTTP finished: %s %s status=%s duration=%.3fs",
         request.method, request.path, response.status_code, elapsed)
+    # Prevent browser caching of pages and API responses
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
     return response
 
 @app.teardown_request
@@ -218,7 +234,9 @@ except Exception:
     app.secret_key = 'supersecretkey_fallback_should_be_changed'
 
 # --- Limit upload size ---
-app.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024
+# Set high enough to allow large photo batch imports (500 MB).
+# Flask returns HTTP 413 when this is exceeded.
+app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024
 
 
 def get_locale():
@@ -272,6 +290,8 @@ CUSTOM_PLAYLIST_FILE = str(get_status_file("pictureframe_custom_playlist.json"))
 CURRENT_PHOTO_FILE = str(get_status_file("pictureframe_current_photo.txt"))
 SLIDESHOW_PID_FILE = get_status_file("pictureframe_slideshow.pid")
 SLIDESHOW_STATUS_FILE = get_status_file("pictureframe_slideshow_status.json")
+BACKGROUND_PID_FILE = get_status_file("pictureframe_background.pid")
+BACKGROUND_STATUS_FILE = get_status_file("pictureframe_background_status.json")
 CANCEL_FLAG_PATH = get_cancel_flag_path()
 PREPARED_DIR = BASE_DIR / "static" / "prepared"
 
@@ -546,12 +566,12 @@ def upload_page():
 def handle_upload():
     """Handle file uploads from the public page."""
     if 'photos' not in request.files:
-        flash(_("Aucun fichier sélectionné."), "error")
+        flash(_("No files selected."), "error")
         return redirect(url_for('upload_page'))
 
     files = request.files.getlist('photos')
     if not files or files[0].filename == '':
-        flash(_("Aucun fichier sélectionné."), "error")
+        flash(_("No files selected."), "error")
         return redirect(url_for('upload_page'))
 
     PENDING_UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
@@ -569,7 +589,7 @@ def handle_upload():
             logger.info(f"[Upload] New file received from guest and awaiting approval: {final_path.name}")
             count += 1
 
-    flash(_('%(count)s photo(s) envoyée(s) pour validation avec succès !', count=count), "success")
+    flash(_('%(count)s photo(s) sent for validation successfully!', count=count), "success")
     return redirect(url_for('upload_page'))
 
 @app.route('/api/get_pending_photos')
@@ -628,7 +648,7 @@ def manage_pending_photo():
     if action == 'reject':
         try:
             pending_path.unlink()
-            return jsonify({"success": True, "message": _("Photo rejetée.")})
+            return jsonify({"success": True, "message": _("Previous photo")})
         except Exception as e:
             return jsonify({"success": False, "message": f"Erreur: {e}"}), 500
 
@@ -638,7 +658,7 @@ def manage_pending_photo():
         # 2. Start preparation.
         # 3. If preparation succeeds, remove the photo from the pending directory.
         # Use a dedicated 'guests' directory to avoid mixing or deleting other photos.
-        target_source = "invités"
+        target_source = "guests"
         source_dir = BASE_DIR / "static" / "photos" / target_source
         source_dir.mkdir(parents=True, exist_ok=True)
 
@@ -662,22 +682,22 @@ def manage_pending_photo():
                 # --- NEW: Automatically enable the 'invites' source if it is not already enabled ---
                 # This ensures the approved photo will be shown in the slideshow.
                 current_sources = config.get('display_sources', [])
-                if 'invités' not in current_sources:
-                    current_sources.append('invités')
+                if 'guests' not in current_sources:
+                    current_sources.append('guests')
                     config['display_sources'] = current_sources
                     save_config(config)
 
                 # Restart the slideshow to include the new photo immediately.
-                if is_slideshow_running():
-                    restart_slideshow_for_update()
+                if is_display_process_running():
+                    restart_display_process_for_update()
 
-                return jsonify({"success": True, "message": _("Photo approuvée et préparée. Le diaporama a été mis à jour.")})
+                return jsonify({"success": True, "message": _("Photo approved and prepared. The slideshow has been updated.")})
             else:
-                return jsonify({"success": False, "message": _("La préparation de la photo a échoué. La photo reste en attente.")}), 500
+                return jsonify({"success": False, "message": _("Photo preparation failed. The photo remains pending.")}), 500
         except Exception as e:
             return jsonify({"success": False, "message": f"Error during preparation: {e}"}), 500
 
-    return jsonify({"success": False, "message": _("Action inconnue.")}), 400
+    return jsonify({"success": False, "message": _("Activation in progress...")}), 400
 
 @app.route('/debug/pending')
 @login_required
@@ -699,20 +719,76 @@ def login():
         password = request.form.get('password')
         if username and password and check_credentials(username, password):
             session['logged_in'] = True
-            flash(_("Connexion réussie"), "success")
+            flash(_("Successful connection"), "success")
             return redirect(url_for('configure'))
         else:
-            flash(_("Identifiants invalides"), "error")
+            flash(_("Invalid identifiers"), "error")
     return render_template('login.html.jinja')
 
 @app.route('/logout', methods=['GET', 'POST'])
 def logout():
     session.pop('logged_in', None)
-    flash(_("Déconnexion réussie"), "success")
+    flash(_("Successful disconnection"), "success")
     return redirect(url_for('login'))
 
 
 # --- Configuration & slideshow management ---
+
+# Fallback timezone list used when zoneinfo.available_timezones() returns
+# empty (Windows without the tzdata package).  Covers major regions so the
+# selector is usable; the full list is available once tzdata is installed.
+_FALLBACK_TIMEZONES = [
+    "Africa/Cairo", "Africa/Casablanca", "Africa/Johannesburg", "Africa/Nairobi",
+    "America/Anchorage", "America/Argentina/Buenos_Aires", "America/Chicago",
+    "America/Denver", "America/Halifax", "America/Los_Angeles", "America/Mexico_City",
+    "America/New_York", "America/Phoenix", "America/Sao_Paulo", "America/Toronto",
+    "America/Vancouver",
+    "Asia/Bangkok", "Asia/Beirut", "Asia/Calcutta", "Asia/Colombo", "Asia/Damascus",
+    "Asia/Dhaka", "Asia/Dubai", "Asia/Hong_Kong", "Asia/Jakarta", "Asia/Jerusalem",
+    "Asia/Kabul", "Asia/Karachi", "Asia/Kathmandu", "Asia/Kolkata", "Asia/Kuala_Lumpur",
+    "Asia/Manila", "Asia/Pyongyang", "Asia/Seoul", "Asia/Shanghai", "Asia/Singapore",
+    "Asia/Taipei", "Asia/Tehran", "Asia/Tokyo",
+    "Atlantic/Reykjavik",
+    "Australia/Adelaide", "Australia/Brisbane", "Australia/Darwin",
+    "Australia/Hobart", "Australia/Perth", "Australia/Sydney",
+    "Europe/Amsterdam", "Europe/Athens", "Europe/Berlin", "Europe/Brussels",
+    "Europe/Budapest", "Europe/Copenhagen", "Europe/Dublin", "Europe/Helsinki",
+    "Europe/Istanbul", "Europe/Lisbon", "Europe/London", "Europe/Luxembourg",
+    "Europe/Madrid", "Europe/Moscow", "Europe/Oslo", "Europe/Paris", "Europe/Prague",
+    "Europe/Rome", "Europe/Stockholm", "Europe/Vienna", "Europe/Warsaw", "Europe/Zurich",
+    "Pacific/Auckland", "Pacific/Honolulu",
+    "UTC",
+]
+
+
+def get_available_timezones(current_timezone=None):
+    """Return every IANA time zone name, sorted, for the selector.
+
+    ``current_timezone`` (from the saved config) is kept in the list even
+    when it is missing from the system's tz database, so the selector
+    always shows a valid entry for the configured value.
+
+    On Windows without the ``tzdata`` package, ``zoneinfo.available_timezones()``
+    returns an empty set.  A built-in fallback list of common time zones
+    ensures the dropdown is never empty in that case.
+    """
+    try:
+        from zoneinfo import available_timezones
+        timezones = set(available_timezones())
+    except Exception as exc:  # pragma: no cover - depends on tzdata
+        logger.warning(f"Could not list system time zones: {exc}")
+        timezones = set()
+
+    if not timezones:
+        # Fallback: tzdata not installed (common on Windows).  Provide a
+        # curated list of common IANA zones so the selector is usable.
+        logger.info("System timezone list empty; using built-in fallback.")
+        timezones = set(_FALLBACK_TIMEZONES)
+
+    if current_timezone:
+        timezones.add(current_timezone)
+    return sorted(timezones)
+
 
 @app.route('/configure', methods=['GET', 'POST'])
 @login_required
@@ -763,12 +839,17 @@ def configure():
             'tide_latitude', 'tide_longitude', 'stormglass_api_key', 'tide_offset_x', 'tide_offset_y'
             , 'button_pin',
             'timezone'
+            # Background updater settings (app_mode itself is switched
+            # through the dedicated /api/app_mode route).
+            , 'background_update_interval', 'background_output_format',
+            'background_resolution_mode', 'background_display_style'
         ]:
             if key in request.form:
                 value = request.form.get(key)
                 # Handle numeric fields.
                 if key in ['display_duration', 'clock_offset_x', 'clock_offset_y', 'clock_font_size', 'weather_update_interval_minutes', 'display_width', 'display_height', 'info_display_duration', 'tide_offset_x', 'tide_offset_y', 'video_audio_volume', 'favorite_boost_factor',
-                           'button_pin', 'smart_plug_on_delay', 'anniversary_boost_factor']: # Integer fields
+                           'button_pin', 'smart_plug_on_delay', 'anniversary_boost_factor',
+                           'background_update_interval']: # Integer fields
                     try:
                         config[key] = int(value)
                     except (ValueError, TypeError):
@@ -875,8 +956,8 @@ def configure():
         config["show_country_flag"] = 'show_country_flag' in request.form
         config["photo_metadata_background_enabled"] = 'photo_metadata_background_enabled' in request.form
         save_config(config)
-        restart_slideshow_process() # Restart only the slideshow process.
-        flash(_("Configuration enregistrée. Le diaporama a été relancé pour appliquer les changements."), "success")
+        restart_display_process() # Restart only the slideshow process.
+        flash(_("Configuration saved. The slideshow was restarted to apply the changes."), "success")
         return redirect(url_for('configure'))
 
     slideshow_running = any(
@@ -914,7 +995,8 @@ def configure():
         favorite_photos=favorite_photos, # Nouvelle variable pour l'onglet des favoris
         slideshow_running=slideshow_running,
         pending_photos=pending_photos_list,
-        weather_cities=WEATHER_CITIES
+        weather_cities=WEATHER_CITIES,
+        available_timezones=get_available_timezones(config.get('timezone'))
     )
 
 @app.route("/import-usb")
@@ -1009,7 +1091,7 @@ def import_smartphone():
                     continue
                 # Add the preview URL.
                 if update.get("current_photo_path"):
-                    update["current_photo_url"] = url_for('static', filename=f"prepared/smartphone/{update['current_photo_path']}")
+                    update["current_photo_url"] = url_for('static', filename=to_static_url_path(f"prepared/smartphone/{update['current_photo_path']}"))
                 yield stream_event(update)
             prepared_dir = BASE_DIR / "static" / "prepared" / "smartphone"
             for photo in source_dir.iterdir():
@@ -1025,8 +1107,8 @@ def import_smartphone():
             if "smartphone" not in sources:
                 sources.append("smartphone")
             save_config(config)
-            if is_slideshow_running():
-                restart_slideshow_for_update()
+            if is_display_process_running():
+                restart_display_process_for_update()
             yield stream_event({"type": "done", "percent": 100,
                                 "message": _("%(imported)s photos imported; %(skipped)s duplicates skipped.",
                                              imported=imported, skipped=skipped),
@@ -1106,7 +1188,7 @@ def prepare_photos():
                 
                 # Add the prepared image URL in the main thread (which has the active Flask request context).
                 if update.get("current_photo_path"):
-                    update["current_photo_url"] = url_for('static', filename=f"prepared/{source}/{update['current_photo_path']}")
+                    update["current_photo_url"] = url_for('static', filename=to_static_url_path(f"prepared/{source}/{update['current_photo_path']}"))
                 
                 yield f"data: {json.dumps(update, ensure_ascii=False)}\n\n"
                 
@@ -1287,10 +1369,12 @@ def schedule_worker():
         end_time = datetime.strptime(end_str, "%H:%M").time()
         in_schedule_at_boot = (start_time <= end_time and start_time <= now_time <= end_time) or \
                               (start_time > end_time and (now_time >= start_time or now_time <= end_time))
-        
-        if in_schedule_at_boot:
-            logger.info(f"📅 Between {start_str} and {end_str} = active hours at startup; launching the slideshow.")
-            start_slideshow()
+
+        # In background_updater mode, always start the display process at
+        # boot (the desktop wallpaper should update regardless of active hours).
+        if in_schedule_at_boot or get_app_mode(config) == "background_updater":
+            logger.info(f"📅 Launching the display process (mode={get_app_mode(config)}).")
+            start_display_process()
     except Exception as e:
         logger.error(f"❌ Critical error in the startup sequence: {e}", exc_info=True)
 
@@ -1323,40 +1407,45 @@ def schedule_worker():
                 logger.info("📅 Schedule change detected; resetting the manual override.")
                 config['manual_override'] = None
                 save_config(config)
-            
+
             last_schedule_state = in_schedule
             manual_override = config.get('manual_override')
-            slideshow_is_running = is_slideshow_running()
+            slideshow_is_running = is_display_process_running()
+
+            # In background_updater mode, the active-hours schedule is less
+            # meaningful (the desktop wallpaper should update regardless of
+            # the time of day).  Only apply the schedule in picture_frame mode,
+            # or when the user has explicitly set a manual override.
+            skip_schedule = (get_app_mode(config) == "background_updater")
 
             # Automatically stop only when there is no "start" override.
-            if not in_schedule and slideshow_is_running and manual_override != "start":
+            if not skip_schedule and not in_schedule and slideshow_is_running and manual_override != "start":
                 logger.info("📅 Inactive hours detected while the slideshow is running. Stopping...")
-                stop_slideshow()
+                stop_display_process()
             # Automatically start only when there is no "stop" override.
-            elif in_schedule and not slideshow_is_running and manual_override != "stop":
+            elif (skip_schedule or in_schedule) and not slideshow_is_running and manual_override != "stop":
                 logger.info("📅 Active hours detected while the slideshow is stopped. Starting...")
-                # 1. Ensure the display is on (via DPMS if there is no smart plug).
-                set_display_power(on=True)
-                # 2. Briefly wait for the display environment to stabilize.
-                time.sleep(5)
-                
-                # --- FIX: Force the resolution after waking, as at startup ---
-                output_name = get_display_output_name()
-                if output_name:
-                    width = config.get('display_width', 1920)
-                    height = config.get('display_height', 1080)
-                    logger.info(f"📅 Forcing resolution {width}x{height} on display '{output_name}' after wake.")
-                    try:
-                        subprocess.run(
-                            ['swaymsg', 'output', output_name, 'mode', f'{width}x{height}'],
-                            check=True, timeout=10, env=os.environ
-                        )
-                        time.sleep(2) # Allow the display time to stabilize.
-                    except Exception as e:
-                        logger.error(f"❌ Failed to force the resolution after wake: {e}")
+                if not skip_schedule:
+                    # Picture-frame mode: ensure the display is on (via DPMS
+                    # if there is no smart plug) and force the resolution.
+                    set_display_power(on=True)
+                    time.sleep(5)
+                    output_name = get_display_output_name()
+                    if output_name:
+                        width = config.get('display_width', 1920)
+                        height = config.get('display_height', 1080)
+                        logger.info(f"📅 Forcing resolution {width}x{height} on display '{output_name}' after wake.")
+                        try:
+                            subprocess.run(
+                                ['swaymsg', 'output', output_name, 'mode', f'{width}x{height}'],
+                                check=True, timeout=10, env=os.environ
+                            )
+                            time.sleep(2) # Allow the display time to stabilize.
+                        except Exception as e:
+                            logger.error(f"❌ Failed to force the resolution after wake: {e}")
 
-                # 3. Explicitly start the slideshow.
-                start_slideshow()
+                # Start the display process (slideshow or background updater).
+                start_display_process()
 
         except Exception as e:
             logger.error(f"📅❌ Error in the scheduling worker: {e}", exc_info=True)
@@ -1402,16 +1491,16 @@ def toggle_slideshow():
     config = load_config()
 
     # Read the current slideshow state.
-    running = is_slideshow_running()
+    running = is_display_process_running()
 
     # Stop the slideshow if it is running; otherwise start it.
     if running:
-        stop_slideshow()
+        stop_display_process()
         config['manual_override'] = "stop"  # The user requested a stop.
     else:
         set_display_power(on=True)
         time.sleep(1)
-        start_slideshow()
+        start_display_process()
         config['manual_override'] = "start"  # The user requested a start.
 
     save_config(config) # Save config after manual override
@@ -1496,22 +1585,22 @@ def delete_source_photos(source_name):
 @login_required
 def shutdown():
     if not IS_LINUX:
-        flash(_("Arrêt du système non disponible sur cette plateforme."), "warning")
+        flash(_("System shutdown unavailable on this platform."), "warning")
         return redirect(url_for('configure'))
     from platform_utils import system_shutdown
     if not system_shutdown():
-        flash(_("Impossible de lancer l'arrêt du système."), "warning")
+        flash(_("Unable to load data."), "warning")
     return redirect(url_for('configure'))
 
 @app.route('/reboot', methods=['POST'])
 @login_required
 def reboot():
     if not IS_LINUX:
-        flash(_("Redémarrage du système non disponible sur cette plateforme."), "warning")
+        flash(_("System reboot unavailable on this platform."), "warning")
         return redirect(url_for('configure'))
     from platform_utils import system_reboot
     if not system_reboot():
-        flash(_("Impossible de lancer le redémarrage du système."), "warning")
+        flash(_("Unable to initiate system reboot."), "warning")
     return redirect(url_for('configure'))
 
 @app.route('/system_reboot', methods=['POST'])
@@ -1587,9 +1676,124 @@ def ping():
     return jsonify({
         "status": "ok",
         "instance": APP_INSTANCE_ID,
-        "slideshow_running": is_slideshow_running(),
+        "slideshow_running": is_display_process_running(),
         "is_active_hours": is_active
     })
+
+
+# ── Application Update (git pull) ─────────────────────────────────
+
+@app.route('/api/update_status', methods=['GET'])
+@login_required
+def update_status():
+    """Return git repo status and backup info for the update UI."""
+    try:
+        from platform_utils import is_git_repo, git_get_info, git_has_updates, git_backup_exists
+        if not is_git_repo():
+            return jsonify({"is_git_repo": False})
+        has_updates, info = git_has_updates()
+        return jsonify({
+            "is_git_repo": True,
+            "has_updates": has_updates,
+            "commit": info.get("commit", ""),
+            "branch": info.get("branch", ""),
+            "behind_count": info.get("behind_count", 0),
+            "new_commits": info.get("new_commits", []),
+            "backup_exists": git_backup_exists(),
+        })
+    except Exception as e:
+        logger.error("update_status failed: %s", e)
+        return jsonify({"is_git_repo": False, "error": str(e)}), 500
+
+
+@app.route('/api/trigger_update', methods=['POST'])
+@login_required
+def trigger_update():
+    """Generate and launch the update script, then exit the app."""
+    from platform_utils import is_git_repo, generate_update_script
+    if not is_git_repo():
+        return jsonify({"success": False, "message": _("The application is not in a git repository.")}), 400
+    try:
+        script_path, _script_content = generate_update_script(BASE_DIR)
+        if not script_path:
+            raise RuntimeError(_("Unable to generate the update script."))
+
+        import subprocess
+        log_file = str(BASE_DIR / "logs" / "update.log")
+        with open(log_file, "a") as lf:
+            subprocess.Popen(
+                [sys.executable, script_path],
+                stdout=lf, stderr=lf,
+                stdin=subprocess.DEVNULL,
+                start_new_session=True,
+            )
+        logger.info("Update script launched: %s", script_path)
+
+        # Exit the app so the script can restart it.
+        RESTART_EXIT_CODE = 42
+        def do_exit():
+            time.sleep(2)
+            sys.exit(RESTART_EXIT_CODE)
+
+        threading.Thread(target=do_exit, daemon=True).start()
+        return jsonify({"success": True, "message": _("Update in progress...")})
+    except Exception as e:
+        logger.error("trigger_update failed: %s", e)
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
+@app.route('/api/delete_backup', methods=['POST'])
+@login_required
+def delete_backup():
+    """Delete the update backup directory."""
+    from platform_utils import git_delete_backup, git_backup_exists
+    if not git_backup_exists():
+        return jsonify({"success": False, "message": _("No backup file selected.")}), 400
+    if git_delete_backup():
+        return jsonify({"success": True, "message": _("Backup deleted.")})
+    return jsonify({"success": False, "message": _("Error deleting photo.")}), 500
+
+
+@app.route('/api/revert_to_backup', methods=['POST'])
+@login_required
+def revert_to_backup():
+    """Revert to the backup by launching the update script with rollback."""
+    from platform_utils import git_backup_exists, generate_update_script
+    if not git_backup_exists():
+        return jsonify({"success": False, "message": _("No backup to restore.")}), 400
+
+    try:
+        script_path, _script_content = generate_update_script(BASE_DIR)
+        if not script_path:
+            raise RuntimeError(_("Unable to generate the script."))
+
+        # Modify: skip git pull for revert (just restore the backup).
+        with open(script_path, 'r') as f:
+            content = f.read()
+        content = content.replace("if git_pull():", "if False:  # skip git pull for revert")
+        with open(script_path, 'w') as f:
+            f.write(content)
+
+        import subprocess
+        log_file = str(BASE_DIR / "logs" / "update.log")
+        with open(log_file, "a") as lf:
+            subprocess.Popen(
+                [sys.executable, script_path],
+                stdout=lf, stderr=lf,
+                stdin=subprocess.DEVNULL,
+                start_new_session=True,
+            )
+
+        RESTART_EXIT_CODE = 42
+        def do_exit():
+            time.sleep(2)
+            sys.exit(RESTART_EXIT_CODE)
+
+        threading.Thread(target=do_exit, daemon=True).start()
+        return jsonify({"success": True, "message": _("Restoration in progress... The application will restart.")})
+    except Exception as e:
+        logger.error("revert_to_backup failed: %s", e)
+        return jsonify({"success": False, "message": str(e)}), 500
 
 
 @app.route('/restart_app', methods=['POST'])
@@ -1609,7 +1813,7 @@ def restart_app():
     restart_thread = threading.Thread(target=do_restart)
     restart_thread.start()
     
-    flash(_("L'application web redémarre... La page sera inaccessible pendant quelques instants."), "success")
+    flash(_("The web application is rebooting... the page will be inaccessible for a few seconds."), "success")
     return redirect(url_for('configure'))
 
 @app.route('/api/slideshow/restart_for_update', methods=['POST'])
@@ -1617,8 +1821,8 @@ def restart_app():
 def restart_slideshow_for_update_route():
     """Restart the slideshow to apply content updates without turning off the display."""
     try:
-        if is_slideshow_running():
-            restart_slideshow_for_update()
+        if is_display_process_running():
+            restart_display_process_for_update()
         return jsonify({"success": True, "message": "Restart command sent."})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
@@ -1666,7 +1870,7 @@ def play_playlist():
             json.dump(playlist_data_to_save, f)
         
         # Restart the slideshow to load the new playlist without turning off the display.
-        restart_slideshow_for_update()
+        restart_display_process_for_update()
 
         return jsonify({"success": True, "message": f"Lancement du diaporama pour la playlist '{target_playlist.get('name')}'."})
     except Exception as e:
@@ -1682,7 +1886,7 @@ def restart_standard_slideshow():
             os.remove(CUSTOM_PLAYLIST_FILE)
         
         # Restart the slideshow in standard mode without turning off the display.
-        restart_slideshow_for_update()
+        restart_display_process_for_update()
         return jsonify({"success": True, "message": "Standard slideshow restarted."})
     except Exception as e:
         logger.info(f"Error restarting the standard slideshow: {e}")
@@ -1697,13 +1901,13 @@ def toggle_sleep_api():
         return jsonify({"success": False, "message": "Unauthorized access."}), 403
     
     try:
-        if is_slideshow_running():
+        if is_display_process_running():
             logger.info("API toggle_sleep: slideshow running -> stopping.")
-            stop_slideshow()
+            stop_display_process()
             message = "Diaporama mis en veille."
         else:
             logger.info("API toggle_sleep: slideshow stopped -> starting.")
-            start_slideshow()
+            start_display_process()
             message = "Slideshow resumed."
         return jsonify({"success": True, "message": message})
     except Exception as e:
@@ -1954,12 +2158,12 @@ def display_power():
 
     # The logic is now in slideshow_manager.
     if state == 'on':
-        if not is_slideshow_running():
-            start_slideshow()
+        if not is_display_process_running():
+            start_display_process()
         success, message = True, "Start command sent."
     else: # off
-        if is_slideshow_running():
-            stop_slideshow()
+        if is_display_process_running():
+            stop_display_process()
         success, message = True, "Stop command sent."
 
     return jsonify({"success": success, "message": message})
@@ -1989,9 +2193,9 @@ def play_source_as_playlist(source_name):
         with open(CUSTOM_PLAYLIST_FILE, 'w', encoding='utf-8') as f:
             json.dump(playlist_data, f)
         
-        stop_slideshow()
+        stop_display_process()
         time.sleep(1.5) # Allow a little more time for shutdown.
-        start_slideshow()
+        start_display_process()
         
         return jsonify({"success": True, "message": f"Lancement du diaporama pour la source '{source_label}'."})
     except Exception as e:
@@ -2056,32 +2260,54 @@ def set_slideshow_duration():
 
     try:
         config = load_config()
-        config['display_duration'] = duration
+        # Duration is mode-specific: photo rotation in background mode,
+        # on-screen display duration in picture-frame mode.
+        if get_app_mode(config) == "background_updater":
+            config['background_update_interval'] = duration
+        else:
+            config['display_duration'] = duration
         save_config(config)
         
         # Restart the slideshow to apply the new duration.
-        if is_slideshow_running():
-            stop_slideshow()
+        if is_display_process_running():
+            stop_display_process()
             time.sleep(1) # Laisser le temps au processus de se terminer
         
-        start_slideshow()
+        start_display_process()
         
         return jsonify({"success": True, "message": f"Display duration set to {duration} seconds."})
     except Exception as e:
         app.logger.error(f"Error changing the display duration: {e}", exc_info=True)
         return jsonify({"success": False, "message": f"Erreur interne du serveur : {e}"}), 500
 
+def _display_pid_file():
+    """Return the PID file of the display process matching the current run mode."""
+    if get_app_mode(load_config()) == "background_updater":
+        return BACKGROUND_PID_FILE
+    return SLIDESHOW_PID_FILE
+
+
+def _display_status_file():
+    """Return the status file of the display process matching the current run mode."""
+    if get_app_mode(load_config()) == "background_updater":
+        return BACKGROUND_STATUS_FILE
+    return SLIDESHOW_STATUS_FILE
+
+
 def _send_slideshow_command(command, sig):
-    """Send slideshow controls through POSIX signals or the cross-platform command queue."""
-    if not is_slideshow_running():
+    """Send display-process controls through POSIX signals or the cross-platform command queue."""
+    if not is_display_process_running():
         return jsonify({"success": False, "message": "Le diaporama n'est pas en cours."}), 404
     try:
         if IS_LINUX:
-            with SLIDESHOW_PID_FILE.open("r", encoding="utf-8") as pid_file:
+            with _display_pid_file().open("r", encoding="utf-8") as pid_file:
                 pid = int(pid_file.read())
             os.kill(pid, sig)
         else:
-            enqueue_slideshow_command(command)
+            process = ("background"
+                       if get_app_mode(load_config()) == "background_updater"
+                       else "slideshow")
+            enqueue_slideshow_command(command, process=process)
         return jsonify({"success": True})
     except (OSError, ValueError) as e:
         return jsonify({"success": False, "message": f"Impossible de communiquer avec le diaporama : {e}"}), 500
@@ -2112,15 +2338,41 @@ def toggle_notifications_api():
 
 @app.route('/api/slideshow/status')
 def slideshow_status():
-    if not is_slideshow_running():
+    if not is_display_process_running():
         return jsonify({"running": False, "paused": False})
     try:
-        with SLIDESHOW_STATUS_FILE.open("r", encoding="utf-8") as f:
+        with _display_status_file().open("r", encoding="utf-8") as f:
             status = json.load(f)
         config = load_config()
         return jsonify({"running": True, "notifications_enabled":  True, **status})
     except (FileNotFoundError, json.JSONDecodeError):
         return jsonify({"running": True, "paused": False, "notifications_enabled": True})
+
+
+@app.route('/api/app_mode', methods=['GET'])
+def get_app_mode_route():
+    """Return the current top-level run mode (picture frame / background updater)."""
+    return jsonify({"app_mode": get_app_mode(load_config())})
+
+
+@app.route('/api/app_mode', methods=['POST'])
+def set_app_mode_route():
+    """Switch the top-level run mode and restart the display process.
+
+    Accepts JSON: {"app_mode": "picture_frame" | "background_updater"}.
+    Switching modes stops the active display process, persists the new mode
+    to config.json and starts the newly selected one. Display power is never
+    touched during the switch.
+    """
+    if not session.get('logged_in') and request.remote_addr != '127.0.0.1':
+        return jsonify({"success": False, "message": "Unauthorized access."}), 403
+    data = request.get_json(silent=True) or {}
+    new_mode = data.get("app_mode")
+    effective = switch_app_mode(new_mode)
+    if effective != new_mode:
+        return jsonify({"success": False,
+                        "message": "Mode d'exécution invalide."}), 400
+    return jsonify({"success": True, "app_mode": effective})
 
 @app.route('/api/get_available_resolutions')
 @login_required
@@ -2183,12 +2435,12 @@ def set_resolution():
         save_config(config)
 
         # Restart the slideshow so it picks up the new resolution.
-        if is_slideshow_running():
-            stop_slideshow()
-            start_slideshow()
-            message = _("Résolution appliquée : %(width)sx%(height)s. Le diaporama a été redémarré.", width=width, height=height)
+        if is_display_process_running():
+            stop_display_process()
+            start_display_process()
+            message = _("Applied resolution: %(width) SX %(height)s. The slideshow has been restarted.", width=width, height=height)
         else:
-            message = _("Résolution appliquée : %(width)sx%(height)s. Le diaporama n'était pas en cours.", width=width, height=height)
+            message = _("Applied resolution: %(width) SX %(height)s. The slideshow was not in progress.", width=width, height=height)
 
         return jsonify({"success": True, "message": message})
     except Exception as e:
@@ -2250,24 +2502,61 @@ def get_current_resolution_route():
 @login_required
 def current_photo_status():
     """Return the path of the currently displayed photo."""
-    if not is_slideshow_running():
+    if not is_display_process_running():
         return jsonify({"current_photo": None, "status": "stopped", "metadata_text": ""})
 
     try:
-        if os.path.exists(CURRENT_PHOTO_FILE):
-            with open(CURRENT_PHOTO_FILE, "r") as f:
+        photo_path = ""
+        if get_app_mode(load_config()) == "background_updater":
+            # The background updater reports its current photo through its
+            # status file; it never writes CURRENT_PHOTO_FILE.
+            try:
+                with open(BACKGROUND_STATUS_FILE, "r", encoding="utf-8") as f:
+                    photo_path = (json.load(f) or {}).get("current_photo") or ""
+            except (FileNotFoundError, json.JSONDecodeError, OSError):
+                photo_path = ""
+        elif os.path.exists(CURRENT_PHOTO_FILE):
+            with open(CURRENT_PHOTO_FILE, "r", encoding="utf-8") as f:
                 photo_path = f.read().strip()
-            if photo_path:
-                # Build the full URL for the image src attribute.
-                metadata_path = BASE_DIR / "static" / photo_path
-                metadata = get_photo_metadata(metadata_path)
-                metadata_text = format_photo_metadata(metadata, load_config(), _)
-                return jsonify({"current_photo": url_for('static', filename=photo_path),
-                                "status": "running", "metadata_text": metadata_text or _("No Metadata"),
-                                "location_text": format_preview_location(metadata, _)})
+        if photo_path:
+            # The background updater writes an absolute path (e.g.
+            # C:\...\static\prepared\smartphone\photo.jpg); url_for('static')
+            # needs a path relative to the static/ directory.
+            # Try to resolve relative to BASE_DIR/static first; fall back to
+            # string-based stripping for paths that already use forward slashes.
+            from pathlib import Path as _Path
+            try:
+                abs_path = _Path(photo_path)
+                if abs_path.is_absolute():
+                    static_dir = (_Path(BASE_DIR) / "static").resolve()
+                    resolved = abs_path.resolve()
+                    rel = resolved.relative_to(static_dir)
+                    photo_path = to_static_url_path(rel)
+                else:
+                    photo_path = to_static_url_path(photo_path)
+            except (ValueError, OSError):
+                # Path is not under static/ — fall back to string stripping.
+                photo_path = to_static_url_path(photo_path)
+                static_marker = "/static/"
+                if static_marker in photo_path:
+                    photo_path = photo_path.split(static_marker, 1)[1]
+                elif photo_path.startswith("static/"):
+                    photo_path = photo_path[len("static/"):]
+            # If the path is still absolute or not under static/, we cannot
+            # serve it via url_for('static'); return None to avoid a 404.
+            if _Path(photo_path).is_absolute() or not photo_path:
+                return jsonify({"current_photo": None, "status": "running",
+                                "metadata_text": ""})
+            # Build the full URL for the image src attribute.
+            metadata_path = BASE_DIR / "static" / photo_path
+            metadata = get_photo_metadata(metadata_path)
+            metadata_text = format_photo_metadata(metadata, load_config(), _)
+            return jsonify({"current_photo": url_for('static', filename=photo_path),
+                            "status": "running", "metadata_text": metadata_text or _("No Metadata"),
+                            "location_text": format_preview_location(metadata, _)})
     except Exception as e:
         logger.info(f"Error reading current photo file: {e}")
-        
+
     return jsonify({"current_photo": None, "status": "running", "metadata_text": ""})
 
 @app.route('/save_wifi_settings', methods=['POST'])
@@ -2278,7 +2567,7 @@ def save_wifi_settings():
     country = request.form.get('wifi_country') # Get the country code
 
     if not ssid or not country: # Country is now required
-        flash(_("Le SSID et le pays Wi-Fi sont obligatoires."), "danger")
+        flash(_("SSID and Wi-Fi country are mandatory."), "danger")
         return redirect(url_for('configure'))
 
     try:
@@ -2291,9 +2580,9 @@ def save_wifi_settings():
 
         # Apply the Wi-Fi settings to the system.
         set_wifi_config(ssid, password, country) # Pass country to the function
-        flash(_("Paramètres Wi-Fi appliqués. Le service réseau a été redémarré pour forcer la connexion. Veuillez patienter une minute et vérifier le statut."), "success")
+        flash(_("Wi-Fi settings applied. The network service has been restarted to force connection. Please wait a minute and check the status."), "success")
     except Exception as e:
-        flash(_("Erreur lors de l'application des paramètres Wi-Fi : %(error)s", error=e), "danger")
+        flash(_("Error applying Wi-Fi settings: %(error)s", error=e), "danger")
     return redirect(url_for('configure'))
 
 def get_wifi_status():
@@ -2349,22 +2638,22 @@ def change_password_route():
     confirm_password = request.form.get('confirm_password')
 
     if not new_password or not confirm_password:
-        flash(_("Les deux champs de mot de passe sont requis."), "danger")
+        flash(_("Both password fields are required."), "danger")
         return redirect(url_for('configure'))
 
     if new_password != confirm_password:
-        flash(_("Les mots de passe ne correspondent pas."), "danger")
+        flash(_("The passwords do not match."), "danger")
         return redirect(url_for('configure'))
     
     if len(new_password) < 6:
-        flash(_("Le mot de passe doit contenir au moins 6 caractères."), "warning")
+        flash(_("Password must contain at least 6 characters."), "warning")
         return redirect(url_for('configure'))
 
     try:
         change_password(new_password)
-        flash(_("Mot de passe mis à jour avec succès. Il sera nécessaire pour votre prochaine connexion."), "success")
+        flash(_("Password successfully updated. It will be required for your next login."), "success")
     except Exception as e:
-        flash(_("Erreur lors du changement de mot de passe : %(error)s", error=e), "danger")
+        flash(_("Error changing password:%(error)s", error=e), "danger")
 
     return redirect(url_for('configure'))
 
@@ -2408,7 +2697,7 @@ def backup_settings_api():
         backup_name = f'PictureFrame_backup_{datetime.now().strftime("%Y-%m-%d")}.json'
         return send_from_directory('config', 'config.json', as_attachment=True, download_name=backup_name)
     except FileNotFoundError:
-        flash(_("Le fichier de configuration n'a pas été trouvé."), "danger")
+        flash(_("The configuration file was not found."), "danger")
         return redirect(url_for('configure'))
 
 @app.route('/api/restore_settings', methods=['POST'])
@@ -2416,12 +2705,12 @@ def backup_settings_api():
 def restore_settings_api():
     """Restore the configuration from a backup file."""
     if 'backup_file' not in request.files:
-        flash(_("Aucun fichier de sauvegarde sélectionné."), "warning")
+        flash(_("No backup file selected."), "warning")
         return redirect(url_for('configure'))
 
     file = request.files['backup_file']
     if file.filename == '':
-        flash(_("Aucun fichier de sauvegarde sélectionné."), "warning")
+        flash(_("No backup file selected."), "warning")
         return redirect(url_for('configure'))
 
     try:
@@ -2431,11 +2720,11 @@ def restore_settings_api():
 
         # Save the new configuration.
         save_config(new_config_data)
-        flash(_("Configuration restaurée avec succès ! Le diaporama va redémarrer pour appliquer les changements."), "success")
+        flash(_("Configuration successfully restored! The slideshow will restart to apply the changes."), "success")
     except (json.JSONDecodeError, UnicodeDecodeError):
-        flash(_("Fichier de sauvegarde invalide ou corrompu. Ce n'est pas un fichier JSON valide."), "danger")
+        flash(_("Invalid or corrupted backup file. This is not a valid JSON file."), "danger")
     except Exception as e:
-        flash(_("Erreur lors de la restauration : %(error)s", error=e), "danger")
+        flash(_("Restore error: %(error)s", error=e), "danger")
     
     return redirect(url_for('configure'))
 
@@ -2732,7 +3021,7 @@ def apply_filter_api():
                 save_filter_states(previous_states)
                 raise
         # The path is unchanged, but return it to force the browser cache to refresh.
-        new_url = url_for('static', filename=f'prepared/{photo_relative_path}')
+        new_url = url_for('static', filename=to_static_url_path(f'prepared/{photo_relative_path}'))
         return jsonify({"success": True, "message": "Filter applied!", "new_path": new_url})
     except ValueError as e: # Pour les noms de filtres invalides
         return jsonify({"success": False, "message": str(e)}), 400
@@ -2824,8 +3113,8 @@ def photo_crop():
                     elif target.exists():
                         target.unlink()
                 raise
-        if is_slideshow_running():
-            restart_slideshow_for_update()
+        if is_display_process_running():
+            restart_display_process_for_update()
         return jsonify({"success": True, "message": _("Crop saved.")})
     except (ValueError, FileNotFoundError) as error:
         logger.warning("Photo crop rejected: %s", error)
@@ -3021,11 +3310,11 @@ def scan_wifi():
 
 
 def migrate_guest_folders():
-    """Migrate the legacy 'guests' and 'invites' directories to the internal guest-source directory."""
+    """Migrate the legacy 'invites' and 'invités' directories to the internal 'guests' source directory."""
     base_photos = BASE_DIR / "static" / "photos"
     base_prepared = BASE_DIR / "static" / "prepared"
-    target_name = "invités"
-    legacy_names = ["guests", "invites"]
+    target_name = "guests"
+    legacy_names = ["invites", "invités"]
 
     # Create target directories if they do not exist.
     (base_photos / target_name).mkdir(parents=True, exist_ok=True)
@@ -3080,6 +3369,42 @@ def log_thread_exception(args):
                  exc_info=(args.exc_type, args.exc_value, args.exc_traceback))
 
 
+def parse_cli_args():
+    """Parse command-line arguments for app.py.
+
+    ``--mode`` / ``--background`` force the run mode for this session without
+    touching config.json: they set the ``PICTUREFRAME_APP_MODE`` environment
+    variable, which takes precedence over the configuration everywhere
+    (utils/app_mode.py) and is inherited by the child processes.
+    """
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        prog="app.py",
+        description="PictureFrame web server (slideshow / desktop background updater).")
+    parser.add_argument(
+        "--mode", "-m", dest="mode",
+        choices=("picture_frame", "background_updater"),
+        help="Force the run mode for this session: 'picture_frame' (fullscreen "
+             "Pygame slideshow) or 'background_updater' (desktop wallpaper).")
+    parser.add_argument(
+        "--background", action="store_true",
+        help="Shorthand for --mode background_updater.")
+    return parser.parse_args()
+
+
+def apply_forced_app_mode(args):
+    """Honour the CLI mode flags before any worker or child process starts."""
+    from utils.app_mode import ENV_APP_MODE
+    mode = args.mode
+    if args.background and not mode:
+        mode = "background_updater"
+    if mode:
+        os.environ[ENV_APP_MODE] = mode
+        logger.info("Startup: run mode forced via command line to %r", mode)
+    return mode
+
+
 def run_worker(target):
     logger.info("Worker entered: %s", threading.current_thread().name)
     target()
@@ -3110,9 +3435,27 @@ def log_server_readiness():
 
 def main():
     threading.excepthook = log_thread_exception
+    # CLI mode override must be applied before the scheduler and the child
+    # processes read the run mode.
+    apply_forced_app_mode(parse_cli_args())
     logger.info("Startup: migrating guest folders")
     migrate_guest_folders()
     logger.info("Startup: guest folder migration complete")
+
+    # Check for git updates at startup (non-blocking, just logs a suggestion).
+    try:
+        from platform_utils import is_git_repo, git_has_updates
+        if is_git_repo():
+            has_updates, info = git_has_updates()
+            if has_updates:
+                count = info.get("behind_count", 0)
+                logger.info("Startup: git repo is %d commit(s) behind origin. "
+                           "An update is available in the Maintenance tab.", count)
+            else:
+                logger.info("Startup: git repo is up to date (commit %s).",
+                           info.get("commit", "unknown"))
+    except Exception as exc:
+        logger.debug("Startup: git check skipped: %s", exc)
 
     for name, target in (
         ("slideshow-scheduler", schedule_worker),
