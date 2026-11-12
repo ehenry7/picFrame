@@ -30,6 +30,8 @@ from pathlib import Path
 
 logger = logging.getLogger("pictureframe.platform_utils")
 
+BASE_DIR = Path(__file__).resolve().parent
+
 # ── Platform flags ──────────────────────────────────────────────
 IS_LINUX = platform.system() == "Linux"
 IS_WINDOWS = platform.system() == "Windows"
@@ -101,25 +103,33 @@ def get_cancel_flag_path() -> Path:
     return get_temp_dir() / "pictureframe_cancel_import.flag"
 
 
-def get_slideshow_command_dir() -> Path:
-    """Return the cross-process command queue used when POSIX signals are unavailable."""
-    return get_temp_dir() / "pictureframe_slideshow_commands"
+def get_slideshow_command_dir(process: str = "slideshow") -> Path:
+    """Return the cross-process command queue used when POSIX signals are unavailable.
+
+    Args:
+        process: queue owner: "slideshow" (local_slideshow.py) or
+            "background" (background_updater.py). Defaults to the slideshow
+            queue for backward compatibility.
+    """
+    if process not in ("slideshow", "background"):
+        raise ValueError(f"Unsupported process command queue: {process}")
+    return get_temp_dir() / f"pictureframe_{process}_commands"
 
 
-def enqueue_slideshow_command(command: str) -> None:
+def enqueue_slideshow_command(command: str, process: str = "slideshow") -> None:
     """Queue a slideshow command for platforms without the POSIX control signals."""
     if command not in {"next", "previous", "toggle_pause"}:
         raise ValueError(f"Unsupported slideshow command: {command}")
 
-    command_dir = get_slideshow_command_dir()
+    command_dir = get_slideshow_command_dir(process)
     command_dir.mkdir(parents=True, exist_ok=True)
     command_file = command_dir / f"{uuid.uuid4().hex}.txt"
     command_file.write_text(command, encoding="utf-8")
 
 
-def consume_slideshow_commands() -> list[str]:
+def consume_slideshow_commands(process: str = "slideshow") -> list[str]:
     """Read and remove queued slideshow commands."""
-    command_dir = get_slideshow_command_dir()
+    command_dir = get_slideshow_command_dir(process)
     if not command_dir.is_dir():
         return []
 
@@ -527,6 +537,360 @@ def set_timezone(timezone: str):
     except Exception as e:
         logger.error(f"set_timezone failed: {e}")
         return False
+
+
+# ── Git / Application Update ──────────────────────────────────────
+
+def is_git_repo(path=None):
+    """Check whether *path* (defaults to BASE_DIR) is inside a git repository."""
+    import subprocess
+    if path is None:
+        path = BASE_DIR
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--is-inside-work-tree"],
+            cwd=str(path), capture_output=True, text=True, timeout=5,
+        )
+        return result.returncode == 0 and result.stdout.strip() == "true"
+    except Exception:
+        return False
+
+
+def git_get_info(path=None):
+    """Return a dict with current commit hash, branch, and remote URL.
+
+    Returns ``{}`` when *path* is not a git repo or git is unavailable.
+    """
+    import subprocess
+    if path is None:
+        path = BASE_DIR
+    if not is_git_repo(path):
+        return {}
+    info = {}
+    for key, args in (
+        ("commit", ["git", "rev-parse", "--short", "HEAD"]),
+        ("branch", ["git", "rev-parse", "--abbrev-ref", "HEAD"]),
+        ("remote", ["git", "config", "--get", "remote.origin.url"]),
+    ):
+        try:
+            result = subprocess.run(args, cwd=str(path), capture_output=True,
+                                    text=True, timeout=5)
+            info[key] = result.stdout.strip() if result.returncode == 0 else ""
+        except Exception:
+            info[key] = ""
+    return info
+
+
+def git_has_updates(path=None):
+    """Check whether the remote has commits not yet in the local branch.
+
+    Runs ``git fetch`` then compares.  Returns ``(has_updates: bool, info: dict)``.
+    The *info* dict always contains ``commit`` and ``branch``; on success it
+    also includes ``behind_count`` and ``new_commits`` (list of short logs).
+    """
+    import subprocess
+    if path is None:
+        path = BASE_DIR
+    if not is_git_repo(path):
+        return False, {}
+    info = git_get_info(path)
+    try:
+        # Fetch without modifying working tree.
+        subprocess.run(["git", "fetch", "--quiet"], cwd=str(path),
+                       capture_output=True, timeout=30)
+        branch = info.get("branch", "HEAD")
+        # Count commits behind.
+        result = subprocess.run(
+            ["git", "rev-list", "--count", f"HEAD..origin/{branch}"],
+            cwd=str(path), capture_output=True, text=True, timeout=5,
+        )
+        behind = int(result.stdout.strip()) if result.returncode == 0 and result.stdout.strip().isdigit() else 0
+        info["behind_count"] = behind
+        if behind > 0:
+            log_result = subprocess.run(
+                ["git", "log", "--oneline", f"HEAD..origin/{branch}", "--max-count=10"],
+                cwd=str(path), capture_output=True, text=True, timeout=5,
+            )
+            info["new_commits"] = [line for line in log_result.stdout.strip().splitlines() if line]
+        else:
+            info["new_commits"] = []
+        return behind > 0, info
+    except Exception as e:
+        logger.warning("git_has_updates failed: %s", e)
+        return False, info
+
+
+def git_create_backup(path=None):
+    """Create a backup of the current code using git stash or file copy.
+
+    Returns the backup directory path, or ``None`` on failure.
+    The backup is stored in ``.update_backup/`` next to the repo.
+    """
+    import shutil
+    if path is None:
+        path = BASE_DIR
+    backup_dir = path / ".update_backup"
+    try:
+        if backup_dir.exists():
+            shutil.rmtree(backup_dir)
+        # Copy essential files (not .git, not __pycache__, not static/prepared)
+        ignore_patterns = shutil.ignore_patterns(
+            ".git", "__pycache__", "*.pyc", ".update_backup",
+            "static", "logs", "cache", "config",
+        )
+        shutil.copytree(path, backup_dir, ignore=ignore_patterns)
+        logger.info("Backup created at %s", backup_dir)
+        return str(backup_dir)
+    except Exception as e:
+        logger.error("git_create_backup failed: %s", e)
+        return None
+
+
+def git_backup_exists(path=None):
+    """Check if an update backup exists."""
+    if path is None:
+        path = BASE_DIR
+    return (path / ".update_backup" / "app.py").is_file()
+
+
+def git_delete_backup(path=None):
+    """Delete the update backup directory."""
+    import shutil
+    if path is None:
+        path = BASE_DIR
+    backup_dir = path / ".update_backup"
+    try:
+        if backup_dir.exists():
+            shutil.rmtree(backup_dir)
+            logger.info("Update backup deleted.")
+            return True
+        return False
+    except Exception as e:
+        logger.error("git_delete_backup failed: %s", e)
+        return False
+
+
+def generate_update_script(app_dir, startup_script="start_pictureframe.sh"):
+    """Generate a self-contained Python update script (cross-platform).
+
+    The script:
+    1. Waits for the current server to exit
+    2. Kills any remaining processes
+    3. Creates a backup of the current code
+    4. Runs ``git pull``
+    5. Restarts the app
+    6. Waits for the new instance to respond
+    7. If health check fails, restores the backup and restarts again
+
+    Returns ``(script_path: str, content: str)`` or ``(None, "")`` on failure.
+    """
+    import tempfile, os, json
+    app_dir_str = str(app_dir)
+
+    script_content = '''#!/usr/bin/env python3
+"""Auto-generated PictureFrame update script. Runs independently after the web server exits."""
+import os, sys, time, shutil, subprocess, signal, urllib.request, json
+
+APP_DIR = r"%(APP_DIR)s"
+LOG_FILE = os.path.join(APP_DIR, "logs", "update.log")
+HEALTH_URL = "http://127.0.0.1:7090/api/ping"
+BACKUP_DIR = os.path.join(APP_DIR, ".update_backup")
+HEALTH_TIMEOUT = 60
+HEALTH_INTERVAL = 3
+IS_LINUX = sys.platform == "linux"
+IS_WINDOWS = sys.platform == "win32"
+
+FILES_TO_BACKUP = [
+    "app.py", "local_slideshow.py", "platform_utils.py",
+    "requirements.txt", "requirements-pi.txt", "setup.sh",
+    "start_pictureframe.sh", "babel.cfg",
+]
+DIRS_TO_BACKUP = ["utils", "templates", "translations", "tests", "scripts"]
+
+def log(msg):
+    with open(LOG_FILE, "a", encoding="utf-8") as f:
+        f.write(time.strftime("%%Y-%%m-%%d %%H:%%M:%%S") + " [UPDATE] " + msg + "\\n")
+
+def kill_remaining():
+    """Kill any remaining app processes."""
+    if IS_LINUX:
+        pid_file = "/tmp/pictureframe_slideshow.pid"
+        if os.path.exists(pid_file):
+            try:
+                with open(pid_file) as f:
+                    pid = int(f.read().strip())
+                os.kill(pid, signal.SIGTERM)
+            except Exception:
+                pass
+            try:
+                os.remove(pid_file)
+            except Exception:
+                pass
+        subprocess.run(["pkill", "-f", "python3 -u app.py"], capture_output=True)
+        subprocess.run(["pkill", "-f", "python3 app.py"], capture_output=True)
+        subprocess.run(["pkill", "-f", "ffmpeg"], capture_output=True)
+    elif IS_WINDOWS:
+        subprocess.run(["taskkill", "/F", "/IM", "python.exe", "/FI",
+                        "WINDOWTITLE eq PictureFrame*"], capture_output=True)
+        # Also try to kill by command line match
+        subprocess.run(
+            ["wmic", "process", "where",
+             "commandline like '%%app.py%%'", "call", "terminate"],
+            capture_output=True)
+
+def create_backup():
+    """Copy current code to backup directory."""
+    if os.path.exists(BACKUP_DIR):
+        shutil.rmtree(BACKUP_DIR)
+    os.makedirs(BACKUP_DIR)
+    for item in FILES_TO_BACKUP:
+        src = os.path.join(APP_DIR, item)
+        if os.path.isfile(src):
+            shutil.copy2(src, BACKUP_DIR)
+    for d in DIRS_TO_BACKUP:
+        src = os.path.join(APP_DIR, d)
+        if os.path.isdir(src):
+            dst = os.path.join(BACKUP_DIR, d)
+            shutil.copytree(src, dst,
+                            ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+    log("Backup created at " + BACKUP_DIR)
+
+def restore_backup():
+    """Restore code from backup directory."""
+    for item in FILES_TO_BACKUP:
+        src = os.path.join(BACKUP_DIR, item)
+        if os.path.isfile(src):
+            shutil.copy2(src, APP_DIR)
+    for d in DIRS_TO_BACKUP:
+        src = os.path.join(BACKUP_DIR, d)
+        dst = os.path.join(APP_DIR, d)
+        if os.path.isdir(src):
+            if os.path.isdir(dst):
+                shutil.rmtree(dst)
+            shutil.copytree(src, dst)
+
+def git_pull():
+    """Run git pull, return True on success."""
+    try:
+        result = subprocess.run(
+            ["git", "pull"],
+            cwd=APP_DIR, capture_output=True, text=True, timeout=60)
+        log("git pull stdout: " + result.stdout[:500])
+        if result.returncode == 0:
+            return True
+        log("git pull failed (rc=" + str(result.returncode) + "): " + result.stderr[:500])
+        return False
+    except Exception as e:
+        log("git pull exception: " + str(e))
+        return False
+
+def restart_app():
+    """Restart the application."""
+    if IS_LINUX:
+        lock_file = "/tmp/pictureframe_app.lock"
+        if os.path.exists(lock_file):
+            try:
+                os.remove(lock_file)
+            except Exception:
+                pass
+        start_script = os.path.join(APP_DIR, "start_pictureframe.sh")
+        if os.path.isfile(start_script):
+            subprocess.Popen(
+                ["bash", start_script],
+                stdout=open(LOG_FILE, "a"),
+                stderr=subprocess.STDOUT,
+                stdin=subprocess.DEVNULL,
+                start_new_session=True)
+        else:
+            subprocess.Popen(
+                [sys.executable, "app.py"],
+                cwd=APP_DIR,
+                stdout=open(LOG_FILE, "a"),
+                stderr=subprocess.STDOUT,
+                stdin=subprocess.DEVNULL,
+                start_new_session=True)
+    elif IS_WINDOWS:
+        subprocess.Popen(
+            [sys.executable, "app.py"],
+            cwd=APP_DIR,
+            stdout=open(LOG_FILE, "a"),
+            stderr=subprocess.STDOUT,
+            stdin=subprocess.DEVNULL,
+            creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP)
+    log("Restart command sent.")
+
+def health_check(timeout=HEALTH_TIMEOUT):
+    """Poll health endpoint, return True if server responds."""
+    elapsed = 0
+    while elapsed < timeout:
+        try:
+            req = urllib.request.Request(HEALTH_URL)
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                if resp.status == 200:
+                    return True
+        except Exception:
+            pass
+        time.sleep(HEALTH_INTERVAL)
+        elapsed += HEALTH_INTERVAL
+    return False
+
+# --- Main ---
+os.makedirs(os.path.join(APP_DIR, "logs"), exist_ok=True)
+log("Starting update process...")
+
+log("Waiting for current processes to exit...")
+time.sleep(3)
+
+log("Cleaning up remaining processes...")
+kill_remaining()
+time.sleep(2)
+
+log("Creating backup...")
+create_backup()
+
+log("Running git pull...")
+if git_pull():
+    log("Git pull succeeded.")
+else:
+    log("Git pull FAILED. Restoring backup.")
+    restore_backup()
+    log("Backup restored after git pull failure.")
+
+log("Restarting application...")
+restart_app()
+
+log("Waiting for new instance to respond (timeout: " + str(HEALTH_TIMEOUT) + "s)...")
+if health_check():
+    log("Update successful! New instance is responding.")
+    sys.exit(0)
+
+log("Health check failed. Rolling back to backup...")
+kill_remaining()
+time.sleep(2)
+restore_backup()
+
+log("Backup restored. Restarting...")
+restart_app()
+
+if health_check():
+    log("Rollback successful! Previous version is running.")
+    sys.exit(0)
+
+log("CRITICAL: Rollback also failed! Manual intervention required.")
+log("Try running: cd " + APP_DIR + " && python app.py")
+sys.exit(1)
+''' % {"APP_DIR": app_dir_str}
+
+    try:
+        suffix = "_update.py"
+        script_path = tempfile.NamedTemporaryFile(
+            mode='w', suffix=suffix, delete=False, dir=app_dir_str)
+        script_path.write(script_content)
+        script_path.close()
+        return script_path.name, script_content
+    except Exception as e:
+        logger.error("generate_update_script failed: %s", e)
+        return None, ""
 
 
 # ── USB ─────────────────────────────────────────────────────────

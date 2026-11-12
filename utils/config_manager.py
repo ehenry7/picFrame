@@ -24,7 +24,7 @@ def create_default_config():
         "video_audio_enabled": False,
         "video_audio_output": "auto",
         "video_audio_volume": 100,
-        "display_sources": ["usb", "smartphone", "invités"],
+        "display_sources": ["usb", "smartphone", "invit\u00e9s"],
         "show_clock": True,
         "clock_format": "%H:%M",
         "clock_color": "#FFFFFF",
@@ -83,7 +83,22 @@ def create_default_config():
         "photo_metadata_background_color": "#00000080",
         
         "anniversary_boost_enabled": True,
-        "anniversary_boost_factor": 2
+        "anniversary_boost_factor": 2,
+
+        # --- Run mode (top-level switch) ---
+        # "picture_frame": fullscreen kiosk slideshow (default, Raspberry Pi target).
+        # "background_updater": compose photo + overlays into an image file and set it
+        # as the desktop wallpaper on all monitors (Windows/Linux desktops).
+        "app_mode": "picture_frame",
+
+        # --- Background updater settings (only used when app_mode == "background_updater") ---
+        "background_update_interval": 3600,   # seconds between wallpaper changes
+        "background_output_format": "png",    # "png" | "jpg"
+        "background_resolution_mode": "auto", # "auto" (largest monitor) | "manual" (display_width/height)
+        # How the photo is placed on the wallpaper canvas:
+        # "fill" (full screen, crop) | "fit" (letterbox) | "stretch" (distort)
+        # "span" (fill, sized for all screens) | "center" | "tile"
+        "background_display_style": "fit"
     }
 
 _config_cache = None
