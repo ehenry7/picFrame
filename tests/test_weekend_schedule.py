@@ -45,6 +45,7 @@ class WeekendScheduleTests(unittest.TestCase):
                 "datetime": clock, "logger": Mock(), "load_config": lambda: config,
                 "jsonify": lambda value: value, "APP_INSTANCE_ID": "test",
                 "is_slideshow_running": lambda: False,
+                "is_display_process_running": lambda: False,
             }
             exec(compile(ast.Module(body=[function], type_ignores=[]), filename, "exec"), namespace)
             for day in range(7):

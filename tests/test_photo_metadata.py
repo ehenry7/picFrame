@@ -13,6 +13,7 @@ from werkzeug.test import Client
 from werkzeug.wrappers import Response
 
 from utils import metadata_utils
+from utils.path_utils import to_static_url_path
 
 
 class PhotoMetadataTests(unittest.TestCase):
@@ -58,10 +59,14 @@ class PhotoMetadataTests(unittest.TestCase):
             self.assertEqual(local["dateTimeOriginal"], "2020-06-15T12:34:56")
             self.assertNotIn("city", local)
 
-    def test_missing_metadata_is_not_fabricated(self):
+    def test_missing_metadata_falls_back_to_file_date(self):
         path = self.original("smartphone", "photo.jpg")
         Image.new("RGB", (20, 15)).save(path)
-        self.assertEqual(metadata_utils.get_photo_metadata(self.prepared("smartphone", "photo.jpg")), {})
+        # No EXIF date → falls back to file modification time
+        result = metadata_utils.get_photo_metadata(self.prepared("smartphone", "photo.jpg"))
+        self.assertIn("dateTimeOriginal", result)
+        self.assertEqual(result.get("dateSource"), "file")
+        # Truly missing file → empty dict
         self.assertEqual(metadata_utils.get_photo_metadata(self.prepared("smartphone", "missing.jpg")), {})
 
     def test_file_changes_invalidate_metadata_cache(self):
@@ -116,12 +121,16 @@ class PhotoMetadataTests(unittest.TestCase):
         namespace = {
             "app": app, "login_required": lambda function: function,
             "is_slideshow_running": lambda: running[0], "jsonify": jsonify,
+            "is_display_process_running": lambda: running[0],
             "CURRENT_PHOTO_FILE": status_file, "os": os, "BASE_DIR": self.root,
             "url_for": url_for, "get_photo_metadata": metadata_utils.get_photo_metadata,
             "format_photo_metadata": metadata_utils.format_photo_metadata,
             "format_preview_location": metadata_utils.format_preview_location,
+            "to_static_url_path": to_static_url_path,
             "load_config": lambda: config, "_": lambda message: message,
             "logger": logging.getLogger(__name__),
+            "get_app_mode": lambda _config=None: "picture_frame",
+            "BACKGROUND_STATUS_FILE": self.root / "background_status.json",
         }
         source = Path(__file__).resolve().parents[1] / "app.py"
         tree = ast.parse(source.read_text(encoding="utf-8"))
@@ -174,7 +183,9 @@ class PhotoMetadataTests(unittest.TestCase):
         by_name = {item["path"]: item for item in media}
         self.assertEqual(by_name["smartphone/photo.jpg"]["metadata_text"], "2020-06-15")
         self.assertTrue(by_name["smartphone/photo.jpg"]["is_favorite"])
-        self.assertEqual(by_name["smartphone/empty.jpg"]["metadata_text"], "No Metadata")
+        # empty.jpg has no EXIF but now falls back to file date
+        self.assertNotEqual(by_name["smartphone/empty.jpg"]["metadata_text"], "No Metadata")
+        self.assertRegex(by_name["smartphone/empty.jpg"]["metadata_text"], r"^\d{4}-\d{2}-\d{2}$")
 
     def test_photo_date_format_save_and_reload(self):
         from flask import request

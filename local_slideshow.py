@@ -826,8 +826,28 @@ def load_icon(icon_name, size, is_weather_icon=True):
 
     if icon_path.exists():
         try:
-            loaded_surface = pygame.image.load(str(icon_path)).convert_alpha()
-            icon_surface = pygame.transform.scale(loaded_surface, (size, size))
+            loaded_surface = pygame.image.load(str(icon_path))
+            # .convert_alpha() requires a display mode to be set. In the
+            # background updater (headless, no set_mode) this raises
+            # "No video mode has been set", so skip it — the raw surface
+            # still blits correctly onto the off-screen composition surface.
+            if pygame.display.get_surface() is not None:
+                loaded_surface = loaded_surface.convert_alpha()
+            if is_weather_icon:
+                # Weather icons are not guaranteed to be square, so preserve the
+                # original aspect ratio and fit the icon within the (size, size)
+                # box instead of stretching it to a square.
+                orig_w, orig_h = loaded_surface.get_size()
+                if orig_w > 0 and orig_h > 0:
+                    scale = size / max(orig_w, orig_h)
+                    target_w = max(1, int(round(orig_w * scale)))
+                    target_h = max(1, int(round(orig_h * scale)))
+                else:
+                    target_w, target_h = size, size
+                icon_surface = pygame.transform.smoothscale(
+                    loaded_surface, (target_w, target_h))
+            else:
+                icon_surface = pygame.transform.scale(loaded_surface, (size, size))
             _icon_cache[icon_key] = icon_surface
             return icon_surface
         except Exception as e:
@@ -1032,7 +1052,7 @@ overlay_data = OverlayDataCache()
 
 
 # New function to draw the overlay elements (clock, date, weather)
-def draw_overlay(screen, screen_width, screen_height, config, main_font, photo_metadata=None):
+def draw_overlay(screen, screen_width, screen_height, config, main_font, photo_metadata=None, bottom_inset=0):
     now = datetime.now()
     text_color = parse_color(config.get("clock_color", "#FFFFFF"))
     outline_color = parse_color(config.get("clock_outline_color", "#000000"))
@@ -1143,7 +1163,7 @@ def draw_overlay(screen, screen_width, screen_height, config, main_font, photo_m
             block_height = max(
                 line_height, weather_icon.get_height() if weather_icon else 0)
             block_x = screen_width - margin - block_width
-            block_top = screen_height - margin - block_height
+            block_top = screen_height - margin - block_height - bottom_inset
             text_y = block_top + (block_height - line_height) // 2
 
             if config.get("clock_background_enabled", False):
@@ -1192,7 +1212,7 @@ def draw_overlay(screen, screen_width, screen_height, config, main_font, photo_m
                 tide_text = " | ".join(tide_parts)
         else:
             # Show a message if the feature is enabled but no data is available.
-            tide_text = _("Données de marée non disponibles")
+            tide_text = _("Tide data unavailable")
             try:
                 # Use a slightly smaller font for the error message.
                 font_path = config.get("clock_font_path", get_default_font_path())
@@ -1207,7 +1227,7 @@ def draw_overlay(screen, screen_width, screen_height, config, main_font, photo_m
             tide_offset_y = int(config.get("tide_offset_y", 0))
 
             tide_surface = font_to_use.render(tide_text, True, text_color)
-            tide_rect = tide_surface.get_rect(centerx=(screen_width // 2) + tide_offset_x, bottom=(screen_height - 15) + tide_offset_y)
+            tide_rect = tide_surface.get_rect(centerx=(screen_width // 2) + tide_offset_x, bottom=(screen_height - 15 - bottom_inset) + tide_offset_y)
 
             # --- Add a background for tides ---
             if config.get("clock_background_enabled", False):
@@ -1265,17 +1285,17 @@ def draw_overlay(screen, screen_width, screen_height, config, main_font, photo_m
             if position == "bottom_left":
                 metadata_rect = metadata_surface.get_rect(
                     left=15 + metadata_offset_x,
-                    bottom=(screen_height - 15) + metadata_offset_y
+                    bottom=(screen_height - 15 - bottom_inset) + metadata_offset_y
                 )
             elif position == "bottom_right":
                 metadata_rect = metadata_surface.get_rect(
                     right=(screen_width - 15) + metadata_offset_x,
-                    bottom=(screen_height - 15) + metadata_offset_y
+                    bottom=(screen_height - 15 - bottom_inset) + metadata_offset_y
                 )
             elif position == "bottom_center":
                 metadata_rect = metadata_surface.get_rect(
                     centerx=(screen_width // 2) + metadata_offset_x,
-                    bottom=(screen_height - 15) + metadata_offset_y
+                    bottom=(screen_height - 15 - bottom_inset) + metadata_offset_y
                 )
             elif position == "top_left":
                 metadata_rect = metadata_surface.get_rect(
@@ -1290,7 +1310,7 @@ def draw_overlay(screen, screen_width, screen_height, config, main_font, photo_m
             else:  # Fallback
                 metadata_rect = metadata_surface.get_rect(
                     left=15 + metadata_offset_x,
-                    bottom=(screen_height - 15) + metadata_offset_y
+                    bottom=(screen_height - 15 - bottom_inset) + metadata_offset_y
                 )
 
             # Draw the background if enabled.
@@ -1339,9 +1359,9 @@ def draw_overlay(screen, screen_width, screen_height, config, main_font, photo_m
             if flag_position == "top_left":
                 flag_rect = flag_surf.get_rect(topleft=(flag_offset_x, flag_offset_y))
             elif flag_position == "bottom_left":
-                flag_rect = flag_surf.get_rect(bottomleft=(flag_offset_x, screen_height - flag_offset_y))
+                flag_rect = flag_surf.get_rect(bottomleft=(flag_offset_x, screen_height - flag_offset_y - bottom_inset))
             elif flag_position == "bottom_right":
-                flag_rect = flag_surf.get_rect(bottomright=(screen_width - flag_offset_x, screen_height - flag_offset_y))
+                flag_rect = flag_surf.get_rect(bottomright=(screen_width - flag_offset_x, screen_height - flag_offset_y - bottom_inset))
             else:  # top_right (default)
                 flag_rect = flag_surf.get_rect(topright=(screen_width - flag_offset_x, flag_offset_y))
             screen.blit(flag_surf, flag_rect)
@@ -2021,7 +2041,7 @@ def start_slideshow():
                 # Build the default playlist.
                 filter_states = load_filter_states()
                 favorites = load_favorites()
-                display_sources = config.get("display_sources", ["usb", "smartphone", "invités"])
+                display_sources = config.get("display_sources", ["usb", "smartphone", "guests"])
                 slideshow_video_enabled = config.get("slideshow_video_enabled", True)
                 
                 all_media = []
@@ -2089,11 +2109,11 @@ def start_slideshow():
 
                 ip_address = get_local_ip()
                 messages = [
-                    (message_font, _("Aucune photo trouvée.")),
-                    (ip_font, _("Configurez sur : http://%(ip)s", ip=f"{ip_address}:7090")),
-                    (small_font, _("(Identifiants dans credentials.json à la racine de la SD)")),
-                    (message_font, _("Résolution de l'écran : [%(w)s x %(h)s]", w=SCREEN_WIDTH, h=SCREEN_HEIGHT)),
-                    (message_font, _("Nouvelle tentative dans 60 secondes..."))
+                    (message_font, _("No resolution found.")),
+                    (ip_font, _("Configure at: http://%(ip)s", ip=f"{ip_address}:7090")),
+                    (small_font, _("(Credentials in credentials.json at the root of the SD card)")),
+                    (message_font, _("Screen resolution", w=SCREEN_WIDTH, h=SCREEN_HEIGHT)),
+                    (message_font, _("Retrying in 60 seconds..."))
                 ]
                 
                 line_spacing = 20
@@ -2119,7 +2139,7 @@ def start_slideshow():
                 # Display the QR code.
                 if qr_surface:
                     current_y += qr_spacing - line_spacing # Ajuster l'espacement avant le QR
-                    qr_title_text = _("Scannez pour configurer")
+                    qr_title_text = _("Scan to configure")
                     qr_title_surface = small_font.render(qr_title_text, True, text_color)
                     qr_title_rect = qr_title_surface.get_rect(centerx=SCREEN_WIDTH // 2, top=current_y)
                     draw_text_with_outline(screen, qr_title_text, small_font, text_color, outline_color, qr_title_rect.topleft, anchor="topleft")
@@ -2165,7 +2185,7 @@ def start_slideshow():
 
                 # Write the current photo path to the status file.
                 try:
-                    with open(CURRENT_PHOTO_FILE, "w") as f:
+                    with open(CURRENT_PHOTO_FILE, "w", encoding="utf-8") as f:
                         path_to_write = Path(photo_path)
                         if is_video:
                             # For a video, write the thumbnail path for the live preview.
@@ -2175,7 +2195,9 @@ def start_slideshow():
 
                         # Convert the absolute path to a path relative to the 'static' directory.
                         relative_path = path_to_write.relative_to(Path(BASE_DIR) / 'static')
-                        f.write(str(relative_path))
+                        # Use POSIX separators so the stored path works as a URL on Windows
+                        # (backslashes would be percent-encoded to %5C by url_for, causing 404s).
+                        f.write(relative_path.as_posix())
                 except Exception as e:
                     logger.info(f"Error writing current photo file: {e}")
 
