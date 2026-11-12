@@ -66,6 +66,7 @@ def register_photo_edit_routes(app, prepared_root, translate):
                            manual_location="location" in edit,
                            date=metadata.get("dateTimeOriginal") or "",
                            manual_date="date" in edit,
+                           date_source=metadata.get("dateSource", "exif") if "date" not in edit else "manual",
                            location_text=format_preview_location(metadata, translate),
                            countries=sorted(_preview_country_codes().values()))
         except ValueError as error:

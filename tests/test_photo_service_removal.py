@@ -142,7 +142,8 @@ class PhotoServiceRemovalTests(unittest.TestCase):
                 rendered = environment.get_template("configure.html.jinja").render(
                     config=config, prepared_photos_by_source={"immich": [media]},
                     source_labels=self.source_labels(translations.gettext)(config["display_sources"]),
-                    favorite_photos=[media], slideshow_running=False, pending_photos=[])
+                    favorite_photos=[media], slideshow_running=False, pending_photos=[],
+                    available_timezones=["Europe/Paris", "Asia/Jerusalem"])
                 # Inline scripts contain preserved on-disk identifiers, not visible labels.
                 visible_text = re.sub(r"<script\b[^>]*>.*?</script>", "", rendered, flags=re.S)
                 visible = VisibleText()
@@ -165,7 +166,9 @@ class PhotoServiceRemovalTests(unittest.TestCase):
                 "request": request, "jsonify": jsonify, "PREPARED_DIR": root,
                 "CUSTOM_PLAYLIST_FILE": playlist, "json": json,
                 "get_photo_source_labels": self.source_labels(),
-                "stop_slideshow": Mock(), "start_slideshow": Mock(), "time": Mock(),
+                "stop_slideshow": Mock(), "start_slideshow": Mock(),
+                "stop_display_process": Mock(), "start_display_process": Mock(),
+                "time": Mock(),
             }
             exec(compile(ast.Module(body=[node], type_ignores=[]), "app.py", "exec"), namespace)
             app.add_url_rule("/play/<source_name>", view_func=namespace["play_source_as_playlist"],

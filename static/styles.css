@@ -465,12 +465,13 @@ button:hover {
   }
 
   /* Main nav: horizontal scroll on mobile */
-  .main-nav {
+  #main-nav {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    justify-content: flex-start !important;
   }
-  .main-nav::-webkit-scrollbar { display: none; }
+  #main-nav::-webkit-scrollbar { display: none; }
 
   .main-nav-link {
     flex-shrink: 0;
@@ -561,5 +562,49 @@ button:hover {
     width: auto;
     display: inline-block;
     margin: 0 4px;
+  }
+
+  /* Stack inline flex label+input rows vertically */
+  .tabcontent div[style*="display: flex"] {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 4px;
+  }
+
+  /* Tailwind flex rows with labels: allow wrapping */
+  .tabcontent .flex.items-center {
+    flex-wrap: wrap;
+  }
+
+  /* w-52 labels: full width on mobile so input wraps below */
+  .tabcontent .w-52 {
+    width: 100% !important;
+    flex-shrink: 1 !important;
+    margin-bottom: 4px;
+  }
+
+  /* Live preview metadata: full width */
+  #live-preview-metadata,
+  #live-preview-location {
+    width: 100% !important;
+  }
+
+  /* Logo + live preview header: stack vertically on mobile */
+  .container > .flex.justify-between.items-center.mb-2 {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  /* Language + logout header: allow wrapping */
+  .container > .flex.justify-between.items-center.mb-4 {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+  }
+
+  /* Range inputs in lightbox: smaller on mobile */
+  .photo-lightbox-actions input[type="range"] {
+    width: 80px !important;
   }
 }

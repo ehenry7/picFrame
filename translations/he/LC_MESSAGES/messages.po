@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-10 20:08+0200\n"
+"POT-Creation-Date: 2026-11-11 16:09+0200\n"
 "PO-Revision-Date: 2026-11-10 11:47+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: he\n"
@@ -18,212 +18,247 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: app.py:442
+#: app.py:456
 msgid "Imported photos"
 msgstr "תמונות מיובאות"
 
-#: app.py:492 app.py:2266 templates/configure.html.jinja:4159
+#: app.py:506 app.py:2454 templates/configure.html.jinja:4333
 msgid "No Metadata"
 msgstr "אין מטא-נתונים"
 
-#: app.py:549 app.py:554
-msgid "Aucun fichier sélectionné."
-msgstr "& יצירת תעודה"
+#: app.py:563 app.py:568 templates/configure.html.jinja:2340
+msgid "No files selected."
+msgstr ""
 
-#: app.py:572
-#, python-format
-msgid "%(count)s photo(s) envoyée(s) pour validation avec succès !"
+#: app.py:586
+#, fuzzy, python-format
+msgid "%(count)s photo(s) sent for validation successfully!"
 msgstr "תמונה/ות %(count)s הוגשו בהצלחה לאימות!"
 
-#: app.py:631
-msgid "Photo rejetée."
-msgstr "התמונה נדחתה."
+#: app.py:645 templates/configure.html.jinja:308
+#: templates/configure.html.jinja:1241 templates/configure.html.jinja:1905
+#, fuzzy
+msgid "Previous photo"
+msgstr "חיתוך תמונה"
 
-#: app.py:674
-msgid "Photo approuvée et préparée. Le diaporama a été mis à jour."
-msgstr "התמונה אושרה והוכנה. מצגת השקופיות עודכנה."
+#: app.py:688
+msgid "Photo approved and prepared. The slideshow has been updated."
+msgstr ""
 
-#: app.py:676
-msgid "La préparation de la photo a échoué. La photo reste en attente."
-msgstr "הכנת התמונה נכשלה. התמונה עדיין ממתינה."
+#: app.py:690
+#, fuzzy
+msgid "Photo preparation failed. The photo remains pending."
+msgstr "הכנת התמונות נכשלה או בוטלה."
 
-#: app.py:680
-msgid "Action inconnue."
-msgstr "פעולה לא ידועה."
+#: app.py:694
+#, fuzzy
+msgid "Activation in progress..."
+msgstr "הבקשה בתהליך..."
 
-#: app.py:702
-msgid "Connexion réussie"
-msgstr "הכניסה למערכת אושרה"
+#: app.py:716
+#, fuzzy
+msgid "Successful connection"
+msgstr "התחבר/י"
 
-#: app.py:705
-msgid "Identifiants invalides"
-msgstr "אישורים לא חוקיים"
+#: app.py:719
+msgid "Invalid identifiers"
+msgstr ""
 
-#: app.py:711
-msgid "Déconnexion réussie"
-msgstr "היציאה הצליחה"
+#: app.py:725
+msgid "Successful disconnection"
+msgstr ""
 
-#: app.py:879
-msgid ""
-"Configuration enregistrée. Le diaporama a été relancé pour appliquer les "
-"changements."
-msgstr "התצורה נשמרה. מצגת השקופיות הופעלה מחדש כדי להחיל את השינויים."
+#: app.py:898
+msgid "Configuration saved. The slideshow was restarted to apply the changes."
+msgstr ""
 
-#: app.py:979
+#: app.py:998
 #, python-format
 msgid "Unsupported photo file: %(name)s"
 msgstr "קובץ תמונה לא נתמך: %(name)s"
 
-#: app.py:998 app.py:1031
+#: app.py:1017 app.py:1050
 #, python-format
 msgid "%(imported)s photos imported; %(skipped)s duplicates skipped."
 msgstr "יובאו %(imported)s תמונות; דולגו %(skipped)s כפילויות."
 
-#: app.py:1021
+#: app.py:1040
 msgid "Photo preparation failed or was cancelled."
 msgstr "הכנת התמונות נכשלה או בוטלה."
 
-#: app.py:1499
-msgid "Arrêt du système non disponible sur cette plateforme."
+#: app.py:1518
+msgid "System shutdown unavailable on this platform."
 msgstr ""
 
-#: app.py:1503
+#: app.py:1522 app.py:1651 app.py:1706 templates/configure.html.jinja:3591
+msgid "Unable to load data."
+msgstr ""
+
+#: app.py:1529
+msgid "System reboot unavailable on this platform."
+msgstr ""
+
+#: app.py:1533
+msgid "Unable to initiate system reboot."
+msgstr ""
+
+#: app.py:1644
+msgid "Update unavailable on this platform."
+msgstr ""
+
+#: app.py:1647
+msgid "The application is not in a git repository."
+msgstr ""
+
+#: app.py:1672 templates/configure.html.jinja:3645
+msgid "Update in progress..."
+msgstr ""
+
+#: app.py:1684 app.py:2607 app.py:2612
+msgid "No backup file selected."
+msgstr ""
+
+#: app.py:1686
+msgid "Backup deleted."
+msgstr ""
+
+#: app.py:1687 templates/configure.html.jinja:2337
+#: templates/configure.html.jinja:3349
 #, fuzzy
-msgid "Impossible de lancer l'arrêt du système."
-msgstr "לא ניתן לטעון את הנתונים."
+msgid "Error deleting photo."
+msgstr "שלח תמונות"
 
-#: app.py:1510
-msgid "Redémarrage du système non disponible sur cette plateforme."
+#: app.py:1695
+msgid "Restore unavailable on this platform."
 msgstr ""
 
-#: app.py:1514
-msgid "Impossible de lancer le redémarrage du système."
+#: app.py:1698 templates/configure.html.jinja:1505
+msgid "Backup and Restore"
 msgstr ""
 
-#: app.py:1612
+#: app.py:1731
+#, fuzzy
+msgid "Restoration in progress... The application will restart."
+msgstr "שחזור בתהליך... האפליקציה תופעל מחדש."
+
+#: app.py:1754
 msgid ""
-"L'application web redémarre... La page sera inaccessible pendant quelques"
-" instants."
-msgstr "אפליקציית האינטרנט מופעלת מחדש... הדף לא יהיה זמין למשך מספר רגעים."
-
-#: app.py:2189
-#, python-format
-msgid "Résolution appliquée : %(width)sx%(height)s. Le diaporama a été redémarré."
-msgstr "הרזולוציה הוחלה: %(width)sx%(height)s. המצגת הופעלה מחדש."
-
-#: app.py:2191
-#, python-format
-msgid ""
-"Résolution appliquée : %(width)sx%(height)s. Le diaporama n'était pas en "
-"cours."
-msgstr "הרזולוציה הוחלה: %(width)sx%(height)s. המצגת לא הייתה פעילה."
-
-#: app.py:2281
-msgid "Le SSID et le pays Wi-Fi sont obligatoires."
-msgstr "שם הרשת (SSID) ומדינת ה-Wi-Fi הם שדות חובה."
-
-#: app.py:2294
-msgid ""
-"Paramètres Wi-Fi appliqués. Le service réseau a été redémarré pour forcer"
-" la connexion. Veuillez patienter une minute et vérifier le statut."
+"The web application is rebooting... the page will be inaccessible for a "
+"few seconds."
 msgstr ""
-"הגדרות ה-Wi-Fi הוחלו. שירות הרשת הופעל מחדש כדי לאלץ חיבור. אנא המתן דקה "
-"ובדוק את הסטטוס."
 
-#: app.py:2296
+#: app.py:2374
 #, python-format
-msgid "Erreur lors de l'application des paramètres Wi-Fi : %(error)s"
-msgstr "שגיאה בהחלת הגדרות ה-Wi-Fi: %(error)s"
-
-#: app.py:2352
-msgid "Les deux champs de mot de passe sont requis."
-msgstr "נדרשים שני שדות הסיסמה."
-
-#: app.py:2356
-msgid "Les mots de passe ne correspondent pas."
-msgstr "הסיסמאות אינן תואמות."
-
-#: app.py:2360
-msgid "Le mot de passe doit contenir au moins 6 caractères."
-msgstr "הסיסמה חייבת להכיל לפחות 6 תווים."
-
-#: app.py:2365
 msgid ""
-"Mot de passe mis à jour avec succès. Il sera nécessaire pour votre "
-"prochaine connexion."
-msgstr "הסיסמה עודכנה בהצלחה. היא תידרש בהתחברות הבאה שלך."
+"Applied resolution: %(width) SX %(height)s. The slideshow has been "
+"restarted."
+msgstr ""
 
-#: app.py:2367
+#: app.py:2376
 #, python-format
-msgid "Erreur lors du changement de mot de passe : %(error)s"
-msgstr "שגיאה בשינוי הסיסמה: %(error)s"
-
-#: app.py:2411
-msgid "Le fichier de configuration n'a pas été trouvé."
-msgstr "קובץ התצורה לא נמצא."
-
-#: app.py:2419 app.py:2424
-msgid "Aucun fichier de sauvegarde sélectionné."
-msgstr "לא נבחר קובץ גיבוי."
-
-#: app.py:2434
 msgid ""
-"Configuration restaurée avec succès ! Le diaporama va redémarrer pour "
-"appliquer les changements."
-msgstr "התצורה שוחזרה בהצלחה! המצגת תופעל מחדש כדי להחיל את השינויים."
+"Applied resolution: %(width) SX %(height)s. The slideshow was not in "
+"progress."
+msgstr ""
 
-#: app.py:2436
+#: app.py:2469
+msgid "SSID and Wi-Fi country are mandatory."
+msgstr ""
+
+#: app.py:2482
 msgid ""
-"Fichier de sauvegarde invalide ou corrompu. Ce n'est pas un fichier JSON "
-"valide."
-msgstr "קובץ גיבוי לא תקין או פגום. זהו אינו קובץ JSON תקין."
+"Wi-Fi settings applied. The network service has been restarted to force "
+"connection. Please wait a minute and check the status."
+msgstr ""
 
-#: app.py:2438
+#: app.py:2484
 #, python-format
-msgid "Erreur lors de la restauration : %(error)s"
-msgstr "שגיאה בשחזור: %(error)s"
+msgid "Error applying Wi-Fi settings: %(error)s"
+msgstr ""
 
-#: app.py:2539
+#: app.py:2540
+msgid "Both password fields are required."
+msgstr ""
+
+#: app.py:2544
+msgid "The passwords do not match."
+msgstr ""
+
+#: app.py:2548
+msgid "Password must contain at least 6 characters."
+msgstr ""
+
+#: app.py:2553
+msgid "Password successfully updated. It will be required for your next login."
+msgstr ""
+
+#: app.py:2555
+#, python-format
+msgid "Error changing password:%(error)s"
+msgstr ""
+
+#: app.py:2599
+msgid "The configuration file was not found."
+msgstr ""
+
+#: app.py:2622
+msgid ""
+"Configuration successfully restored! The slideshow will restart to apply "
+"the changes."
+msgstr ""
+
+#: app.py:2624
+msgid "Invalid or corrupted backup file. This is not a valid JSON file."
+msgstr ""
+
+#: app.py:2626
+#, python-format
+msgid "Restore error: %(error)s"
+msgstr ""
+
+#: app.py:2727
 msgid "name_key"
 msgstr ""
 
-#: app.py:2752
+#: app.py:2940
 msgid "Another crop is being prepared. Please wait."
 msgstr "חיתוך אחר בהכנה. נא להמתין."
 
-#: app.py:2829
+#: app.py:3017
 msgid "Crop saved."
 msgstr "החיתוך נשמר."
 
-#: local_slideshow.py:1205
-msgid "Données de marée non disponibles"
-msgstr "נתוני גאות ושפל אינם זמינים"
+#: local_slideshow.py:1209
+msgid "Tide data unavailable"
+msgstr ""
 
-#: local_slideshow.py:2096
-msgid "Aucune photo trouvée."
-msgstr "לא נמצאו תמונות."
+#: local_slideshow.py:2106 templates/configure.html.jinja:3891
+#, fuzzy
+msgid "No resolution found."
+msgstr "לא נמצא פתרון."
 
-#: local_slideshow.py:2097
+#: local_slideshow.py:2107
 #, python-format
-msgid "Configurez sur : http://%(ip)s"
-msgstr "הגדר בכתובת: http://%(ip)s"
+msgid "Configure at: http://%(ip)s"
+msgstr ""
 
-#: local_slideshow.py:2098
-msgid "(Identifiants dans credentials.json à la racine de la SD)"
-msgstr "(פרטי התחברות ב-credentials.json בתיקיית השורש של כרטיס ה-SD)"
+#: local_slideshow.py:2108
+msgid "(Credentials in credentials.json at the root of the SD card)"
+msgstr ""
 
-#: local_slideshow.py:2099
-#, python-format
-msgid "Résolution de l'écran : [%(w)s x %(h)s]"
-msgstr "רזולוציית מסך: [%(w)s x %(h)s]"
+#: local_slideshow.py:2109 templates/configure.html.jinja:490
+msgid "Screen resolution"
+msgstr ""
 
-#: local_slideshow.py:2100
-msgid "Nouvelle tentative dans 60 secondes..."
-msgstr "ניסיון חוזר בעוד 60 שניות..."
+#: local_slideshow.py:2110
+#, fuzzy
+msgid "Retrying in 60 seconds..."
+msgstr "הפניה תוך 5 שניות..."
 
-#: local_slideshow.py:2126
-msgid "Scannez pour configurer"
-msgstr "סרוק כדי להגדיר"
+#: local_slideshow.py:2136
+#, fuzzy
+msgid "Scan to configure"
+msgstr "חיבור"
 
 #: templates/configure.html.jinja:4
 msgid "Date format reference"
@@ -275,1520 +310,1507 @@ msgstr "דוגמאות (15 ביוני 2020):"
 
 #: templates/configure.html.jinja:27
 msgid "Auto Enhance"
-msgstr "שיפור אוטומטי"
+msgstr ""
 
 #: templates/configure.html.jinja:28
 msgid "Vivid"
-msgstr "צבעים חיים"
+msgstr ""
 
 #: templates/configure.html.jinja:29
 msgid "Warm"
-msgstr "חם"
+msgstr ""
 
 #: templates/configure.html.jinja:30
 msgid "Cool"
-msgstr "קר"
+msgstr ""
 
 #: templates/configure.html.jinja:31
 msgid "Dramatic B&W"
-msgstr "שחור לבן דרמטי"
+msgstr ""
 
 #: templates/configure.html.jinja:32
 msgid "Soft Glow"
-msgstr "זוהר רך"
+msgstr ""
 
 #: templates/configure.html.jinja:33
 msgid "Sharpen"
-msgstr "חידוד"
+msgstr ""
 
 #: templates/configure.html.jinja:34
 msgid "Duotone"
-msgstr "דו-גוני"
+msgstr ""
 
 #: templates/configure.html.jinja:35
 msgid "Posterize"
-msgstr "פוסטריזציה"
+msgstr ""
 
 #: templates/configure.html.jinja:36
 msgid "Matte"
-msgstr "מט"
+msgstr ""
 
 #: templates/configure.html.jinja:37
 msgid "Film Grain"
-msgstr "גרעיניות פילם"
+msgstr ""
 
 #: templates/configure.html.jinja:38
 msgid "Pencil Sketch"
-msgstr "רישום עיפרון"
+msgstr ""
 
 #: templates/configure.html.jinja:39
 msgid "Selective Color - Red"
-msgstr "צבע סלקטיבי - אדום"
+msgstr ""
 
 #: templates/configure.html.jinja:40
 msgid "Selective Color - Green"
-msgstr "צבע סלקטיבי - ירוק"
+msgstr ""
 
 #: templates/configure.html.jinja:41
 msgid "Selective Color - Blue"
-msgstr "צבע סלקטיבי - כחול"
+msgstr ""
 
 #: templates/configure.html.jinja:42
 msgid "Tilt Shift"
-msgstr "אפקט מיניאטורה"
+msgstr ""
 
 #: templates/configure.html.jinja:43
 msgid "Cinematic"
-msgstr "קולנועי"
+msgstr ""
 
 #: templates/configure.html.jinja:44
 msgid "Cross Process"
-msgstr "עיבוד מוצלב"
+msgstr ""
 
 #: templates/configure.html.jinja:45
 msgid "Watercolor"
-msgstr "צבעי מים"
+msgstr ""
 
 #: templates/configure.html.jinja:46 tests/test_photo_filters.py:216
 msgid "Vignette - Dark Edges"
-msgstr "וינייטה - שוליים כהים"
+msgstr ""
 
-#: templates/configure.html.jinja:55
+#: templates/configure.html.jinja:56
 msgid "Configuration"
-msgstr "הגדרות"
+msgstr ""
 
-#: templates/configure.html.jinja:222 templates/login.html.jinja:89
+#: templates/configure.html.jinja:252
+msgid "Background updater mode activated."
+msgstr ""
+
+#: templates/configure.html.jinja:253
+msgid "Picture frame mode activated."
+msgstr ""
+
+#: templates/configure.html.jinja:256 templates/configure.html.jinja:260
+msgid "Mode switch failed."
+msgstr ""
+
+#: templates/configure.html.jinja:273 templates/login.html.jinja:89
 #: templates/upload.html.jinja:73
-msgid "Langue"
-msgstr "שפה"
+msgid "Language"
+msgstr ""
 
-#: templates/configure.html.jinja:234
-msgid "Se déconnecter"
-msgstr "התנתק"
+#: templates/configure.html.jinja:285
+#, fuzzy
+msgid "Disconnect"
+msgstr "התחבר/י"
 
-#: templates/configure.html.jinja:241 templates/configure.html.jinja:4179
-msgid "Le diaporama est arrêté."
-msgstr "המצגת נעצרה."
+#: templates/configure.html.jinja:292 templates/configure.html.jinja:4353
+msgid "The slideshow is stopped."
+msgstr ""
 
-#: templates/configure.html.jinja:244 templates/configure.html.jinja:1768
-msgid "Photo en cours"
-msgstr "תמונה נוכחית"
+#: templates/configure.html.jinja:295 templates/configure.html.jinja:1941
+msgid "Photo in progress"
+msgstr ""
 
-#: templates/configure.html.jinja:252 templates/configure.html.jinja:1118
-msgid "Activer/Désactiver les notifications"
-msgstr "הפעל/השבת התראות"
+#: templates/configure.html.jinja:303 templates/configure.html.jinja:1236
+msgid "Enable/Disable notifications"
+msgstr ""
 
-#: templates/configure.html.jinja:257 templates/configure.html.jinja:1123
-#: templates/configure.html.jinja:1732
-msgid "Photo précédente"
-msgstr "תמונה קודמת"
+#: templates/configure.html.jinja:313 templates/configure.html.jinja:1246
+#: templates/configure.html.jinja:1909
+msgid "Pause/Reading"
+msgstr ""
 
-#: templates/configure.html.jinja:262 templates/configure.html.jinja:1128
-#: templates/configure.html.jinja:1736
-msgid "Pause/Lecture"
-msgstr "השהה/נגן"
+#: templates/configure.html.jinja:318 templates/configure.html.jinja:1251
+#: templates/configure.html.jinja:1913
+#, fuzzy
+msgid "Next photo"
+msgstr "תמונה"
 
-#: templates/configure.html.jinja:267 templates/configure.html.jinja:1133
-#: templates/configure.html.jinja:1740
-msgid "Photo suivante"
-msgstr "תמונה הבאה"
+#: templates/configure.html.jinja:331
+msgid "Slideshow"
+msgstr ""
 
-#: templates/configure.html.jinja:280
-msgid "Diaporama"
-msgstr "מצגת"
+#: templates/configure.html.jinja:333
+msgid "Content"
+msgstr ""
 
-#: templates/configure.html.jinja:282
-msgid "Contenu"
-msgstr "תוכן"
-
-#: templates/configure.html.jinja:284
+#: templates/configure.html.jinja:335
 msgid "Interactions"
-msgstr "אינטראקציות"
+msgstr ""
 
-#: templates/configure.html.jinja:287
-msgid "Système"
-msgstr "מערכת"
+#: templates/configure.html.jinja:338
+msgid "System"
+msgstr ""
 
-#: templates/configure.html.jinja:294
+#: templates/configure.html.jinja:345
 msgid ""
 "Gérez les paramètres d'affichage du diaporama, la durée, les "
 "transitions..."
-msgstr "נהל את הגדרות התצוגה של המצגת, משך זמן, מעברים..."
-
-#: templates/configure.html.jinja:295
-msgid "Affichage"
-msgstr "תצוגה"
-
-#: templates/configure.html.jinja:297
-msgid "Configurez l'affichage de l'heure, la météo et les marées."
-msgstr "הגדר את תצוגת השעה, מזג האוויר והגאות והשפל."
-
-#: templates/configure.html.jinja:298
-msgid "Horloge & Infos"
-msgstr "שעון ומידע"
-
-#: templates/configure.html.jinja:300
-msgid "Métadonnées"
-msgstr "מטא-דאטה"
-
-#: templates/configure.html.jinja:307
-msgid "Configurez les sources de photos."
-msgstr "הגדרת מקורות התמונות."
-
-#: templates/configure.html.jinja:308
-msgid "Sources"
-msgstr "מקורות"
-
-#: templates/configure.html.jinja:310
-msgid "Visualisez et gérez toutes les photos prêtes pour le diaporama."
-msgstr "צפה ונהל את כל התמונות המוכנות למצגת."
-
-#: templates/configure.html.jinja:311
-msgid "Aperçu"
-msgstr "תצוגה מקדימה"
-
-#: templates/configure.html.jinja:313
-msgid "Créez et gérez vos albums photo personnalisés."
-msgstr "צור ונהל את אלבומי התמונות המותאמים אישית שלך."
-
-#: templates/configure.html.jinja:314
-msgid "Playlists"
-msgstr "רשימות השמעה"
-
-#: templates/configure.html.jinja:316
-msgid "Retrouvez et gérez vos photos favorites."
-msgstr "מצא ונהל את התמונות המועדפות עליך."
-
-#: templates/configure.html.jinja:317
-msgid "Favoris"
-msgstr "מועדפים"
-
-#: templates/configure.html.jinja:325
-msgid "Validez ou rejetez les photos envoyées par les invités."
-msgstr "אשר או דחה תמונות שנשלחו על ידי אורחים."
-
-#: templates/configure.html.jinja:326
-msgid "Validation"
-msgstr "אישור"
-
-#: templates/configure.html.jinja:329
-msgid "Lancez les imports, contrôlez le diaporama et envoyez des photos."
-msgstr "הפעל ייבוא, שלוט במצגת ושלח תמונות."
-
-#: templates/configure.html.jinja:330 templates/configure.html.jinja:1100
-msgid "Actions"
-msgstr "פעולות"
-
-#: templates/configure.html.jinja:337
-msgid "Gérez les paramètres Wi-Fi et réseau."
-msgstr "נהל הגדרות Wi-Fi ורשת."
-
-#: templates/configure.html.jinja:338
-msgid "Réseau"
-msgstr "רשת"
-
-#: templates/configure.html.jinja:340
-msgid "Gérez les sauvegardes et contrôles système."
-msgstr "ניהול גיבויים ובדיקות מערכת."
-
-#: templates/configure.html.jinja:341
-msgid "Maintenance"
-msgstr "תחזוקה"
-
-#: templates/configure.html.jinja:343
-msgid "Consultez les statistiques d'utilisation du système."
-msgstr "צפה בסטטיסטיקות השימוש במערכת."
-
-#: templates/configure.html.jinja:344
-msgid "Statistiques"
-msgstr "סטטיסטיקות"
+msgstr ""
 
 #: templates/configure.html.jinja:346
-msgid "Consultez les journaux système."
-msgstr "צפה ביומני המערכת (Logs)."
+msgid "Display"
+msgstr ""
 
-#: templates/configure.html.jinja:347
-msgid "Logs"
-msgstr "יומנים"
+#: templates/configure.html.jinja:348
+msgid "Configurez l'affichage de l'heure, la météo et les marées."
+msgstr ""
 
-#: templates/configure.html.jinja:356
-msgid "Paramètres d'affichage"
-msgstr "הגדרות תצוגה"
+#: templates/configure.html.jinja:349
+msgid "Clock & Info"
+msgstr ""
+
+#: templates/configure.html.jinja:351
+#, fuzzy
+msgid "Metadata"
+msgstr "אין מטא-נתונים"
+
+#: templates/configure.html.jinja:358
+msgid "Configure photo sources."
+msgstr ""
 
 #: templates/configure.html.jinja:359
-msgid "Durée d'affichage (en secondes) :"
-msgstr "משך תצוגה (בשניות):"
+msgid "Sources"
+msgstr ""
+
+#: templates/configure.html.jinja:361
+msgid "Visualize and manage all the photos ready for slideshow."
+msgstr ""
+
+#: templates/configure.html.jinja:362
+msgid "Preview"
+msgstr ""
+
+#: templates/configure.html.jinja:364
+msgid "Create and manage your personalized photo albums."
+msgstr ""
 
 #: templates/configure.html.jinja:365
-msgid "Orientation du cadre"
-msgstr "כיוון המסגרת"
-
-#: templates/configure.html.jinja:369
-msgid "Paysage (Horizontal)"
-msgstr "לרוחב (אופקי)"
-
-#: templates/configure.html.jinja:371
-msgid "Portrait (Vertical)"
-msgstr "לאורך (אנכי)"
-
-#: templates/configure.html.jinja:373
-msgid ""
-"Si vous changez l'orientation, pensez à relancer une préparation des "
-"photos (onglet Actions) pour adapter le contenu."
+msgid "Playlists"
 msgstr ""
-"אם תשנה את הכיוון, זכור להפעיל מחדש את הכנת התמונות (בלשונית פעולות) כדי "
-"להתאים את התוכן."
 
-#: templates/configure.html.jinja:378
-msgid "Horaires Semaine (Dim-Jeu)"
-msgstr "לוח זמנים אמצע שבוע (א'-ה')"
+#: templates/configure.html.jinja:367
+msgid "Find and manage your favorite photos."
+msgstr ""
 
-#: templates/configure.html.jinja:379 templates/configure.html.jinja:386
-msgid "Allumage :"
-msgstr "הדלקה:"
+#: templates/configure.html.jinja:368
+#, fuzzy
+msgid "Favorites"
+msgstr "התמונות האהובות עליך"
 
-#: templates/configure.html.jinja:381 templates/configure.html.jinja:388
-msgid "Extinction :"
-msgstr "כיבוי:"
+#: templates/configure.html.jinja:376
+msgid "Validate or reject the photos sent by the guests."
+msgstr ""
 
-#: templates/configure.html.jinja:385
-msgid "Horaires Weekend (Ven-Sam)"
-msgstr "לוח זמנים סוף שבוע (ו'-ש')"
+#: templates/configure.html.jinja:377
+msgid "Validation"
+msgstr ""
+
+#: templates/configure.html.jinja:380
+msgid "Launch the imports, control the slideshow and send photos."
+msgstr ""
+
+#: templates/configure.html.jinja:381 templates/configure.html.jinja:1218
+msgid "Actions"
+msgstr ""
+
+#: templates/configure.html.jinja:388
+msgid "Manage Wi-Fi and network settings."
+msgstr ""
+
+#: templates/configure.html.jinja:389
+msgid "Network"
+msgstr ""
+
+#: templates/configure.html.jinja:391
+msgid "Manage backups and system checks."
+msgstr ""
+
+#: templates/configure.html.jinja:392
+msgid "Maintenance"
+msgstr ""
+
+#: templates/configure.html.jinja:394
+msgid "Consultez les statistiques d'utilisation du système."
+msgstr ""
 
 #: templates/configure.html.jinja:395
-msgid "Résolution de l'écran"
-msgstr "רזולוציית מסך"
+msgid "Statistics"
+msgstr ""
 
-#: templates/configure.html.jinja:399
-msgid "Chargement des résolutions..."
-msgstr "טוען רזולוציות..."
+#: templates/configure.html.jinja:397
+msgid "Check the system logs."
+msgstr ""
 
-#: templates/configure.html.jinja:403
-msgid "Appliquer"
-msgstr "החל"
+#: templates/configure.html.jinja:398
+msgid "Logs"
+msgstr ""
 
-#: templates/configure.html.jinja:406
-msgid ""
-"Force une résolution spécifique. Utile si l'écran n'est pas détecté "
-"correctement au démarrage."
-msgstr "מאלץ רזולוציה ספציפית. שימושי אם המסך אינו מזוהה כראוי בהפעלה."
+#: templates/configure.html.jinja:407
+msgid "Run mode"
+msgstr ""
 
-#: templates/configure.html.jinja:409
-#, python-format
-msgid "Hauteur utile de l'écran (%% affiché) :"
-msgstr "גובה שימושי של המסך (%% מוצג):"
+#: templates/configure.html.jinja:414
+msgid "Picture frame"
+msgstr ""
 
 #: templates/configure.html.jinja:415
-msgid "Largeur d'affichage cible (px) :"
-msgstr "רוחב תצוגה יעד (פיקסלים):"
+msgid "Fullscreen slideshow on this device's screen (Raspberry Pi)."
+msgstr ""
 
-#: templates/configure.html.jinja:418
-msgid "Hauteur d'affichage cible (px) :"
-msgstr "גובה תצוגה יעד (פיקסלים):"
+#: templates/configure.html.jinja:420
+msgid "Desktop background updater"
+msgstr ""
 
-#: templates/configure.html.jinja:424
-msgid "Détecter la résolution de l'écran actif"
-msgstr "זהה את רזולוציית המסך הפעיל"
+#: templates/configure.html.jinja:421
+msgid ""
+"Compose a photo with overlays and set it as the desktop wallpaper on all "
+"screens."
+msgstr ""
 
-#: templates/configure.html.jinja:424
-msgid "Détecter"
-msgstr "זהה"
-
-#: templates/configure.html.jinja:428
-msgid "Activer l'effet Pan/Zoom sur les photos"
-msgstr "הפעל אפקט תנועה/זום (Pan/Zoom) בתמונות"
+#: templates/configure.html.jinja:427
+msgid "Apply mode"
+msgstr ""
 
 #: templates/configure.html.jinja:432
+msgid "Background updater settings"
+msgstr ""
+
+#: templates/configure.html.jinja:434
+msgid "Background update interval (seconds) :"
+msgstr ""
+
+#: templates/configure.html.jinja:438
+#, fuzzy
+msgid "Background image format :"
+msgstr "מדריך לתבניות תאריך"
+
+#: templates/configure.html.jinja:444
+#, fuzzy
+msgid "Background resolution :"
+msgstr "לא נמצא פתרון."
+
+#: templates/configure.html.jinja:446
+msgid "Automatic (largest screen)"
+msgstr ""
+
+#: templates/configure.html.jinja:447
+msgid "Manual (use target display size)"
+msgstr ""
+
+#: templates/configure.html.jinja:454
+#, fuzzy
+msgid "Display's duration :"
+msgstr "מכין"
+
+#: templates/configure.html.jinja:460
+#, fuzzy
+msgid "Frame orientation"
+msgstr "ייבוא מידע..."
+
+#: templates/configure.html.jinja:464
+msgid "Landscape (Horizontal)"
+msgstr ""
+
+#: templates/configure.html.jinja:466
+msgid "Portrait (Vertical)"
+msgstr ""
+
+#: templates/configure.html.jinja:468
+msgid ""
+"If you change the orientation, remember to restart photo preparation "
+"(Actions tab) to adapt the content."
+msgstr ""
+
+#: templates/configure.html.jinja:473
+msgid "Weekday hours (Sun-Thu)"
+msgstr ""
+
+#: templates/configure.html.jinja:474 templates/configure.html.jinja:481
+msgid "Ignition:"
+msgstr ""
+
+#: templates/configure.html.jinja:476 templates/configure.html.jinja:483
+msgid "Extinction :"
+msgstr ""
+
+#: templates/configure.html.jinja:480
+msgid "Weekend hours (Fri-Sat)"
+msgstr ""
+
+#: templates/configure.html.jinja:494
+#, fuzzy
+msgid "Loading resolutions..."
+msgstr "טוען עורך חיתוך..."
+
+#: templates/configure.html.jinja:498
+msgid "Apply"
+msgstr ""
+
+#: templates/configure.html.jinja:501
+msgid ""
+"Forces a specific resolution. Useful if the screen is not detected "
+"correctly at startup."
+msgstr ""
+
+#: templates/configure.html.jinja:504
+#, python-format
+msgid "Useful screen height (%% shown) :"
+msgstr ""
+
+#: templates/configure.html.jinja:510
+msgid "Target display width (px) :"
+msgstr ""
+
+#: templates/configure.html.jinja:513
+msgid "Target display height (px) :"
+msgstr ""
+
+#: templates/configure.html.jinja:519
+msgid "Détecter la résolution de l'écran actif"
+msgstr ""
+
+#: templates/configure.html.jinja:519
+#, fuzzy
+msgid "Detect"
+msgstr "זוהה!"
+
+#: templates/configure.html.jinja:523
+msgid "Enable Pan/Zoom effect on photos"
+msgstr ""
+
+#: templates/configure.html.jinja:527
 msgid "Start zoom (1.00 = full image):"
 msgstr "זום התחלתי (1.00 = תמונה מלאה):"
 
-#: templates/configure.html.jinja:437
+#: templates/configure.html.jinja:532
 #, fuzzy, python-format
 msgid "End zoom (1.15 = 15%% zoom):"
 msgstr "זום סופי (1.15 = הגדלה של 15%):"
 
-#: templates/configure.html.jinja:443
-msgid "Activer l'effet de transition entre les photos"
-msgstr "הפעל אפקט מעבר בין תמונות"
+#: templates/configure.html.jinja:538
+msgid "Enable the transition effect between photos"
+msgstr ""
 
-#: templates/configure.html.jinja:447
-msgid "Durée de transition (secondes) :"
-msgstr "משך מעבר (שניות):"
+#: templates/configure.html.jinja:542
+#, fuzzy
+msgid "Transition duration (seconds):"
+msgstr "הפניה תוך 5 שניות..."
 
-#: templates/configure.html.jinja:452
-msgid "Type de transition :"
-msgstr "סוג מעבר:"
+#: templates/configure.html.jinja:547
+msgid "Transition type:"
+msgstr ""
 
-#: templates/configure.html.jinja:455
+#: templates/configure.html.jinja:550
 msgid "Random"
 msgstr "אקראי"
 
-#: templates/configure.html.jinja:457
-msgid "Fondu enchaîné"
-msgstr "עמעום הדרגתי (Crossfade)"
+#: templates/configure.html.jinja:552
+#, fuzzy
+msgid "Crossfade"
+msgstr "החיתוך נשמר."
 
-#: templates/configure.html.jinja:459
-msgid "Glisser depuis la gauche"
-msgstr "החלקה משמאל"
-
-#: templates/configure.html.jinja:461
-msgid "Glisser depuis la droite"
-msgstr "החלקה מימין"
-
-#: templates/configure.html.jinja:463
-msgid "Glisser depuis le bas"
-msgstr "החלקה מלמטה"
-
-#: templates/configure.html.jinja:465
-msgid "Glisser depuis le haut"
-msgstr "החלקה מלמעלה"
-
-#: templates/configure.html.jinja:469
-msgid "Fréquence d'images (FPS) :"
-msgstr "קצב פריימים (FPS):"
-
-#: templates/configure.html.jinja:471
-msgid "Automatique (30 FPS sur Pi 3, 60 FPS sinon)"
-msgstr "אוטומטי (30 FPS ב-Pi 3, אחרת 60 FPS)"
-
-#: templates/configure.html.jinja:477
-msgid ""
-"Fréquence des favoris (nombre d'ajouts supplémentaires dans la liste de "
-"lecture) :"
-msgstr "תדירות מועדפים (מספר הוספות נוספות לרשימת ההשמעה):"
-
-#: templates/configure.html.jinja:480
-msgid "Ex: 0 = pas de boost, 2 = 3x plus de chances d'apparaître."
-msgstr "לדוגמה: 0 = ללא דחיפה, 2 = סיכוי גדול פי 3 להופיע."
-
-#: templates/configure.html.jinja:486
-msgid "Activer le boost pour les photos à leur date anniversaire de prise de vue"
-msgstr "הפעל דחיפה לתמונות ביום השנה לצילומן"
-
-#: templates/configure.html.jinja:490
-msgid "Facteur de boost anniversaire :"
-msgstr "מקדם דחיפת יום שנה:"
-
-#: templates/configure.html.jinja:495
-msgid "Afficher les vidéos dans le diaporama"
-msgstr "הצג סרטונים במצגת"
-
-#: templates/configure.html.jinja:500
-msgid "Activer le son pour les vidéos"
-msgstr "הפעל שמע עבור סרטונים"
-
-#: templates/configure.html.jinja:505
-msgid "Activer le décodage vidéo matériel (plus fluide, mais peut être instable)"
-msgstr "הפעל פענוח וידאו בחומרה (חלק יותר, אך עלול להיות לא יציב)"
-
-#: templates/configure.html.jinja:507
-msgid ""
-"Cochez cette case pour une lecture plus fluide sur les Raspberry Pi. "
-"Décochez si vous rencontrez des écrans bleus/noirs après les vidéos."
+#: templates/configure.html.jinja:554
+msgid "Swipe from left"
 msgstr ""
-"סמן תיבה זו להפעלה חלקה יותר ב-Raspberry Pi. בטל סימון אם אתה נתקל במסכים"
-" כחולים/שחורים לאחר סרטונים."
 
-#: templates/configure.html.jinja:511
-msgid "Sortie audio :"
-msgstr "פלט שמע:"
-
-#: templates/configure.html.jinja:514
-msgid "Automatique"
-msgstr "אוטומטי"
-
-#: templates/configure.html.jinja:516
-msgid "HDMI"
-msgstr "HDMI"
-
-#: templates/configure.html.jinja:518
-msgid "Jack 3.5mm (Casque)"
-msgstr "שקע 3.5 מ\"מ (אוזניות)"
-
-#: templates/configure.html.jinja:523
-msgid "Volume :"
-msgstr "עוצמת שמע:"
-
-#: templates/configure.html.jinja:535
-msgid "Gestion de l'alimentation (Prise Connectée)"
-msgstr "ניהול צריכת חשמל (שקע חכם)"
-
-#: templates/configure.html.jinja:537
-msgid ""
-"Si votre écran ne se met pas complètement en veille, vous pouvez utiliser"
-" une prise connectée (Wi-Fi) pour couper son alimentation. PictureFrame "
-"enverra une simple requête HTTP aux URLs que vous spécifiez."
+#: templates/configure.html.jinja:556
+msgid "Swipe from right"
 msgstr ""
-"אם המסך שלך אינו נכנס למצב שינה מלא, תוכל להשתמש בשקע חכם (Wi-Fi) כדי "
-"לנתק את החשמל שלו. PictureFrame ישלח בקשת HTTP פשוטה לכתובות שתציין."
 
-#: templates/configure.html.jinja:538
-msgid "Exemples d'URLs :"
-msgstr "דוגמאות לכתובות URL:"
-
-#: templates/configure.html.jinja:550
-msgid ""
-"Activer le contrôle par prise\n"
-"                            connectée"
+#: templates/configure.html.jinja:558
+msgid "Swipe from bottom"
 msgstr ""
-"הפעל שליטה באמצעות שקע\n"
-"                            חכם"
 
-#: templates/configure.html.jinja:557
-msgid ""
-"État de la\n"
-"                            prise : Inconnu"
+#: templates/configure.html.jinja:560
+msgid "Swipe from up"
 msgstr ""
-"מצב\n"
-"                            השקע: לא ידוע"
 
 #: templates/configure.html.jinja:564
-msgid ""
-"URL\n"
-"                                pour ALLUMER la prise :"
+msgid "Frame rate (FPS):"
 msgstr ""
-"כתובת URL\n"
-"                                להדלקת השקע:"
 
-#: templates/configure.html.jinja:573 templates/configure.html.jinja:586
-msgid "Tester"
-msgstr "בדוק"
-
-#: templates/configure.html.jinja:577
-msgid ""
-"URL\n"
-"                                pour ÉTEINDRE la prise :"
+#: templates/configure.html.jinja:566
+msgid "Automatic (30 FPS on Pi 3, 60 FPS otherwise)"
 msgstr ""
-"כתובת URL\n"
-"                                לכיבוי השקע:"
+
+#: templates/configure.html.jinja:572
+msgid "Favorites frequency (number of additional additions to the playlist):"
+msgstr ""
+
+#: templates/configure.html.jinja:575
+msgid "Ex: 0 = no boost, 2 = 3x more chance of appearing."
+msgstr ""
+
+#: templates/configure.html.jinja:581
+msgid "Enable boost for photos on their shooting anniversary"
+msgstr ""
+
+#: templates/configure.html.jinja:585
+msgid "Birthday boost factor:"
+msgstr ""
 
 #: templates/configure.html.jinja:590
-msgid ""
-"Délai\n"
-"                                après allumage (secondes) :"
+msgid "Show videos in slideshow"
 msgstr ""
-"השהייה\n"
-"                                לאחר הדלקה (שניות):"
 
 #: templates/configure.html.jinja:595
-msgid ""
-"Temps d'attente pour que l'écran s'initialise avant de forcer la "
-"résolution. Augmentez si la résolution est toujours incorrecte."
-msgstr "זמן המתנה לאתחול המסך לפני אילוץ הרזולוציה. הגדל אם הרזולוציה עדיין שגויה."
-
-#: templates/configure.html.jinja:598
-msgid ""
-"URL\n"
-"                                de Statut (Optionnel) :"
+msgid "Enable sound for videos"
 msgstr ""
-"כתובת URL\n"
-"                                לסטטוס (אופציונלי):"
 
-#: templates/configure.html.jinja:604
-msgid "Pour Home Assistant, utilisez l'URL de l'API des états :"
-msgstr "עבור Home Assistant, השתמש בכתובת ה-API של המצבים:"
+#: templates/configure.html.jinja:600
+msgid "Activate hardware video decoding (more fluid, but can be unstable)"
+msgstr ""
 
-#: templates/configure.html.jinja:610
-msgid "Token d'accès Home Assistant (si URL de statut HA) :"
-msgstr "אסימון גישה (Token) של Home Assistant (אם נעשה שימוש ב-URL סטטוס HA):"
+#: templates/configure.html.jinja:602
+msgid ""
+"Check this box for smoother playback on Raspberry Pis. Uncheck if you "
+"experience blue/black screens after videos."
+msgstr ""
+
+#: templates/configure.html.jinja:606
+msgid "Sound output :"
+msgstr ""
+
+#: templates/configure.html.jinja:609
+msgid "Automatic"
+msgstr ""
+
+#: templates/configure.html.jinja:611
+msgid "HDMI"
+msgstr ""
+
+#: templates/configure.html.jinja:613
+msgid "Jack 3.5mm (headphone)"
+msgstr ""
 
 #: templates/configure.html.jinja:618
-msgid "Afficher/Cacher le token"
-msgstr "הצג/הסתר אסימון"
+msgid "Volume :"
+msgstr ""
 
-#: templates/configure.html.jinja:623
-msgid "Créez un \"Token d'accès longue durée\" dans votre profil Home Assistant."
-msgstr "צור \"אסימון גישה לטווח ארוך\" בפרופיל ה-Home Assistant שלך."
+#: templates/configure.html.jinja:630
+msgid "Power management (Connected Socket)"
+msgstr ""
+
+#: templates/configure.html.jinja:632
+msgid ""
+"If your screen does not go to sleep completely, you can use a connected "
+"outlet (Wi-Fi) to turn off its power. PictureFrame will send a simple "
+"HTTP request to the URLs you specify."
+msgstr ""
 
 #: templates/configure.html.jinja:633
-msgid "Affichage de l'heure"
-msgstr "תצוגת שעה"
+msgid "Examples of URLs:"
+msgstr ""
 
-#: templates/configure.html.jinja:638
-msgid "Afficher l'heure"
-msgstr "הצג שעה"
+#: templates/configure.html.jinja:645
+msgid ""
+"Enable socket control\n"
+"                            connected"
+msgstr ""
 
-#: templates/configure.html.jinja:643
-msgid "Taille de la police :"
-msgstr "גודל גופן:"
+#: templates/configure.html.jinja:652
+msgid ""
+"Test the\n"
+"                            connection"
+msgstr ""
 
-#: templates/configure.html.jinja:648 templates/configure.html.jinja:810
-msgid "Décalage horizontal (px) :"
-msgstr "היסט אופקי (פיקסלים):"
+#: templates/configure.html.jinja:659 templates/configure.html.jinja:672
+#: templates/configure.html.jinja:693 templates/configure.html.jinja:1049
+msgid ""
+"Format\n"
+"                            of the location"
+msgstr ""
 
-#: templates/configure.html.jinja:654 templates/configure.html.jinja:817
-msgid "Décalage vertical (px) :"
-msgstr "היסט אנכי (פיקסלים):"
+#: templates/configure.html.jinja:668 templates/configure.html.jinja:681
+msgid "Tester"
+msgstr ""
 
-#: templates/configure.html.jinja:660
-msgid "Couleur du texte (hex) :"
-msgstr "צבע טקסט (hex):"
+#: templates/configure.html.jinja:685
+msgid ""
+"Deadline\n"
+"                                after ignition (seconds):"
+msgstr ""
 
-#: templates/configure.html.jinja:665
-msgid "Couleur du contour (hex) :"
-msgstr "צבע קו מתאר (hex):"
-
-#: templates/configure.html.jinja:672
-msgid "Position de l'heure :"
-msgstr "מיקום השעה:"
-
-#: templates/configure.html.jinja:675
-msgid "Gauche"
-msgstr "שמאל"
-
-#: templates/configure.html.jinja:677
-msgid "Centre"
-msgstr "מרכז"
-
-#: templates/configure.html.jinja:679
-msgid "Droite"
-msgstr "ימין"
-
-#: templates/configure.html.jinja:684
-msgid "Police :"
-msgstr "גופן:"
+#: templates/configure.html.jinja:690
+msgid ""
+"Time to wait for the screen to initialize before forcing the resolution. "
+"Increase if the resolution is still incorrect."
+msgstr ""
 
 #: templates/configure.html.jinja:699
-msgid "Afficher un fond derrière l'heure/date/météo"
-msgstr "הצג רקע מאחורי השעה/תאריך/מזג אוויר"
-
-#: templates/configure.html.jinja:703
-msgid ""
-"Couleur du fond (hex RGBA)\n"
-"                            :"
+msgid "For Home Assistant, use the States API URL:"
 msgstr ""
-"צבע רקע (hex RGBA)\n"
-"                            :"
 
-#: templates/configure.html.jinja:711
-msgid "Affichage de la date"
-msgstr "תצוגת תאריך"
+#: templates/configure.html.jinja:705
+msgid "Home Assistant access token (if HA status URL):"
+msgstr ""
 
-#: templates/configure.html.jinja:714
-msgid "Afficher la date (sous l'heure)"
-msgstr "הצג תאריך (מתחת לשעה)"
+#: templates/configure.html.jinja:713 templates/configure.html.jinja:897
+#: templates/configure.html.jinja:2736
+msgid "Show/Hide photos"
+msgstr ""
 
 #: templates/configure.html.jinja:718
-msgid "Format de la date :"
-msgstr "פורמט תאריך:"
+msgid "Create a \"Long-lived access token\" in your Home Assistant profile."
+msgstr ""
 
-#: templates/configure.html.jinja:765
-msgid "Affichage des marées (StormGlass Tide API)"
-msgstr "תצוגת גאות ושפל (StormGlass Tide API)"
+#: templates/configure.html.jinja:728
+msgid "Time display"
+msgstr ""
 
-#: templates/configure.html.jinja:766
-msgid "Utilise l'API de"
-msgstr "משתמש ב-API של"
+#: templates/configure.html.jinja:733
+msgid "Show time"
+msgstr ""
+
+#: templates/configure.html.jinja:738
+msgid "Font size :"
+msgstr ""
+
+#: templates/configure.html.jinja:743 templates/configure.html.jinja:905
+msgid "Horizontal offset (px):"
+msgstr ""
+
+#: templates/configure.html.jinja:749 templates/configure.html.jinja:912
+msgid "Vertical offset (px):"
+msgstr ""
+
+#: templates/configure.html.jinja:755
+msgid "Text color (hex) :"
+msgstr ""
+
+#: templates/configure.html.jinja:760
+msgid "Outline color (hex):"
+msgstr ""
 
 #: templates/configure.html.jinja:767
-msgid ""
-"Une clé API est\n"
-"                        requise. Vous pouvez trouver les coordonnées de "
-"votre port sur des sites comme"
+#, fuzzy
+msgid "Time position :"
+msgstr "ייבוא מידע..."
+
+#: templates/configure.html.jinja:770
+msgid "Left"
 msgstr ""
-"נדרש מפתח API.\n"
-"                        תוכל למצוא את קואורדינטות הנמל שלך באתרים כמו"
 
-#: templates/configure.html.jinja:771
-msgid ""
-"Note : Cette API fournit les hauteurs de marée, mais pas\n"
-"                        le coefficient de marée."
+#: templates/configure.html.jinja:772
+#, fuzzy
+msgid "Center"
+msgstr "& התחבר מחדש"
+
+#: templates/configure.html.jinja:774
+msgid "Right"
 msgstr ""
-"הערה: API זה מספק את גובה הגאות, אך לא\n"
-"                        את מקדם הגאות."
 
-#: templates/configure.html.jinja:776
-msgid "Afficher les informations de marée"
-msgstr "הצג מידע על גאות ושפל"
-
-#: templates/configure.html.jinja:781
-msgid "Latitude (ex: 48.3904) :"
-msgstr "קו רוחב (לדוגמה: 48.3904):"
-
-#: templates/configure.html.jinja:787
-msgid "Longitude (ex: -4.4861) :"
-msgstr "קו אורך (לדוגמה: -4.4861):"
+#: templates/configure.html.jinja:779
+msgid "Font :"
+msgstr ""
 
 #: templates/configure.html.jinja:794
-msgid "Clé API StormGlass :"
-msgstr "מפתח API של StormGlass:"
-
-#: templates/configure.html.jinja:802
-msgid "Afficher/Cacher la clé API"
-msgstr "הצג/הסתר מפתח API"
-
-#: templates/configure.html.jinja:825
-msgid "Tester la connexion"
-msgstr "בדוק חיבור"
-
-#: templates/configure.html.jinja:828
-msgid "Forcer la mise à jour"
-msgstr "אלץ עדכון"
-
-#: templates/configure.html.jinja:836
-msgid "État Actuel des Marées"
-msgstr "מצב גאות ושפל נוכחי"
-
-#: templates/configure.html.jinja:839
-msgid ""
-"Dernière mise à jour des données\n"
-"                                    :"
+msgid "Display background behind time/date/weather"
 msgstr ""
-"עדכון נתונים אחרון\n"
-"                                    :"
 
-#: templates/configure.html.jinja:840 templates/configure.html.jinja:843
-#: templates/configure.html.jinja:1230 templates/configure.html.jinja:1233
-#: templates/configure.html.jinja:1237 templates/configure.html.jinja:1311
-#: templates/configure.html.jinja:1313 templates/configure.html.jinja:1317
-#: templates/configure.html.jinja:1483 templates/configure.html.jinja:1486
-#: templates/configure.html.jinja:1490 templates/configure.html.jinja:1493
-#: templates/configure.html.jinja:2146 templates/configure.html.jinja:4414
-msgid "Chargement..."
-msgstr "טוען..."
-
-#: templates/configure.html.jinja:842
-msgid "État de l'API :"
-msgstr "מצב ה-API:"
-
-#: templates/configure.html.jinja:849
-msgid "Fuseau Horaire"
-msgstr "אזור זמן"
-
-#: templates/configure.html.jinja:851
-msgid "Fuseau horaire actuel du système :"
-msgstr "אזור הזמן הנוכחי של המערכת:"
-
-#: templates/configure.html.jinja:852
-msgid "Non défini"
-msgstr "לא מוגדר"
-
-#: templates/configure.html.jinja:856
-msgid "Attention :"
-msgstr "שים לב:"
-
-#: templates/configure.html.jinja:856
+#: templates/configure.html.jinja:798
 msgid ""
-"La détection automatique du fuseau horaire a\n"
-"                            échoué lors de l'installation. Le système est"
-" configuré sur <strong>UTC</strong>. L'heure\n"
-"                            affichée peut être incorrecte."
+"Background color (hex RGBA)\n"
+"                            :"
 msgstr ""
-"הזיהוי האוטומטי של אזור הזמן\n"
-"                            נכשל במהלך ההתקנה. המערכת מוגדרת על "
-"<strong>UTC</strong>. השעה\n"
-"                            המוצגת עלולה להיות שגויה."
+
+#: templates/configure.html.jinja:806
+msgid "Date display"
+msgstr ""
+
+#: templates/configure.html.jinja:809
+msgid "Show date (below time)"
+msgstr ""
+
+#: templates/configure.html.jinja:813
+#, fuzzy
+msgid "Date format :"
+msgstr "מדריך לתבניות תאריך"
 
 #: templates/configure.html.jinja:860
-msgid ""
-"Vous pouvez le corriger manuellement en vous connectant au Raspberry Pi "
-"(via SSH) et\n"
-"                            en exécutant la commande :"
+msgid "Tide display (StormGlass Tide API)"
 msgstr ""
-"תוכל לתקן זאת ידנית על ידי התחברות ל-Raspberry Pi (דרך SSH)\n"
-"                            והרצת הפקודה:"
 
-#: templates/configure.html.jinja:863
-msgid "(remplacez par votre région/ville)."
-msgstr "(החלף באזור/עיר שלך)."
+#: templates/configure.html.jinja:861
+msgid "Uses the API"
+msgstr ""
+
+#: templates/configure.html.jinja:862
+msgid ""
+"An API key is\n"
+"                        required. You can find your port coordinates on "
+"sites like"
+msgstr ""
 
 #: templates/configure.html.jinja:866
 msgid ""
-"Le fuseau horaire a été configuré automatiquement\n"
-"                            lors de l'installation."
+"Note: This API provides tide heights, but not\n"
+"                        the tidal coefficient."
 msgstr ""
-"אזור הזמן הוגדר אוטומטית\n"
-"                            במהלך ההתקנה."
 
-#: templates/configure.html.jinja:877
-msgid "Sources à afficher dans le diaporama"
-msgstr "מקורות להצגה במצגת"
-
-#: templates/configure.html.jinja:879
-msgid ""
-"Sélectionnez les sources de photos à inclure dans le diaporama.\n"
-"                        Les photos seront mélangées entre les sources "
-"sélectionnées."
+#: templates/configure.html.jinja:871
+msgid "Show tide information"
 msgstr ""
-"בחר את מקורות התמונות לכלול במצגת.\n"
-"                        התמונות יעורבבו בין המקורות שנבחרו."
 
-#: templates/configure.html.jinja:890
-msgid "Photos USB"
-msgstr "תמונות USB"
-
-#: templates/configure.html.jinja:894
-msgid "Photos Smartphone"
-msgstr "תמונות סמארטפון"
-
-#: templates/configure.html.jinja:898
-msgid "Photos des invités (validées)"
-msgstr "תמונות אורחים (מאושרות)"
-
-#: templates/configure.html.jinja:906
-msgid "Affichage des métadonnées des photos"
-msgstr "תצוגת מטא-דאטה של תמונות"
-
-#: templates/configure.html.jinja:908
-msgid "Configurez l'affichage des informations (date, lieu) de vos photos."
-msgstr "הגדרת פרטי התמונות המוצגים (תאריך ומיקום)."
-
-#: templates/configure.html.jinja:913
-msgid "Afficher la date de prise de vue"
-msgstr "הצג תאריך צילום"
-
-#: templates/configure.html.jinja:916
-msgid ""
-"Format de\n"
-"                            la date"
+#: templates/configure.html.jinja:876
+msgid "Latitude (eg: 48.3904):"
 msgstr ""
-"פורמט\n"
-"                            התאריך"
 
-#: templates/configure.html.jinja:921
-#, python-format
-msgid "Utilise les codes de formatage Python (ex: %%d/%%m/%%Y, %%B %%Y)."
-msgstr "משתמש בקודי פורמט של Python (לדוגמה: %%d/%%m/%%Y, %%B %%Y)."
+#: templates/configure.html.jinja:882
+msgid "Longitude (eg: -4.4861):"
+msgstr ""
 
-#: templates/configure.html.jinja:928
-msgid "Afficher la localisation (ville/pays)"
-msgstr "הצג מיקום (עיר/מדינה)"
+#: templates/configure.html.jinja:889
+msgid "Api Key StormGlass :"
+msgstr ""
+
+#: templates/configure.html.jinja:920
+#, fuzzy
+msgid "Test the connection"
+msgstr "התחבר/י"
+
+#: templates/configure.html.jinja:923 templates/configure.html.jinja:4809
+msgid "Force update"
+msgstr ""
 
 #: templates/configure.html.jinja:931
-msgid ""
-"Format\n"
-"                            de la localisation"
+msgid "Current State of the Tides"
 msgstr ""
-"פורמט\n"
-"                            המיקום"
 
-#: templates/configure.html.jinja:936
-msgid "Ville, Pays"
-msgstr "עיר, מדינה"
+#: templates/configure.html.jinja:934
+msgid ""
+"Last data update\n"
+"                                    :"
+msgstr ""
 
-#: templates/configure.html.jinja:938
-msgid "Ville uniquement"
-msgstr "עיר בלבד"
+#: templates/configure.html.jinja:935 templates/configure.html.jinja:938
+#: templates/configure.html.jinja:1348 templates/configure.html.jinja:1351
+#: templates/configure.html.jinja:1355 templates/configure.html.jinja:1429
+#: templates/configure.html.jinja:1431 templates/configure.html.jinja:1435
+#: templates/configure.html.jinja:1656 templates/configure.html.jinja:1659
+#: templates/configure.html.jinja:1663 templates/configure.html.jinja:1666
+#: templates/configure.html.jinja:2320 templates/configure.html.jinja:4588
+#, fuzzy
+msgid "Loading..."
+msgstr "טוען עורך חיתוך..."
 
-#: templates/configure.html.jinja:940
-msgid "Pays uniquement"
-msgstr "מדינה בלבד"
+#: templates/configure.html.jinja:937
+msgid "API Status:"
+msgstr ""
+
+#: templates/configure.html.jinja:944 templates/configure.html.jinja:957
+msgid "Time zone"
+msgstr ""
+
+#: templates/configure.html.jinja:946
+msgid "Current system time zone:"
+msgstr ""
 
 #: templates/configure.html.jinja:947
-msgid "Afficher le drapeau du pays"
-msgstr "הצג דגל מדינה"
-
-#: templates/configure.html.jinja:950
-msgid ""
-"Taille du\n"
-"                            drapeau"
+msgid "Undefined"
 msgstr ""
-"גודל\n"
-"                            הדגל"
 
-#: templates/configure.html.jinja:963
-msgid ""
-"Opacité\n"
-"                            du drapeau (0.1 à 1.0)"
+#: templates/configure.html.jinja:951
+msgid "Attention :"
 msgstr ""
-"שקיפות\n"
-"                            הדגל (0.1 עד 1.0)"
 
-#: templates/configure.html.jinja:971
-msgid "Position du drapeau"
-msgstr "מיקום הדגל"
+#: templates/configure.html.jinja:951
+#, fuzzy
+msgid ""
+"Automatic time zone detection has\n"
+"                            failed during installation. The system is set"
+" to <strong>UTC</strong>. The time\n"
+"                            displayed may be incorrect."
+msgstr ""
+"הזיהוי אזור הזמן האוטומטי נכשל במהלך ההתקנה. המערכת מוגדרת "
+"ל־<strong>UTC</strong>. השעה המוצגת עלולה להיות לא מדויקת."
 
-#: templates/configure.html.jinja:975 templates/configure.html.jinja:1057
-msgid "En haut à droite"
-msgstr "למעלה מימין"
+#: templates/configure.html.jinja:983
+msgid ""
+"The change will be applied to the system after saving. A restart may be "
+"necessary."
+msgstr ""
 
-#: templates/configure.html.jinja:977 templates/configure.html.jinja:1055
-msgid "En haut à gauche"
-msgstr "למעלה משמאל"
+#: templates/configure.html.jinja:993
+msgid "Sources to display in the slideshow"
+msgstr ""
 
-#: templates/configure.html.jinja:979 templates/configure.html.jinja:1050
-msgid "En bas à droite"
-msgstr "למטה מימין"
-
-#: templates/configure.html.jinja:981 templates/configure.html.jinja:1048
-msgid "En bas à gauche"
-msgstr "למטה משמאל"
-
-#: templates/configure.html.jinja:987 templates/configure.html.jinja:1062
-msgid "Décalage horizontal (px)"
-msgstr "היסט אופקי (פיקסלים)"
-
-#: templates/configure.html.jinja:994 templates/configure.html.jinja:1069
-msgid "Décalage vertical (px)"
-msgstr "היסט אנכי (פיקסלים)"
-
-#: templates/configure.html.jinja:1002
-msgid "Style et Positionnement"
-msgstr "סגנון ומיקום"
+#: templates/configure.html.jinja:995
+msgid ""
+"Select photo sources to include in the slideshow.\n"
+"                        Photos will be mixed between the selected sources."
+msgstr ""
 
 #: templates/configure.html.jinja:1006
-msgid "Taille de la police"
-msgstr "גודל גופן"
+#, fuzzy
+msgid "USB Photos"
+msgstr "עבור"
 
-#: templates/configure.html.jinja:1013
-msgid "Police"
-msgstr "גופן"
+#: templates/configure.html.jinja:1010
+#, fuzzy
+msgid "Smartphone Photos"
+msgstr "תמונות מיובאות"
+
+#: templates/configure.html.jinja:1014
+msgid ""
+"Guest photos\n"
+"                            (validated)"
+msgstr ""
+
+#: templates/configure.html.jinja:1023
+#, fuzzy
+msgid "Viewing photo metadata"
+msgstr "אין מטא-נתונים"
+
+#: templates/configure.html.jinja:1025
+msgid "Configure the information (date, location) displayed for your photos."
+msgstr ""
 
 #: templates/configure.html.jinja:1030
-msgid "Couleur du texte (hex)"
-msgstr "צבע טקסט (hex)"
+msgid "Show shooting date"
+msgstr ""
 
-#: templates/configure.html.jinja:1037
-msgid "Couleur du contour (hex)"
-msgstr "צבע קו מתאר (hex)"
+#: templates/configure.html.jinja:1033
+msgid ""
+"Format of\n"
+"                            the date"
+msgstr ""
 
-#: templates/configure.html.jinja:1044
+#: templates/configure.html.jinja:1038
+#, python-format
+msgid "Uses Python formatting codes (ex: %%d/%%m/%%Y, %%B %%Y)."
+msgstr ""
+
+#: templates/configure.html.jinja:1045
+msgid ""
+"Show location\n"
+"                            (city/country)"
+msgstr ""
+
+#: templates/configure.html.jinja:1054
+msgid "City, Country"
+msgstr ""
+
+#: templates/configure.html.jinja:1056
+msgid "City only"
+msgstr ""
+
+#: templates/configure.html.jinja:1058 templates/configure.html.jinja:1956
+#: templates/configure.html.jinja:2335
+msgid "Country only"
+msgstr ""
+
+#: templates/configure.html.jinja:1065
+msgid "Show country flag"
+msgstr ""
+
+#: templates/configure.html.jinja:1068
+msgid ""
+"Size of\n"
+"                            flag"
+msgstr ""
+
+#: templates/configure.html.jinja:1081
+msgid ""
+"Opacity\n"
+"                            of the flag (0.1 to 1.0)"
+msgstr ""
+
+#: templates/configure.html.jinja:1089
+msgid "Flag position"
+msgstr ""
+
+#: templates/configure.html.jinja:1093 templates/configure.html.jinja:1175
+msgid "Top right"
+msgstr ""
+
+#: templates/configure.html.jinja:1095 templates/configure.html.jinja:1173
+msgid "Top left"
+msgstr ""
+
+#: templates/configure.html.jinja:1097 templates/configure.html.jinja:1168
+msgid "Bottom right"
+msgstr ""
+
+#: templates/configure.html.jinja:1099 templates/configure.html.jinja:1166
+msgid "Bottom left"
+msgstr ""
+
+#: templates/configure.html.jinja:1105 templates/configure.html.jinja:1180
+msgid "Horizontal offset (px)"
+msgstr ""
+
+#: templates/configure.html.jinja:1112 templates/configure.html.jinja:1187
+msgid "Vertical offset (px)"
+msgstr ""
+
+#: templates/configure.html.jinja:1120
+msgid "Style and Positioning"
+msgstr ""
+
+#: templates/configure.html.jinja:1124
+#, fuzzy
+msgid "Font size"
+msgstr "גודל הבחירה"
+
+#: templates/configure.html.jinja:1131
+msgid "Police"
+msgstr ""
+
+#: templates/configure.html.jinja:1148
+msgid "Text color (hex)"
+msgstr ""
+
+#: templates/configure.html.jinja:1155
+msgid "Outline color (hex)"
+msgstr ""
+
+#: templates/configure.html.jinja:1162
 msgid "Position"
-msgstr "מיקום"
+msgstr ""
 
-#: templates/configure.html.jinja:1053
-msgid "En bas au centre"
-msgstr "למטה במרכז"
+#: templates/configure.html.jinja:1171
+msgid "Bottom center"
+msgstr ""
 
-#: templates/configure.html.jinja:1079
-msgid "Afficher un fond semi-transparent derrière les métadonnées"
-msgstr "הצג רקע חצי-שקוף מאחורי המטא-דאטה"
+#: templates/configure.html.jinja:1197
+msgid "Show a semi-transparent background behind the metadata"
+msgstr ""
 
-#: templates/configure.html.jinja:1083
-msgid "Couleur du fond (hex RGBA)"
-msgstr "צבע רקע (hex RGBA)"
+#: templates/configure.html.jinja:1201
+msgid "Background color (hex RGBA)"
+msgstr ""
 
-#: templates/configure.html.jinja:1092
-msgid "Enregistrer les modifications"
-msgstr "שמור שינויים"
+#: templates/configure.html.jinja:1210
+msgid "Save changes"
+msgstr ""
 
-#: templates/configure.html.jinja:1104
-msgid "Gestion du diaporama"
-msgstr "ניהול המצגת"
+#: templates/configure.html.jinja:1222
+msgid "Slideshow management"
+msgstr ""
 
-#: templates/configure.html.jinja:1109
-msgid "Arrêter le diaporama"
-msgstr "עצור מצגת"
+#: templates/configure.html.jinja:1227
+msgid "Stop slideshow"
+msgstr ""
 
-#: templates/configure.html.jinja:1111
-msgid "Démarrer le diaporama"
-msgstr "הפעל מצגת"
+#: templates/configure.html.jinja:1229
+msgid "Start slideshow"
+msgstr ""
 
-#: templates/configure.html.jinja:1140
-msgid "Importation des photos"
+#: templates/configure.html.jinja:1258
+#, fuzzy
+msgid "Importing photos"
 msgstr "ייבוא תמונות"
 
-#: templates/configure.html.jinja:1143
-msgid "Importer depuis la clé USB"
-msgstr "ייבא מכונן USB"
+#: templates/configure.html.jinja:1261
+#, fuzzy
+msgid "Import from USB drive"
+msgstr "ייבוא תיקייה"
 
-#: templates/configure.html.jinja:1153
-msgid "Préparation en cours..."
-msgstr "הכנה בתהליך..."
+#: templates/configure.html.jinja:1271 templates/configure.html.jinja:4814
+#, fuzzy
+msgid "Preparation in progress..."
+msgstr "הבקשה בתהליך..."
 
-#: templates/configure.html.jinja:1154
-msgid "Photo en cours de préparation"
-msgstr "תמונה בהכנה"
+#: templates/configure.html.jinja:1272
+msgid "Photo being prepared"
+msgstr ""
 
-#: templates/configure.html.jinja:1163
+#: templates/configure.html.jinja:1281
 msgid "Select photos or a folder from this device. Duplicate photos are skipped."
 msgstr "בחרו תמונות או תיקייה מהמכשיר הזה. תמונות כפולות יידלגו."
 
-#: templates/configure.html.jinja:1168
+#: templates/configure.html.jinja:1286
 msgid "Import photos"
 msgstr "ייבוא תמונות"
 
-#: templates/configure.html.jinja:1172
+#: templates/configure.html.jinja:1290
 msgid "Import folder"
 msgstr "ייבוא תיקייה"
 
-#: templates/configure.html.jinja:1181
-msgid "Importation de musique"
-msgstr "ייבוא מוזיקה"
+#: templates/configure.html.jinja:1299 templates/configure.html.jinja:3539
+msgid "Importation :"
+msgstr "ייבוא מידע..."
 
-#: templates/configure.html.jinja:1182
-msgid ""
-"Téléchargez vos propres fichiers MP3 ou WAV pour accompagner vos "
-"playlists."
-msgstr "העלה קבצי MP3 או WAV משלך לליווי רשימות ההשמעה שלך."
-
-#: templates/configure.html.jinja:1186
-msgid "Sélectionner un fichier"
-msgstr "בחר קובץ"
-
-#: templates/configure.html.jinja:1190 templates/configure.html.jinja:3633
-msgid "Uploader"
-msgstr "העלה"
-
-#: templates/configure.html.jinja:1196
-msgid "Musiques disponibles"
-msgstr "מוזיקה זמינה"
-
-#: templates/configure.html.jinja:1208
-msgid "Photos en attente de validation"
-msgstr "תמונות הממתינות לאישור"
-
-#: templates/configure.html.jinja:1211
-msgid ""
-"Approuvez ou rejetez les photos envoyées. Les photos approuvées\n"
-"                        seront ajoutées à la source \"Invités\"."
+#: templates/configure.html.jinja:1300
+msgid "Upload your own MP3 or WAV files to accompany your playlists."
 msgstr ""
-"אשר או דחה את התמונות שנשלחו. תמונות שיאושרו\n"
-"                        יתווספו למקור \"אורחים\"."
 
-#: templates/configure.html.jinja:1215 templates/configure.html.jinja:1530
-msgid "Actualiser"
-msgstr "רענן"
-
-#: templates/configure.html.jinja:1225
-msgid "État de la connexion Wi-Fi"
-msgstr "מצב חיבור ה-Wi-Fi"
-
-#: templates/configure.html.jinja:1229 templates/configure.html.jinja:1310
-msgid "État:"
-msgstr "מצב:"
-
-#: templates/configure.html.jinja:1233
-msgid "Réseau (SSID):"
-msgstr "רשת (SSID):"
-
-#: templates/configure.html.jinja:1237 templates/configure.html.jinja:1312
-msgid "Adresse IP:"
-msgstr "כתובת IP:"
-
-#: templates/configure.html.jinja:1244
-msgid "Configuration Wi-Fi"
-msgstr "הגדרת Wi-Fi"
-
-#: templates/configure.html.jinja:1246
-msgid ""
-"La sélection du pays est obligatoire pour activer\n"
-"                    l'interface Wi-Fi et respecter les réglementations "
-"locales sur les fréquences radio."
+#: templates/configure.html.jinja:1304 templates/configure.html.jinja:1697
+msgid "Select a log:"
 msgstr ""
-"בחירת המדינה היא חובה כדי להפעיל\n"
-"                    את ממשק ה-Wi-Fi ולעמוד בתקנות המקומיות של תדרי הרדיו."
 
-#: templates/configure.html.jinja:1250
-msgid ""
-"Pays (pour la\n"
-"                            réglementation Wi-Fi)"
+#: templates/configure.html.jinja:1308 templates/configure.html.jinja:3807
+msgid "Upload"
 msgstr ""
-"מדינה (עבור\n"
-"                            תקנות ה-Wi-Fi)"
 
-#: templates/configure.html.jinja:1254
+#: templates/configure.html.jinja:1314
+msgid "Available music"
+msgstr ""
+
+#: templates/configure.html.jinja:1326
+#, fuzzy
+msgid "Photos awaiting validation"
+msgstr "אין תמונות הממתינות לאימות."
+
+#: templates/configure.html.jinja:1329
+msgid ""
+"Approve or reject submitted photos. Approved photos\n"
+"                        will be added to the “Guests” source."
+msgstr ""
+
+#: templates/configure.html.jinja:1333 templates/configure.html.jinja:1703
+msgid "Refresh"
+msgstr ""
+
+#: templates/configure.html.jinja:1343
+msgid "Wi-Fi connection status"
+msgstr ""
+
+#: templates/configure.html.jinja:1347 templates/configure.html.jinja:1428
+msgid "Status :"
+msgstr ""
+
+#: templates/configure.html.jinja:1351
+msgid "Network (SSID):"
+msgstr ""
+
+#: templates/configure.html.jinja:1355 templates/configure.html.jinja:1430
+msgid "IP address:"
+msgstr ""
+
+#: templates/configure.html.jinja:1362
+msgid "Wi-Fi Configuration"
+msgstr ""
+
+#: templates/configure.html.jinja:1364
+msgid ""
+"Country selection is required to activate\n"
+"                    the Wi-Fi interface and comply with local radio "
+"frequency regulations."
+msgstr ""
+
+#: templates/configure.html.jinja:1368
+msgid ""
+"Country (for\n"
+"                            Wi-Fi regulations)"
+msgstr ""
+
+#: templates/configure.html.jinja:1372
 msgid "France"
-msgstr "צרפת"
+msgstr ""
 
-#: templates/configure.html.jinja:1254
-msgid "États-Unis"
-msgstr "ארצות הברית"
+#: templates/configure.html.jinja:1372
+msgid "United States"
+msgstr ""
 
-#: templates/configure.html.jinja:1254
-msgid "Royaume-Uni"
-msgstr "בריטניה"
+#: templates/configure.html.jinja:1372
+msgid "United Kingdom"
+msgstr ""
 
-#: templates/configure.html.jinja:1255
-msgid "Allemagne"
-msgstr "גרמניה"
+#: templates/configure.html.jinja:1373
+msgid "Deutschland"
+msgstr ""
 
-#: templates/configure.html.jinja:1255
-msgid "Espagne"
-msgstr "ספרד"
+#: templates/configure.html.jinja:1373
+msgid "Spain"
+msgstr ""
 
-#: templates/configure.html.jinja:1255
+#: templates/configure.html.jinja:1373
 msgid "Canada"
-msgstr "קנדה"
-
-#: templates/configure.html.jinja:1255
-msgid "Belgique"
-msgstr "בלגיה"
-
-#: templates/configure.html.jinja:1256
-msgid "Suisse"
-msgstr "שווייץ"
-
-#: templates/configure.html.jinja:1264
-msgid ""
-"SSID (Nom du\n"
-"                            réseau)"
 msgstr ""
-"SSID (שם\n"
-"                            הרשת)"
 
-#: templates/configure.html.jinja:1271 templates/login.html.jinja:62
-msgid "Mot de passe"
-msgstr "סיסמה"
-
-#: templates/configure.html.jinja:1280 templates/configure.html.jinja:1356
-#: templates/configure.html.jinja:1371 templates/login.html.jinja:69
-msgid "Afficher/Cacher le mot de passe"
-msgstr "הצג/הסתר סיסמה"
-
-#: templates/configure.html.jinja:1285
-msgid "Laissez vide si le réseau est ouvert."
-msgstr "השאר ריק אם הרשת פתוחה."
-
-#: templates/configure.html.jinja:1289
-msgid "Appliquer les paramètres Wi-Fi"
-msgstr "החל הגדרות Wi-Fi"
-
-#: templates/configure.html.jinja:1292
-msgid ""
-"Note : Après avoir appliqué les paramètres, la connexion\n"
-"                    peut prendre jusqu'à une minute. Si le statut de "
-"connexion ci-dessus ne passe pas à \"Connecté\",\n"
-"                    vérifiez le mot de passe puis essayez de redémarrer "
-"le système."
+#: templates/configure.html.jinja:1373
+msgid "Belgium"
 msgstr ""
-"הערה: לאחר החלת ההגדרות, החיבור\n"
-"                    עשוי להימשך עד דקה. אם מצב החיבור למעלה אינו משתנה "
-"ל\"מחובר\",\n"
-"                    בדוק את הסיסמה ולאחר מכן נסה להפעיל מחדש את המערכת."
 
-#: templates/configure.html.jinja:1299
-msgid "Gestion des Interfaces Réseau"
-msgstr "ניהול ממשקי רשת"
-
-#: templates/configure.html.jinja:1301
-msgid ""
-"Si le Wi-Fi ne se connecte pas alors qu'un câble Ethernet\n"
-"                    est branché, c'est souvent un problème de priorité. "
-"Désactivez l'interface Ethernet pour forcer le\n"
-"                    système à utiliser exclusivement le Wi-Fi. Cette "
-"action redémarre le service réseau."
+#: templates/configure.html.jinja:1374
+msgid "Switzerland"
 msgstr ""
-"אם ה-Wi-Fi אינו מתחבר כאשר כבל רשת (Ethernet)\n"
-"                    מחובר, זוהי לרוב בעיית עדיפות. השבת את ממשק "
-"ה-Ethernet כדי לאלץ את\n"
-"                    המערכת להשתמש ב-Wi-Fi בלבד. פעולה זו מפעילה מחדש את "
-"שירות הרשת."
 
-#: templates/configure.html.jinja:1309
-msgid "Interface Filaire (eth0)"
-msgstr "ממשק קווי (eth0)"
-
-#: templates/configure.html.jinja:1324
-msgid "Réseaux Wi-Fi à proximité"
-msgstr "רשתות Wi-Fi קרובות"
-
-#: templates/configure.html.jinja:1325
+#: templates/configure.html.jinja:1382
 msgid ""
-"Cliquez sur le bouton pour rechercher les réseaux Wi-Fi disponibles.\n"
-"                    Cliquer sur un réseau dans la liste remplira "
-"automatiquement le champ SSID ci-dessus."
+"SSID (Name of\n"
+"                            network)"
 msgstr ""
-"לחץ על הכפתור כדי לחפש רשתות Wi-Fi זמינות.\n"
-"                    לחיצה על רשת ברשימה תמלא אוטומטית את שדה ה-SSID למעלה."
 
-#: templates/configure.html.jinja:1330 templates/configure.html.jinja:2150
-msgid "Lancer le scan"
-msgstr "הפעל סריקה"
-
-#: templates/configure.html.jinja:1341 templates/configure.html.jinja:2154
-msgid "Sécurité"
-msgstr "אבטחה"
-
-#: templates/configure.html.jinja:1344
-msgid "Changer le mot de passe de l'interface"
-msgstr "שנה את סיסמת הממשק"
-
-#: templates/configure.html.jinja:1347
-msgid ""
-"Nouveau mot de\n"
-"                            passe"
+#: templates/configure.html.jinja:1389 templates/login.html.jinja:62
+msgid "Password"
 msgstr ""
-"סיסמה\n"
-"                            חדשה"
 
-#: templates/configure.html.jinja:1352
-msgid "6 caractères minimum"
-msgstr "מינימום 6 תווים"
-
-#: templates/configure.html.jinja:1363
-msgid ""
-"Confirmer le\n"
-"                            nouveau mot de passe"
+#: templates/configure.html.jinja:1398 templates/configure.html.jinja:1473
+#: templates/configure.html.jinja:1488 templates/login.html.jinja:69
+msgid "Show/Hide Password"
 msgstr ""
-"אשר\n"
-"                            סיסמה חדשה"
 
-#: templates/configure.html.jinja:1376
-msgid ""
-"Les mots de passe ne\n"
-"                            correspondent pas."
+#: templates/configure.html.jinja:1403
+msgid "Leave blank if the network is open."
 msgstr ""
-"הסיסמאות אינן\n"
-"                            תואמות."
 
-#: templates/configure.html.jinja:1381
-msgid "Changer le mot de passe"
-msgstr "שנה סיסמה"
-
-#: templates/configure.html.jinja:1388
-msgid "Sauvegarde et Restauration"
-msgstr "גיבוי ושחזור"
-
-#: templates/configure.html.jinja:1390
-msgid ""
-"Sauvegardez votre configuration (API, partages,\n"
-"                    affichage...) dans un fichier. Vous pourrez le "
-"restaurer plus tard ou sur une nouvelle\n"
-"                    installation."
+#: templates/configure.html.jinja:1407
+msgid "Apply Wi-Fi settings"
 msgstr ""
-"גבה את התצורה שלך (API, שיתופים,\n"
-"                    תצוגה...) לקובץ. תוכל לשחזר אותה מאוחר יותר או בהתקנה"
-"\n"
-"                    חדשה."
 
-#: templates/configure.html.jinja:1396
-msgid "Sauvegarder la configuration"
-msgstr "גבה תצורה"
-
-#: templates/configure.html.jinja:1399
-msgid "Télécharger la sauvegarde"
-msgstr "הורד גיבוי"
-
-#: templates/configure.html.jinja:1404
-msgid "Restaurer une configuration"
-msgstr "שחזר תצורה"
-
-#: templates/configure.html.jinja:1406
+#: templates/configure.html.jinja:1410
 msgid ""
-"Êtes-vous sûr ? La configuration actuelle sera écrasée par le contenu du "
-"fichier de sauvegarde."
-msgstr "האם אתה בטוח? התצורה הנוכחית תידרס על ידי תוכן קובץ הגיבוי."
-
-#: templates/configure.html.jinja:1411
-msgid "Restaurer"
-msgstr "שחזר"
-
-#: templates/configure.html.jinja:1421
-msgid "Système de Fichiers de la Carte SD"
-msgstr "מערכת הקבצים של כרטיס ה-SD"
-
-#: templates/configure.html.jinja:1423
-msgid ""
-"Si vous avez flashé PictureFrame sur une carte SD plus grande que\n"
-"                    l'image, utilisez cette option pour étendre la "
-"partition et utiliser tout l'espace disponible. Un\n"
-"                    redémarrage du système sera nécessaire pour finaliser"
-" l'opération."
+"Note: After applying the settings, the connection\n"
+"                    may take up to a minute. If the connection status "
+"above does not change to \"Connected\",\n"
+"                    check the password then try restarting the system."
 msgstr ""
-"אם צרבת את PictureFrame על כרטיס SD גדול יותר\n"
-"                    מהתמונה, השתמש באפשרות זו כדי להרחיב את המחיצה ולנצל "
-"את כל השטח הפנוי. תידרש\n"
-"                    הפעלה מחדש של המערכת כדי להשלים את הפעולה."
+
+#: templates/configure.html.jinja:1417
+msgid "Network Interface Management"
+msgstr ""
+
+#: templates/configure.html.jinja:1419
+msgid ""
+"If Wi-Fi won't connect while using an Ethernet cable\n"
+"                    is connected, it is often a priority problem. Disable"
+" the Ethernet interface to force the\n"
+"                    system to use Wi-Fi exclusively. This action restarts"
+" the network service."
+msgstr ""
 
 #: templates/configure.html.jinja:1427
-msgid "Note :"
-msgstr "הערה:"
-
-#: templates/configure.html.jinja:1427
-msgid ""
-"Cette opération est sûre et ne supprime aucune donnée.\n"
-"                        Elle prépare simplement le système à s'étendre au"
-" prochain démarrage."
+msgid "Wired Interface (eth0)"
 msgstr ""
-"פעולה זו בטוחה ואינה מוחקת נתונים.\n"
-"                        היא פשוט מכינה את המערכת להרחבה בהפעלה הבאה."
-
-#: templates/configure.html.jinja:1432
-msgid "Étendre le système de fichiers"
-msgstr "הרחב את מערכת הקבצים"
-
-#: templates/configure.html.jinja:1439
-msgid "Contrôle du système"
-msgstr "בקרת מערכת"
 
 #: templates/configure.html.jinja:1442
+msgid "Nearby Wi-Fi networks"
+msgstr ""
+
+#: templates/configure.html.jinja:1443
+msgid ""
+"Click the button to search for available Wi-Fi networks.\n"
+"                    Clicking on a network in the list will automatically "
+"populate the SSID field above."
+msgstr ""
+
+#: templates/configure.html.jinja:1448 templates/configure.html.jinja:2324
+msgid "Start the scan"
+msgstr ""
+
+#: templates/configure.html.jinja:1459 templates/configure.html.jinja:2328
+msgid "Security"
+msgstr ""
+
+#: templates/configure.html.jinja:1462
+msgid "Change the interface password"
+msgstr ""
+
+#: templates/configure.html.jinja:1465
+msgid "New Password"
+msgstr ""
+
+#: templates/configure.html.jinja:1469
+msgid "6 characters minimum"
+msgstr ""
+
+#: templates/configure.html.jinja:1480
+msgid ""
+"Confirm the\n"
+"                            new password"
+msgstr ""
+
+#: templates/configure.html.jinja:1493
+msgid ""
+"Passwords do not\n"
+"                            do not match."
+msgstr ""
+
+#: templates/configure.html.jinja:1498
+msgid "Change password"
+msgstr ""
+
+#: templates/configure.html.jinja:1507
+msgid ""
+"Save your configuration (API, shares,\n"
+"                    display...) in a file. You can restore it later or on"
+" a new one.\n"
+"                    installation."
+msgstr ""
+
+#: templates/configure.html.jinja:1513
+msgid "Save configuration"
+msgstr ""
+
+#: templates/configure.html.jinja:1516 templates/configure.html.jinja:1601
+msgid "Download backup"
+msgstr ""
+
+#: templates/configure.html.jinja:1521
+msgid "Restore a configuration"
+msgstr ""
+
+#: templates/configure.html.jinja:1523
+msgid ""
+"Are you sure? The current configuration will be overwritten by the "
+"contents of the backup file."
+msgstr ""
+
+#: templates/configure.html.jinja:1528
+msgid "Restore"
+msgstr ""
+
+#: templates/configure.html.jinja:1538
+msgid "SD card file system"
+msgstr ""
+
+#: templates/configure.html.jinja:1540
+msgid ""
+"If you flashed PictureFrame to an SD card larger than\n"
+"                    image, use this option to extend the partition and "
+"use all available space. A\n"
+"                    System restart will be required to finalize the "
+"operation."
+msgstr ""
+
+#: templates/configure.html.jinja:1544
+msgid "Note :"
+msgstr ""
+
+#: templates/configure.html.jinja:1544
+msgid ""
+"This operation is safe and does not delete any data.\n"
+"                        It simply prepares the system to expand at the "
+"next startup."
+msgstr ""
+
+#: templates/configure.html.jinja:1549
+msgid "Extend file system"
+msgstr ""
+
+#: templates/configure.html.jinja:1556
+#, fuzzy
+msgid "Application Update"
+msgstr "הבקשה בתהליך..."
+
+#: templates/configure.html.jinja:1560
+msgid "Checking git repository..."
+msgstr ""
+
+#: templates/configure.html.jinja:1563
+msgid ""
+"The application is not installed from a git repository. Automatic updates"
+" are not available."
+msgstr ""
+
+#: templates/configure.html.jinja:1578
+#, fuzzy
+msgid "New commits"
+msgstr "קומיטים חדשים"
+
+#: templates/configure.html.jinja:1584 templates/configure.html.jinja:3907
+#, fuzzy
+msgid "Application in progress..."
+msgstr "הבקשה בתהליך..."
+
+#: templates/configure.html.jinja:1589
+msgid "Update now"
+msgstr ""
+
+#: templates/configure.html.jinja:1592
+msgid "Previous version backup"
+msgstr ""
+
+#: templates/configure.html.jinja:1593
+msgid ""
+"A backup of the previous version is available. You can restore or delete "
+"it."
+msgstr ""
+
+#: templates/configure.html.jinja:1597
+msgid "Restore previous version"
+msgstr ""
+
+#: templates/configure.html.jinja:1612
+#, fuzzy
+msgid "System control"
+msgstr "התחבר/י"
+
+#: templates/configure.html.jinja:1615
 msgid ""
 "Êtes-vous sûr de vouloir redémarrer UNIQUEMENT l'application web ? Le "
 "système d'exploitation ne sera pas redémarré."
 msgstr ""
-"האם אתה בטוח שברצונך להפעיל מחדש רק את אפליקציית האינטרנט? מערכת ההפעלה "
-"לא תופעל מחדש."
 
-#: templates/configure.html.jinja:1445
-msgid "Redémarrer l'application web"
-msgstr "הפעל מחדש את אפליקציית האינטרנט"
-
-#: templates/configure.html.jinja:1454
-msgid "Redémarrer le système"
-msgstr "הפעל מחדש את המערכת"
-
-#: templates/configure.html.jinja:1462
-msgid "Supprimer les logs"
-msgstr "מחק יומנים"
-
-#: templates/configure.html.jinja:1467
-msgid "Êtes-vous sûr de vouloir ÉTEINDRE le système ?"
-msgstr "האם אתה בטוח שברצונך לכבות את המערכת?"
-
-#: templates/configure.html.jinja:1470
-msgid "Éteindre le système"
-msgstr "כבה מערכת"
-
-#: templates/configure.html.jinja:1479
-msgid "Informations Système"
-msgstr "מידע מערכת"
-
-#: templates/configure.html.jinja:1483
-msgid "Température CPU:"
-msgstr "טמפרטורת מעבד:"
-
-#: templates/configure.html.jinja:1486
-msgid "Utilisation CPU:"
-msgstr "שימוש במעבד:"
-
-#: templates/configure.html.jinja:1490
-msgid "RAM:"
-msgstr "זיכרון RAM:"
-
-#: templates/configure.html.jinja:1493
-msgid "Stockage:"
-msgstr "אחסון:"
-
-#: templates/configure.html.jinja:1498
-msgid "Historique Température CPU (10 min)"
-msgstr "היסטוריית טמפרטורת מעבד (10 דקות)"
-
-#: templates/configure.html.jinja:1502
-msgid "Historique Utilisation CPU (10 min)"
-msgstr "היסטוריית שימוש במעבד (10 דקות)"
-
-#: templates/configure.html.jinja:1506
-msgid "Historique Utilisation RAM (10 min)"
-msgstr "היסטוריית שימוש ב-RAM (10 דקות)"
-
-#: templates/configure.html.jinja:1510
-msgid "Historique Utilisation Disque (10 min)"
-msgstr "היסטוריית שימוש בדיסק (10 דקות)"
-
-#: templates/configure.html.jinja:1521
-msgid "Logs Système"
-msgstr "יומני מערכת"
-
-#: templates/configure.html.jinja:1524
-msgid "Sélectionner un log :"
-msgstr "בחר יומן:"
-
-#: templates/configure.html.jinja:1533
-msgid "Effacer les logs"
-msgstr "נקה יומנים"
-
-#: templates/configure.html.jinja:1546
-msgid "Aperçu des photos préparées"
-msgstr "תצוגה מקדימה של תמונות מוכנות"
-
-#: templates/configure.html.jinja:1548
-msgid ""
-"Voici les photos qui sont prêtes à être affichées par le diaporama,\n"
-"                    classées par source. Cliquez sur une photo pour "
-"l'agrandir."
+#: templates/configure.html.jinja:1618
+msgid "Reboot Application Web"
 msgstr ""
-"אלה התמונות המוכנות להצגה במצגת,\n"
-"                    ממוינות לפי מקור. לחץ על תמונה כדי להגדיל אותה."
 
-#: templates/configure.html.jinja:1559
+#: templates/configure.html.jinja:1627
+msgid "Restart the system"
+msgstr ""
+
+#: templates/configure.html.jinja:1635
+msgid "Delete logs"
+msgstr ""
+
+#: templates/configure.html.jinja:1640
+msgid "Are you sure you want to turn OFF the system?"
+msgstr ""
+
+#: templates/configure.html.jinja:1643
+msgid "Shut down the system"
+msgstr ""
+
+#: templates/configure.html.jinja:1652
+msgid "System Information"
+msgstr ""
+
+#: templates/configure.html.jinja:1656
+msgid "CPU Temperature:"
+msgstr ""
+
+#: templates/configure.html.jinja:1659
+msgid "CPU Usage :"
+msgstr ""
+
+#: templates/configure.html.jinja:1663
+msgid "RAM:"
+msgstr ""
+
+#: templates/configure.html.jinja:1666
+msgid "Storage:"
+msgstr ""
+
+#: templates/configure.html.jinja:1671
+msgid "History CPU temperature (10 min)"
+msgstr ""
+
+#: templates/configure.html.jinja:1675
+msgid "History CPU use (10 min)"
+msgstr ""
+
+#: templates/configure.html.jinja:1679
+msgid "History RAM use (10 min)"
+msgstr ""
+
+#: templates/configure.html.jinja:1683
+msgid "History use disc (10 min)"
+msgstr ""
+
+#: templates/configure.html.jinja:1694
+msgid "Logs System"
+msgstr ""
+
+#: templates/configure.html.jinja:1706
+msgid "Clear logs"
+msgstr ""
+
+#: templates/configure.html.jinja:1719
+msgid "Preview of prepared photos"
+msgstr ""
+
+#: templates/configure.html.jinja:1721
+msgid ""
+"Here are the photos that are ready to be displayed by the slideshow,\n"
+"                    classified by source. Click on a photo to enlarge it."
+msgstr ""
+
+#: templates/configure.html.jinja:1732
 #, python-format
 msgid "%(num)d photo"
 msgid_plural ""
 "%(num)d\n"
 "                                photos"
-msgstr[0] "%(num)d תמונה"
+msgstr[0] ""
 msgstr[1] ""
-"%(num)d\n"
-"                                תמונות"
 
-#: templates/configure.html.jinja:1566
+#: templates/configure.html.jinja:1739
 #, python-format
 msgid "Supprimer toutes les photos de la source '%(source)s'"
-msgstr "מחק את כל התמונות מהמקור '%(source)s'"
+msgstr ""
 
-#: templates/configure.html.jinja:1568
-msgid "Tout supprimer"
-msgstr "מחק הכל"
+#: templates/configure.html.jinja:1741
+msgid "Delete All"
+msgstr ""
 
-#: templates/configure.html.jinja:1605 templates/configure.html.jinja:1608
-#: templates/configure.html.jinja:1847 templates/configure.html.jinja:1850
+#: templates/configure.html.jinja:1778 templates/configure.html.jinja:1781
+#: templates/configure.html.jinja:2020 templates/configure.html.jinja:2023
 #, python-format
-msgid "Aperçu de %(media)s"
-msgstr "תצוגה מקדימה של %(media)s"
+msgid "%(media)s preview"
+msgstr ""
 
-#: templates/configure.html.jinja:1628 templates/configure.html.jinja:1868
-msgid "Filtre..."
-msgstr "מסנן..."
+#: templates/configure.html.jinja:1801 templates/configure.html.jinja:2041
+msgid "Filter..."
+msgstr ""
 
-#: templates/configure.html.jinja:1630 templates/configure.html.jinja:1871
-msgid "Noir & Blanc"
-msgstr "שחור ולבן"
+#: templates/configure.html.jinja:1803 templates/configure.html.jinja:2044
+msgid "Black & White"
+msgstr ""
 
-#: templates/configure.html.jinja:1632 templates/configure.html.jinja:1872
-msgid "Sépia"
-msgstr "ספיה"
+#: templates/configure.html.jinja:1805 templates/configure.html.jinja:2045
+msgid "Sepia"
+msgstr ""
 
-#: templates/configure.html.jinja:1634 templates/configure.html.jinja:1875
+#: templates/configure.html.jinja:1807 templates/configure.html.jinja:2048
 #: tests/test_photo_filters.py:215
 msgid "B&W Background"
-msgstr "רקע בשחור ולבן"
+msgstr ""
 
-#: templates/configure.html.jinja:1636 templates/configure.html.jinja:1877
+#: templates/configure.html.jinja:1809 templates/configure.html.jinja:2050
 msgid "Vintage"
-msgstr "וינטג'"
+msgstr ""
 
-#: templates/configure.html.jinja:1640 templates/configure.html.jinja:1881
+#: templates/configure.html.jinja:1813 templates/configure.html.jinja:2054
 msgid "Polaroid"
-msgstr "פולארויד"
+msgstr ""
 
-#: templates/configure.html.jinja:1644 templates/configure.html.jinja:1885
-msgid "Carte Postale"
-msgstr "גלויה"
+#: templates/configure.html.jinja:1817 templates/configure.html.jinja:2058
+msgid "Postcards"
+msgstr ""
 
-#: templates/configure.html.jinja:1647 templates/configure.html.jinja:1888
+#: templates/configure.html.jinja:1820 templates/configure.html.jinja:2061
 msgid "Polaroid Vintage"
-msgstr "פולארויד וינטג'"
+msgstr ""
 
-#: templates/configure.html.jinja:1648 templates/configure.html.jinja:1889
+#: templates/configure.html.jinja:1821 templates/configure.html.jinja:2062
 msgid "Original"
-msgstr "מקור"
+msgstr ""
 
-#: templates/configure.html.jinja:1656 templates/configure.html.jinja:1897
-#: templates/configure.html.jinja:1953
+#: templates/configure.html.jinja:1829 templates/configure.html.jinja:2070
+#: templates/configure.html.jinja:2126
 msgid "Crop photo"
 msgstr "חיתוך תמונה"
 
-#: templates/configure.html.jinja:1662 templates/configure.html.jinja:1903
-msgid "Ajouter à une playlist"
-msgstr "הוסף לרשימת השמעה"
+#: templates/configure.html.jinja:1835 templates/configure.html.jinja:2076
+#, fuzzy
+msgid "Add to a playlist"
+msgstr "שנה את שם רשימת ההשמעה"
 
-#: templates/configure.html.jinja:1666 templates/configure.html.jinja:1907
-#: templates/configure.html.jinja:2157
-msgid "Mettre en favori"
-msgstr "סמן כמועדף"
-
-#: templates/configure.html.jinja:1674 templates/configure.html.jinja:1915
-msgid "Sauvegarder la photo originale"
-msgstr "שמור תמונה מקורית"
-
-#: templates/configure.html.jinja:1679 templates/configure.html.jinja:1920
-msgid "Photo anniversaire !"
-msgstr "תמונת יום שנה!"
-
-#: templates/configure.html.jinja:1685 templates/configure.html.jinja:1926
-msgid "Supprimer ce média"
-msgstr "מחק מדיה זו"
-
-#: templates/configure.html.jinja:1696 templates/configure.html.jinja:1937
-#: templates/configure.html.jinja:2160
-msgid "Ajouter une légende..."
-msgstr "הוסף כיתוב..."
-
-#: templates/configure.html.jinja:1707
-msgid ""
-"Aucune photo préparée n'a été trouvée. Veuillez\n"
-"                    en importer depuis l'onglet \"Actions\"."
+#: templates/configure.html.jinja:1839 templates/configure.html.jinja:2080
+#: templates/configure.html.jinja:2331
+msgid "Bookmark"
 msgstr ""
-"לא נמצאו תמונות מוכנות. אנא\n"
-"                    ייבא תמונות מלשונית \"פעולות\"."
 
-#: templates/configure.html.jinja:1716
-msgid "Gestion des Playlists"
-msgstr "ניהול רשימות השמעה"
+#: templates/configure.html.jinja:1847 templates/configure.html.jinja:2088
+#, fuzzy
+msgid "Save the original photo"
+msgstr "לא ניתן לטעון את תמונת המקור."
 
-#: templates/configure.html.jinja:1718
-msgid ""
-"Créez des albums virtuels (playlists) en sélectionnant des\n"
-"                    photos de n'importe quelle source. Vous pouvez "
-"ensuite lancer un diaporama contenant uniquement les\n"
-"                    photos d'une playlist."
-msgstr ""
-"צור אלבומים וירטואליים (רשימות השמעה) על ידי בחירת\n"
-"                    תמונות מכל מקור. לאחר מכן תוכל להפעיל מצגת המכילה רק "
-"את\n"
-"                    התמונות מרשימת השמעה."
+#: templates/configure.html.jinja:1852 templates/configure.html.jinja:2093
+#, fuzzy
+msgid "Birthday photo!"
+msgstr "תמונות מיובאות"
 
-#: templates/configure.html.jinja:1726
-msgid ""
-"Contrôle du Diaporama\n"
-"                                Actuel"
-msgstr ""
-"שליטה במצגת\n"
-"                                הנוכחית"
-
-#: templates/configure.html.jinja:1749
-msgid ""
-"Arrête la playlist en cours et relance le diaporama avec toutes les "
-"sources activées."
-msgstr "עוצר את רשימת ההשמעה הנוכחית ומפעיל מחדש את המצגת עם כל המקורות הפעילים."
-
-#: templates/configure.html.jinja:1750 templates/configure.html.jinja:3816
+#: templates/configure.html.jinja:1858 templates/configure.html.jinja:2099
 #: templates/configure.html.jinja:3821
-msgid "Retour au diaporama standard"
-msgstr "חזרה למצגת רגילה"
-
-#: templates/configure.html.jinja:1757
-msgid "Aucune playlist en cours"
-msgstr "אין רשימת השמעה פעילה"
-
-#: templates/configure.html.jinja:1763
-msgid "Aperçu en direct"
-msgstr "תצוגה מקדימה חיה"
-
-#: templates/configure.html.jinja:1766
-msgid ""
-"Le diaporama est\n"
-"                                arrêté."
+msgid "Delete this media"
 msgstr ""
-"המצגת\n"
-"                                נעצרה."
 
-#: templates/configure.html.jinja:1778
-msgid "Créer une nouvelle playlist"
-msgstr "צור רשימת השמעה חדשה"
+#: templates/configure.html.jinja:1869 templates/configure.html.jinja:2110
+#: templates/configure.html.jinja:2334
+#, fuzzy
+msgid "Add a caption..."
+msgstr "זיהוי..."
 
-#: templates/configure.html.jinja:1781
-msgid "Nom de la playlist (ex: Vacances 2024)"
-msgstr "שם רשימת ההשמעה (לדוגמה: חופשה 2024)"
-
-#: templates/configure.html.jinja:1783 templates/configure.html.jinja:2161
-msgid "Pas de musique"
-msgstr "ללא מוזיקה"
-
-#: templates/configure.html.jinja:1785 templates/configure.html.jinja:2164
-msgid "Écouter la musique"
-msgstr "האזן למוזיקה"
-
-#: templates/configure.html.jinja:1790
-msgid "Créer"
-msgstr "צור"
-
-#: templates/configure.html.jinja:1797
-msgid "Vos Playlists"
-msgstr "רשימות ההשמעה שלך"
-
-#: templates/configure.html.jinja:1808
-msgid "Vos photos favorites"
-msgstr "התמונות המועדפות שלך"
-
-#: templates/configure.html.jinja:1810
+#: templates/configure.html.jinja:1880
 msgid ""
-"Voici toutes vos photos marquées comme favorites. Vous pouvez les\n"
-"                    gérer ici."
+"No prepared photos found. Please\n"
+"                    import from the \"Actions\" tab."
 msgstr ""
-"אלה כל התמונות שסימנת כמועדפות. תוכל\n"
-"                    לנהל אותן כאן."
 
-#: templates/configure.html.jinja:1945
-msgid ""
-"Vous n'avez aucune\n"
-"                    photo en favori pour le moment."
+#: templates/configure.html.jinja:1889
+msgid "Playlist Management"
 msgstr ""
-"אין לך\n"
-"                    תמונות מועדפות כרגע."
+
+#: templates/configure.html.jinja:1891
+msgid ""
+"Create virtual albums (playlists) by selecting\n"
+"                    photos from any source. You can then launch a "
+"slideshow containing only the\n"
+"                    photos from a playlist."
+msgstr ""
+
+#: templates/configure.html.jinja:1899
+msgid ""
+"Slideshow Control\n"
+"                                Current"
+msgstr ""
+
+#: templates/configure.html.jinja:1922
+msgid ""
+"Stop the current playlist and relaunch the slideshow with all activated "
+"sources."
+msgstr ""
+
+#: templates/configure.html.jinja:1923 templates/configure.html.jinja:3990
+#: templates/configure.html.jinja:3995
+msgid "Return to standard slideshow"
+msgstr ""
+
+#: templates/configure.html.jinja:1930 templates/configure.html.jinja:3425
+#, fuzzy
+msgid "No playlist"
+msgstr "אין רשימת השמעה"
+
+#: templates/configure.html.jinja:1936
+msgid "Live preview"
+msgstr ""
+
+#: templates/configure.html.jinja:1939
+msgid ""
+"The slideshow is\n"
+"                                arrested."
+msgstr ""
+
+#: templates/configure.html.jinja:1951
+#, fuzzy
+msgid "Create a new playlist"
+msgstr "הסר מרשימת ההשמעה"
 
 #: templates/configure.html.jinja:1954
+msgid "Playlist name (ex: holidays 2024)"
+msgstr ""
+
+#: templates/configure.html.jinja:1958 templates/configure.html.jinja:2338
+msgid "Listen to music"
+msgstr ""
+
+#: templates/configure.html.jinja:1963
+#, fuzzy
+msgid "Create"
+msgstr "& התחבר מחדש"
+
+#: templates/configure.html.jinja:1970
+#, fuzzy
+msgid "Your playlists"
+msgstr "אין רשימת השמעה"
+
+#: templates/configure.html.jinja:1981
+#, fuzzy
+msgid "Your favorite photos"
+msgstr "תמונות מיובאות"
+
+#: templates/configure.html.jinja:1983
+#, fuzzy
+msgid ""
+"Here are all your photos marked as favorites. You can\n"
+"                    manage here."
+msgstr "הנה כל התמונות שסומנו כמועדפות. אתה יכול...&#10; לנהל כאן."
+
+#: templates/configure.html.jinja:2118
+#, fuzzy
+msgid ""
+"You have no\n"
+"                    favorite photo for the moment."
+msgstr "אין לך&#10; התמונה שמורה כעת כמועדפת."
+
+#: templates/configure.html.jinja:2127
 msgid ""
 "Drag the selection to position it. Adjust its size below. The selection "
 "always matches the slideshow screen ratio. Originals are preserved."
@@ -1796,698 +1818,519 @@ msgstr ""
 "גררו את הבחירה למיקום הרצוי ושנו את גודלה למטה. היחס תמיד תואם למסך "
 "המצגת. המקור נשמר."
 
-#: templates/configure.html.jinja:1958
+#: templates/configure.html.jinja:2131
 msgid "Selection size"
 msgstr "גודל הבחירה"
 
-#: templates/configure.html.jinja:1961
+#: templates/configure.html.jinja:2134
 msgid ""
 "Increase selection size to include the full photo. Extra space uses a "
 "blurred background."
 msgstr "הגדילו את הבחירה כדי לכלול את כל התמונה. השטח הנוסף מתמלא ברקע מטושטש."
 
-#: templates/configure.html.jinja:1964 templates/configure.html.jinja:2141
+#: templates/configure.html.jinja:2137 templates/configure.html.jinja:2315
 msgid "Cancel"
 msgstr "ביטול"
 
-#: templates/configure.html.jinja:1965
+#: templates/configure.html.jinja:2138
 msgid "Reset crop"
 msgstr "איפוס חיתוך"
 
-#: templates/configure.html.jinja:1966
+#: templates/configure.html.jinja:2139
 msgid "Save crop"
 msgstr "שמירת חיתוך"
 
-#: templates/configure.html.jinja:2040
+#: templates/configure.html.jinja:2213
 msgid "Loading crop editor..."
 msgstr "טוען עורך חיתוך..."
 
-#: templates/configure.html.jinja:2051
+#: templates/configure.html.jinja:2224
 msgid "Could not load original photo."
 msgstr "לא ניתן לטעון את תמונת המקור."
 
-#: templates/configure.html.jinja:2103
+#: templates/configure.html.jinja:2276
 msgid "Preparing cropped photo..."
 msgstr "מכין תמונה חתוכה..."
 
-#: templates/configure.html.jinja:2131
+#: templates/configure.html.jinja:2304
 msgid "Filter strength"
-msgstr "עוצמת המסנן"
+msgstr ""
 
-#: templates/configure.html.jinja:2132
+#: templates/configure.html.jinja:2305
 msgid "Hold to view Before"
-msgstr "לחיצה ממושכת להצגת המקור"
+msgstr ""
 
-#: templates/configure.html.jinja:2133
+#: templates/configure.html.jinja:2306
 msgid "Edit location"
-msgstr "עריכת מיקום"
+msgstr ""
 
-#: templates/configure.html.jinja:2134
+#: templates/configure.html.jinja:2307
 msgid "Edit capture date"
-msgstr "עריכת תאריך צילום"
+msgstr ""
 
-#: templates/configure.html.jinja:2135
+#: templates/configure.html.jinja:2308
 msgid "Capture date"
-msgstr "תאריך צילום"
+msgstr ""
 
-#: templates/configure.html.jinja:2136
+#: templates/configure.html.jinja:2309
 msgid "Date manually overridden"
-msgstr "התאריך הוגדר ידנית"
+msgstr ""
 
-#: templates/configure.html.jinja:2137
+#: templates/configure.html.jinja:2310
+msgid "Date from file (no EXIF data)"
+msgstr "תאריך מהקובץ (אין נתוני EXIF)"
+
+#: templates/configure.html.jinja:2311
 msgid "City"
-msgstr "עיר"
+msgstr ""
 
-#: templates/configure.html.jinja:2138
+#: templates/configure.html.jinja:2312
 msgid "Country"
-msgstr "מדינה"
+msgstr ""
 
-#: templates/configure.html.jinja:2139
+#: templates/configure.html.jinja:2313
+#, fuzzy
 msgid "Save"
-msgstr "שמירה"
+msgstr "שמירת חיתוך"
 
-#: templates/configure.html.jinja:2140
+#: templates/configure.html.jinja:2314
 msgid "Use original location"
-msgstr "שימוש במיקום המקורי"
+msgstr ""
 
-#: templates/configure.html.jinja:2147
-msgid "Erreur"
+#: templates/configure.html.jinja:2321 templates/configure.html.jinja:4811
+#, fuzzy
+msgid "Error"
 msgstr "שגיאה"
 
-#: templates/configure.html.jinja:2148
+#: templates/configure.html.jinja:2322
 msgid "N/A"
-msgstr "לא זמין"
+msgstr "לא רלוונטי"
 
-#: templates/configure.html.jinja:2149
-msgid "Scan en cours..."
-msgstr "סריקה בתהליך..."
+#: templates/configure.html.jinja:2323
+#, fuzzy
+msgid "Scanning in progress..."
+msgstr "חיבור"
 
-#: templates/configure.html.jinja:2151
-msgid "Aucun réseau Wi-Fi trouvé."
-msgstr "לא נמצאו רשתות Wi-Fi."
+#: templates/configure.html.jinja:2325
+msgid "No Wi-Fi network found."
+msgstr ""
 
-#: templates/configure.html.jinja:2152
-msgid "Erreur de communication avec le serveur:"
-msgstr "שגיאת תקשורת עם השרת:"
+#: templates/configure.html.jinja:2326
+#, fuzzy
+msgid "Communication error with the server:"
+msgstr "שגיאה בתקשורת עם השרת:"
 
-#: templates/configure.html.jinja:2153
+#: templates/configure.html.jinja:2327
 msgid "SSID"
-msgstr "SSID"
+msgstr ""
 
-#: templates/configure.html.jinja:2155
+#: templates/configure.html.jinja:2329
 msgid "Signal"
-msgstr "אות"
+msgstr "איתות"
 
-#: templates/configure.html.jinja:2156
-msgid "Aucune"
-msgstr "אין"
+#: templates/configure.html.jinja:2330
+msgid "None"
+msgstr ""
 
-#: templates/configure.html.jinja:2158
-msgid "Vous n'avez aucune photo en favori pour le moment."
-msgstr "אין לך תמונות מועדפות כרגע."
+#: templates/configure.html.jinja:2332
+msgid "You don't have any favorite photos at the moment."
+msgstr ""
 
-#: templates/configure.html.jinja:2159
-msgid "Cette playlist est vide."
-msgstr "רשימת השמעה זו ריקה."
+#: templates/configure.html.jinja:2333
+msgid "This playlist is empty."
+msgstr ""
 
-#: templates/configure.html.jinja:2162
-msgid "Musique de la playlist mise à jour !"
-msgstr "המוזיקה של רשימת ההשמעה עודכנה!"
+#: templates/configure.html.jinja:2336
+msgid "Update failed"
+msgstr ""
 
-#: templates/configure.html.jinja:2163
-msgid "Erreur lors de la mise à jour de la musique de la playlist."
-msgstr "שגיאה בעדכון המוזיקה של רשימת ההשמעה."
+#: templates/configure.html.jinja:2339
+msgid "Stop music"
+msgstr ""
 
-#: templates/configure.html.jinja:2165
-msgid "Arrêter la musique"
-msgstr "עצור מוזיקה"
+#: templates/configure.html.jinja:2341
+msgid "Error retrieving system information"
+msgstr ""
 
-#: templates/configure.html.jinja:2166
-msgid "Aucune musique sélectionnée."
-msgstr "לא נבחרה מוזיקה."
-
-#: templates/configure.html.jinja:2167
-msgid "Cliquer pour sélectionner ce réseau"
-msgstr "לחץ כדי לבחור רשת זו"
-
-#: templates/configure.html.jinja:2171
+#: templates/configure.html.jinja:2345
 msgid "photo"
 msgstr "תמונה"
 
-#: templates/configure.html.jinja:2172
+#: templates/configure.html.jinja:2346
 msgid "photos"
-msgstr "תמונות"
+msgstr "עבור"
 
-#: templates/configure.html.jinja:2173
-msgid "Aucune playlist créée pour le moment."
-msgstr "לא נוצרו רשימות השמעה כרגע."
+#: templates/configure.html.jinja:2347
+#, fuzzy
+msgid "No playlists created yet."
+msgstr "רשימת ההשמעה הזו ריקה."
 
-#: templates/configure.html.jinja:2174
-msgid "Erreur lors du chargement des playlists."
-msgstr "שגיאה בטעינת רשימות ההשמעה."
+#: templates/configure.html.jinja:2348
+#, fuzzy
+msgid "Error loading playlists."
+msgstr "שנה את שם רשימת ההשמעה"
 
-#: templates/configure.html.jinja:2175 templates/configure.html.jinja:3196
+#: templates/configure.html.jinja:2349 templates/configure.html.jinja:3370
 msgid "Lancer"
-msgstr "הפעל"
+msgstr "סרוק"
 
-#: templates/configure.html.jinja:2176
-msgid "Supprimer la playlist"
-msgstr "מחק רשימת השמעה"
-
-#: templates/configure.html.jinja:2177
-msgid "Renommer la playlist"
-msgstr "שנה שם רשימת השמעה"
-
-#: templates/configure.html.jinja:2178
-msgid "Entrez le nouveau nom pour la playlist :"
-msgstr "הזן שם חדש עבור רשימת ההשמעה:"
-
-#: templates/configure.html.jinja:2181
-msgid "Ordre sauvegardé !"
-msgstr "הסדר נשמר!"
-
-#: templates/configure.html.jinja:2226
-msgid "Veuillez entrer une URL."
-msgstr "אנא הזן כתובת URL."
-
-#: templates/configure.html.jinja:2231
-msgid "Test en cours..."
-msgstr "בדיקה בתהליך..."
-
-#: templates/configure.html.jinja:2245 templates/configure.html.jinja:2392
-#: templates/configure.html.jinja:3489 templates/configure.html.jinja:3769
-#: templates/configure.html.jinja:3913
-msgid "Erreur de communication avec le serveur."
-msgstr "שגיאת תקשורת עם השרת."
-
-#: templates/configure.html.jinja:2271
-msgid "État de la prise : Allumée"
-msgstr "מצב השקע: דולק"
-
-#: templates/configure.html.jinja:2274
-msgid "État de la prise : Éteinte"
-msgstr "מצב השקע: כבוי"
-
-#: templates/configure.html.jinja:2283
-msgid "État : Erreur"
-msgstr "מצב: שגיאה"
-
-#: templates/configure.html.jinja:2287
-msgid "État de la prise : Injoignable"
-msgstr "מצב השקע: לא זמין"
-
-#: templates/configure.html.jinja:2332
-msgid "Aucune photo en attente de validation."
-msgstr "אין תמונות הממתינות לאישור."
-
-#: templates/configure.html.jinja:2361
-msgid "Approuver"
-msgstr "אשר"
-
-#: templates/configure.html.jinja:2362
-msgid "Rejeter"
-msgstr "דחה"
-
-#: templates/configure.html.jinja:2388 templates/configure.html.jinja:3103
-#: templates/configure.html.jinja:3814
-msgid "Erreur :"
-msgstr "שגיאה:"
-
-#: templates/configure.html.jinja:2552
-msgid "Retirer de la playlist"
-msgstr "הסר מרשימת ההשמעה"
-
-#: templates/configure.html.jinja:2562
-msgid "Afficher/Cacher les photos"
-msgstr "הצג/הסתר תמונות"
-
-#: templates/configure.html.jinja:3089
-msgid "Veuillez entrer un nom pour la playlist."
-msgstr "אנא הזן שם עבור רשימת ההשמעה."
-
-#: templates/configure.html.jinja:3105 templates/configure.html.jinja:3191
-#: templates/configure.html.jinja:3630 templates/configure.html.jinja:3750
-#: templates/configure.html.jinja:3819
-msgid "Erreur de communication."
-msgstr "שגיאת תקשורת."
-
-#: templates/configure.html.jinja:3119
-msgid ""
-"Êtes-vous sûr de vouloir supprimer cette playlist ? Les photos ne seront "
-"pas supprimées."
-msgstr "האם אתה בטוח שברצונך למחוק רשימת השמעה זו? התמונות לא יימחקו."
-
-#: templates/configure.html.jinja:3175
-msgid "Erreur lors de la suppression de la photo."
-msgstr "שגיאה במחיקת התמונה."
-
-#: templates/configure.html.jinja:3181
-msgid "Lancement..."
-msgstr "מפעיל..."
-
-#: templates/configure.html.jinja:3251
-msgid "Aucune playlist"
+#: templates/configure.html.jinja:2350
+#, fuzzy
+msgid "Delete playlist"
 msgstr "אין רשימת השמעה"
 
-#: templates/configure.html.jinja:3291
-msgid "Import en cours..."
-msgstr "ייבוא בתהליך..."
+#: templates/configure.html.jinja:2351
+#, fuzzy
+msgid "Rename the playlist"
+msgstr "שנה את שם רשימת ההשמעה"
 
-#: templates/configure.html.jinja:3320
-msgid "Préparation :"
-msgstr "הכנה:"
+#: templates/configure.html.jinja:2352
+#, fuzzy
+msgid "Enter the new name for the playlist:"
+msgstr "הזן את השם החדש עבור רשימת ההשמעה:"
 
-#: templates/configure.html.jinja:3329
-msgid "Préparation terminée ! Redémarrage du diaporama..."
-msgstr "ההכנה הושלמה! מפעיל מחדש את המצגת..."
+#: templates/configure.html.jinja:2355
+#, fuzzy
+msgid "Order safeguarded!"
+msgstr "ההזמנה נשמרה!"
 
-#: templates/configure.html.jinja:3336
-msgid "Diaporama redémarré. Rechargement de la page..."
-msgstr "המצגת הופעלה מחדש. טוען מחדש את הדף..."
+#: templates/configure.html.jinja:2400
+#, fuzzy
+msgid "Please enter a URL."
+msgstr "אנא הזן כתובת URL."
 
-#: templates/configure.html.jinja:3345
-msgid "Données de préparation invalides reçues du serveur."
-msgstr "התקבלו נתוני הכנה לא תקינים מהשרת."
+#: templates/configure.html.jinja:2405
+#, fuzzy
+msgid "Test in progress..."
+msgstr "חיבור"
 
-#: templates/configure.html.jinja:3353
-msgid "Erreur de connexion au serveur pour la préparation des photos."
-msgstr "שגיאת חיבור לשרת בהכנת התמונות."
+#: templates/configure.html.jinja:2419 templates/configure.html.jinja:2566
+#: templates/configure.html.jinja:3663 templates/configure.html.jinja:3943
+#: templates/configure.html.jinja:4087 templates/configure.html.jinja:4812
+#, fuzzy
+msgid "Communication error with the server."
+msgstr "שגיאה בתקשורת עם השרת."
 
-#: templates/configure.html.jinja:3365
-msgid "Importation :"
-msgstr "ייבוא:"
+#: templates/configure.html.jinja:2445
+msgid "Outlet Status: On"
+msgstr ""
 
-#: templates/configure.html.jinja:3375
+#: templates/configure.html.jinja:2448
+msgid "Outlet Status: Off"
+msgstr ""
+
+#: templates/configure.html.jinja:2457
+#, fuzzy
+msgid "Status: Error"
+msgstr "סטטוס: שגיאה"
+
+#: templates/configure.html.jinja:2461
+msgid "Outlet status: Unreachable"
+msgstr ""
+
+#: templates/configure.html.jinja:2506
+#, fuzzy
+msgid "No photos awaiting validation."
+msgstr "אין תמונות הממתינות לאימות."
+
+#: templates/configure.html.jinja:2535
+#, fuzzy
+msgid "Approve"
+msgstr "לְאַשֵׁר"
+
+#: templates/configure.html.jinja:2536
+msgid "Dismiss"
+msgstr ""
+
+#: templates/configure.html.jinja:2562 templates/configure.html.jinja:3277
+#: templates/configure.html.jinja:3988
+#, fuzzy
+msgid "Error :"
+msgstr "שגיאה"
+
+#: templates/configure.html.jinja:2726
+#, fuzzy
+msgid "Remove from playlist"
+msgstr "שנה את שם רשימת ההשמעה"
+
+#: templates/configure.html.jinja:3263
+#, fuzzy
+msgid "Please enter a name for the playlist."
+msgstr "אנא הזן שם לרשימת ההשמעה."
+
+#: templates/configure.html.jinja:3279 templates/configure.html.jinja:3365
+#: templates/configure.html.jinja:3804 templates/configure.html.jinja:3924
+#: templates/configure.html.jinja:3993 templates/configure.html.jinja:4813
+#, fuzzy
+msgid "Communication error."
+msgstr "שגיאת תקשורת"
+
+#: templates/configure.html.jinja:3293
+msgid "Are you sure you want to delete this playlist? Photos will not be deleted."
+msgstr ""
+
+#: templates/configure.html.jinja:3355
+#, fuzzy
+msgid "Launch..."
+msgstr "לְהַשִׁיק..."
+
+#: templates/configure.html.jinja:3465
+#, fuzzy
+msgid "Import in progress..."
+msgstr "ייבוא ​​בתהליך..."
+
+#: templates/configure.html.jinja:3494
+#, fuzzy
+msgid "Preparation :"
+msgstr "מכין"
+
+#: templates/configure.html.jinja:3503
+msgid "Preparation complete! Restarting the slideshow..."
+msgstr ""
+
+#: templates/configure.html.jinja:3510
+msgid "Slideshow restarted. Reloading the page..."
+msgstr ""
+
+#: templates/configure.html.jinja:3519
+msgid "Invalid staging data received from server."
+msgstr ""
+
+#: templates/configure.html.jinja:3527
+#, fuzzy
+msgid "Error connecting to the server for preparing photos."
+msgstr "שגיאה בהתחברות לשרת לצורך הכנת תמונה."
+
+#: templates/configure.html.jinja:3549
 msgid "Données d'import invalides reçues du serveur."
-msgstr "התקבלו נתוני ייבוא לא תקינים מהשרת."
+msgstr "נתוני ייבוא ​​לא חוקיים התקבלו מהשרת."
 
-#: templates/configure.html.jinja:3383
-msgid "Erreur de connexion au serveur pour l'import"
-msgstr "שגיאת חיבור לשרת בייבוא"
+#: templates/configure.html.jinja:3557
+#, fuzzy
+msgid "Error connecting to server for import"
+msgstr "שגיאת חיבור לשרת בעת ייבוא"
 
-#: templates/configure.html.jinja:3414
-msgid "Aucune donnée de marée à afficher."
-msgstr "אין נתוני גאות ושפל להצגה."
+#: templates/configure.html.jinja:3588
+msgid "No tide data to display."
+msgstr ""
 
-#: templates/configure.html.jinja:3417
-msgid "Impossible de charger les données."
-msgstr "לא ניתן לטעון את הנתונים."
+#: templates/configure.html.jinja:3596
+#, fuzzy
+msgid "Server connection error."
+msgstr "התחבר/י"
 
-#: templates/configure.html.jinja:3422
-msgid "Erreur de connexion au serveur."
-msgstr "שגיאת חיבור לשרת."
+#: templates/configure.html.jinja:3695
+msgid "Please select at least one file."
+msgstr ""
 
-#: templates/configure.html.jinja:3471
-msgid "Mise à jour en cours..."
-msgstr "עדכון בתהליך..."
+#: templates/configure.html.jinja:3704 templates/configure.html.jinja:3792
+#, fuzzy
+msgid "Sending in progress..."
+msgstr "מתבצע משלוח&nbsp;"
 
-#: templates/configure.html.jinja:3521
-msgid "Veuillez sélectionner au moins un fichier."
-msgstr "אנא בחר קובץ אחד לפחות."
-
-#: templates/configure.html.jinja:3530
-msgid "Envoi en cours..."
-msgstr "שולח..."
-
-#: templates/configure.html.jinja:3545
+#: templates/configure.html.jinja:3719
 msgid "Selection exceeds the 32 MB upload limit. Import fewer photos at a time."
 msgstr "הבחירה חורגת ממגבלת ההעלאה של 32 MB. ייבאו פחות תמונות בכל פעם."
 
-#: templates/configure.html.jinja:3570
-msgid "Données invalides reçues du serveur."
-msgstr "התקבלו נתונים לא תקינים מהשרת."
+#: templates/configure.html.jinja:3744
+msgid "Datas received from the server are invalid."
+msgstr ""
 
-#: templates/configure.html.jinja:3578
+#: templates/configure.html.jinja:3752
 msgid "Import ended before completion. Please try again."
 msgstr "הייבוא הסתיים לפני שהושלם. נסו שוב."
 
-#: templates/configure.html.jinja:3585
-msgid "Erreur de communication :"
-msgstr "שגיאת תקשורת:"
-
-#: templates/configure.html.jinja:3618
-msgid "Envoi..."
-msgstr "שולח..."
-
-#: templates/configure.html.jinja:3647
-msgid "Supprimer le fichier musical"
-msgstr "מחק קובץ מוזיקה"
-
-#: templates/configure.html.jinja:3717
-msgid "Aucune résolution trouvée."
-msgstr "לא נמצאה רזולוציה."
-
-#: templates/configure.html.jinja:3721
-msgid "Erreur de chargement."
-msgstr "שגיאת טעינה."
-
-#: templates/configure.html.jinja:3733
-msgid "Application en cours..."
-msgstr "מחיל..."
-
-#: templates/configure.html.jinja:3790
-msgid "Notifications activées"
-msgstr "התראות הופעלו"
-
-#: templates/configure.html.jinja:3790
-msgid "Notifications désactivées"
-msgstr "התראות הושבתו"
-
-#: templates/configure.html.jinja:3804
-msgid "Redémarrage..."
-msgstr "מפעיל מחדש..."
-
-#: templates/configure.html.jinja:3810
-msgid "Diaporama standard relancé."
-msgstr "המצגת הרגילה הופעלה מחדש."
+#: templates/configure.html.jinja:3759
+#, fuzzy
+msgid "Communication error:"
+msgstr "שגיאת תקשורת"
 
 #: templates/configure.html.jinja:3895
-msgid "Détection..."
-msgstr "מזהה..."
+#, fuzzy
+msgid "Loading error."
+msgstr "טוען עורך חיתוך..."
 
-#: templates/configure.html.jinja:3905
-msgid "Détecté !"
+#: templates/configure.html.jinja:3964
+#, fuzzy
+msgid "Notifications enabled"
+msgstr "התראות מופעלות"
+
+#: templates/configure.html.jinja:3964
+#, fuzzy
+msgid "Notifications disabled"
+msgstr "התראות מושבתות"
+
+#: templates/configure.html.jinja:3978
+msgid "Reboot..."
+msgstr ""
+
+#: templates/configure.html.jinja:3984
+msgid "Standard slideshow restarted."
+msgstr ""
+
+#: templates/configure.html.jinja:4069
+#, fuzzy
+msgid "Detection..."
+msgstr "זיהוי..."
+
+#: templates/configure.html.jinja:4079
+#, fuzzy
+msgid "Detected!"
 msgstr "זוהה!"
 
-#: templates/configure.html.jinja:3908
-msgid "Échec"
-msgstr "נכשל"
-
-#: templates/configure.html.jinja:3909
-msgid "Erreur lors de la détection."
-msgstr "שגיאה בזיהוי."
-
-#: templates/configure.html.jinja:4170
-msgid "No location metadata"
-msgstr "אין נתוני מיקום"
-
-#: templates/configure.html.jinja:4195
-msgid "En attente de la prochaine photo..."
-msgstr "ממתין לתמונה הבאה..."
-
-#: templates/configure.html.jinja:4219 templates/configure.html.jinja:4224
-msgid "Erreur de connexion."
-msgstr "שגיאת חיבור."
-
-#: templates/configure.html.jinja:4366
-msgid "Erreur lors de la récupération des infos système:"
-msgstr "שגיאה באחזור מידע המערכת:"
-
-#: templates/configure.html.jinja:4373
-msgid "Erreur de communication avec l'API système:"
-msgstr "שגיאת תקשורת עם ה-API של המערכת:"
-
-#: templates/configure.html.jinja:4387
-msgid "Aucun fichier de log disponible ou sélectionné."
-msgstr "אין קובץ יומן זמין או נבחר."
-
-#: templates/configure.html.jinja:4403
-msgid "Erreur:"
-msgstr "שגיאה:"
-
-#: templates/configure.html.jinja:4407
-msgid "Erreur de connexion à l'API des logs."
-msgstr "שגיאת חיבור ל-API של היומנים."
-
-#: templates/configure.html.jinja:4428
-msgid "Aucun log trouvé"
-msgstr "לא נמצאו יומנים"
-
-#: templates/configure.html.jinja:4432
-msgid "Erreur de chargement"
-msgstr "שגיאת טעינה"
-
-#: templates/configure.html.jinja:4456
-msgid ""
-"Êtes-vous sûr de vouloir effacer le contenu du log \"__LOG_NAME__\" ? "
-"Cette action est irréversible."
+#: templates/configure.html.jinja:4082
+msgid "Failure"
 msgstr ""
-"האם אתה בטוח שברצונך לנקות את תוכן היומן \"__LOG_NAME__\"? פעולה זו אינה "
+
+#: templates/configure.html.jinja:4083
+#, fuzzy
+msgid "Error during detection."
+msgstr "שגיאה במהלך הזיהוי."
+
+#: templates/configure.html.jinja:4344
+#, fuzzy
+msgid "No location metadata"
+msgstr "אין מטא-נתונים"
+
+#: templates/configure.html.jinja:4369
+msgid "Waiting for the next photo..."
+msgstr ""
+
+#: templates/configure.html.jinja:4393 templates/configure.html.jinja:4398
+#, fuzzy
+msgid "Connection error."
+msgstr "התחבר/י"
+
+#: templates/configure.html.jinja:4540
+msgid "Error retrieving system information:"
+msgstr ""
+
+#: templates/configure.html.jinja:4547
+msgid "Erreur de communication avec l'API système:"
+msgstr "שגיאה בתקשורת עם ממשק ה-API של המערכת:"
+
+#: templates/configure.html.jinja:4561
+msgid "No log files available or selected."
+msgstr ""
+
+#: templates/configure.html.jinja:4577
+#, fuzzy
+msgid "Error:"
+msgstr "שגיאה"
+
+#: templates/configure.html.jinja:4581
+msgid "Erreur de connexion à l'API des logs."
+msgstr "שגיאה בחיבור ל-API של יומני הרישום."
+
+#: templates/configure.html.jinja:4602
+msgid "No logs found"
+msgstr ""
+
+#: templates/configure.html.jinja:4606
+#, fuzzy
+msgid "Loading error"
+msgstr "טוען עורך חיתוך..."
+
+#: templates/configure.html.jinja:4630
+#, fuzzy
+msgid ""
+"Are you sure you want to delete the contents of the log \"__LOG_NAME__\"?"
+" This action is irreversible."
+msgstr ""
+"האם אתה בטוח שברצונך למחוק את תוכן היומן \"__LOG_NAME__\"? פעולה זו אינה "
 "הפיכה."
 
-#: templates/configure.html.jinja:4471
+#: templates/configure.html.jinja:4645
 msgid "Erreur lors de l'effacement du log :"
-msgstr "שגיאה בניקוי היומן:"
+msgstr "שגיאה במחיקת יומן:"
 
-#: templates/configure.html.jinja:4474
+#: templates/configure.html.jinja:4648
 msgid "Erreur de connexion à l'API pour effacer les logs."
-msgstr "שגיאת חיבור ל-API לניקוי היומנים."
+msgstr "שגיאת חיבור API לצורך ניקוי יומני רישום."
 
-#: templates/configure.html.jinja:4574
+#: templates/configure.html.jinja:4784
+msgid "new update available"
+msgstr ""
+
+#: templates/configure.html.jinja:4784
+msgid "new updates available"
+msgstr ""
+
+#: templates/configure.html.jinja:4802
+msgid "Error checking git repository."
+msgstr ""
+
+#: templates/configure.html.jinja:4806
 msgid ""
-"Cette opération va préparer le système à étendre la partition au prochain"
-" redémarrage. Voulez-vous continuer ?"
-msgstr "פעולה זו תכין את המערכת להרחבת המחיצה בהפעלה הבאה. האם ברצונך להמשיך?"
+"Do you really want to update the application? The server will restart. "
+"Make sure no system update is in progress."
+msgstr ""
+
+#: templates/configure.html.jinja:4807
+msgid "Do you want to restore the previous version? The application will restart."
+msgstr ""
+
+#: templates/configure.html.jinja:4808
+msgid ""
+"Do you want to delete the previous version backup? This action is "
+"irreversible."
+msgstr ""
+
+#: templates/configure.html.jinja:4810
+#, fuzzy
+msgid "Redirecting in 5 seconds..."
+msgstr "הפניה תוך 5 שניות..."
+
+#: templates/configure.html.jinja:4883
+#, fuzzy
+msgid ""
+"This operation will prepare the system to extend the partition to the "
+"next restart. Do you want to continue?"
+msgstr "פעולה זו תכין את המערכת להרחבת המחיצה באתחול מחדש הבא. האם ברצונך להמשיך?"
 
 #: templates/login.html.jinja:7
-msgid "Connexion"
-msgstr "התחברות"
+#, fuzzy
+msgid "Connection"
+msgstr "התקשרות "
 
 #: templates/login.html.jinja:56
-msgid "Utilisateur"
-msgstr "משתמש"
+msgid "User"
+msgstr ""
 
 #: templates/login.html.jinja:79
-msgid "Se connecter"
-msgstr "התחבר"
+#, fuzzy
+msgid "Connect"
+msgstr "התחבר/י"
 
 #: templates/login.html.jinja:86
-msgid "Envoyer des photos (Invité)"
+#, fuzzy
+msgid "Send photos (guest)"
 msgstr "שלח תמונות (אורח)"
 
 #: templates/upload.html.jinja:7
-msgid "Envoyer des photos"
-msgstr "שלח תמונות"
+#, fuzzy
+msgid "Send photos"
+msgstr "עבור"
 
 #: templates/upload.html.jinja:51
-msgid "Envoyer des photos pour le cadre"
-msgstr "שלח תמונות למסגרת"
+msgid "Send photos to the photoframe"
+msgstr ""
 
 #: templates/upload.html.jinja:52
 msgid "Les photos seront soumises à validation avant d'être affichées."
-msgstr "התמונות יועברו לאישור לפני שיוצגו."
+msgstr "התמונות יוגשו לאישור לפני שיוצגו."
 
 #: templates/upload.html.jinja:64
-msgid "Envoyer"
-msgstr "שלח"
+msgid "Send"
+msgstr ""
 
 #: templates/upload.html.jinja:69
+#, fuzzy
 msgid ""
-"Retour à la connexion\n"
-"          administrateur"
-msgstr ""
-"חזרה להתחברות\n"
-"          מנהל"
+"Return to login\n"
+"          administrator"
+msgstr "חזרה לכניסה&#10; מְנַהֵל"
 
-#~ msgid "Code d'invitation invalide."
-#~ msgstr "קוד הזמנה לא חוקי."
-
-#~ msgid "Ce code d'invitation a expiré."
-#~ msgstr "קוד הזמנה זה פג תוקפו."
-
-#~ msgid "Vous êtes déjà autorisé. Envoyez-moi une photo !"
-#~ msgstr "כבר קיבלת אישור. שלח לי תמונה!"
-
-#~ msgid "Ce code d'invitation a déjà été utilisé."
-#~ msgstr "קוד הזמנה זה כבר נוצל."
-
-#~ msgid ""
-#~ "Félicitations %(name)s ! Vous pouvez "
-#~ "maintenant envoyer des cartes postales "
-#~ "au cadre."
-#~ msgstr "מזל טוב %(name)s! כעת ניתן לשלוח גלויות למסגרת."
-
-#~ msgid "L'accès pour l'invité '%(name)s' a été révoqué."
-#~ msgstr "הגישה עבור האורח '%(name)s' בוטלה."
-
-#~ msgid "Le token du bot est requis."
-#~ msgstr "נדרש טוקן הבוט."
-
-#~ msgid "Token valide ! Le bot s'appelle '%(bot_name)s'."
-#~ msgstr "אסימון תקף! שם הבוט הוא '%(bot_name)s'."
-
-#~ msgid "Échec de l'envoi : %(error)s"
-#~ msgstr "השליחה נכשלה: %(error)s"
-
-#~ msgid "Erreur de connexion : %(error)s"
-#~ msgstr "שגיאת חיבור: %(error)s"
-
-#~ msgid "Lancement de l'import..."
-#~ msgstr "מתחיל ייבוא..."
-
-#~ msgid "(Anniversaire) Il y a %(num)d an"
-#~ msgstr "(יום שנה) לפני שנה %(num)d"
-
-#~ msgid "(Anniversaire) Il y a %(num)d ans"
-#~ msgstr "(יום שנה) לפני %(num)d שנים"
-
-#~ msgid "Amplitude du zoom (ex: 1.15 pour 15%% de zoom) :"
-#~ msgstr "עוצמת הזום (לדוגמה: 1.15 עבור 15%% זום):"
-
-#~ msgid "Affichage de la météo (OpenWeatherMap)"
-#~ msgstr "תצוגת מזג אוויר (OpenWeatherMap)"
-
-#~ msgid "Afficher la météo"
-#~ msgstr "הצג מזג אוויר"
-
-#~ msgid "Ville :"
-#~ msgstr "עיר:"
-
-#~ msgid "Clé API :"
-#~ msgstr "מפתח API:"
-
-#~ msgid "Tester la clé API et la ville"
-#~ msgstr "בדוק מפתח API ועיר"
-
-#~ msgid "Unités :"
-#~ msgstr "יחידות:"
-
-#~ msgid "Celsius"
-#~ msgstr "צלזיוס"
-
-#~ msgid "Fahrenheit"
-#~ msgstr "פרנהייט"
-
-#~ msgid ""
-#~ "Intervalle de MàJ\n"
-#~ "                            (min) :"
+#~ msgid "Display's parameters"
 #~ msgstr ""
-#~ "מרווח עדכון\n"
-#~ "                            (דקות):"
-
-#~ msgid ""
-#~ "ID de l'administrateur\n"
-#~ "                            :"
-#~ msgstr ""
-#~ "מזהה מנהל\n"
-#~ "                            :"
-
-#~ msgid "Tester le Token du Bot"
-#~ msgstr "בדוק אסימון בוט"
-
-#~ msgid "État du bot :"
-#~ msgstr "מצב הבוט:"
-
-#~ msgid "Gestion des invitations pour les invités"
-#~ msgstr "ניהול הזמנות לאורחים"
-
-#~ msgid "Créer une nouvelle invitation"
-#~ msgstr "צור הזמנה חדשה"
-
-#~ msgid "Nom de l'invité (ex: Mamie)"
-#~ msgstr "שם האורח (לדוגמה: סבתא)"
-
-#~ msgid "Valide 7 jours"
-#~ msgstr "תקף ל-7 ימים"
-
-#~ msgid "Valide 30 jours"
-#~ msgstr "תקף ל-30 ימים"
-
-#~ msgid "Valide 90 jours"
-#~ msgstr "תקף ל-90 ימים"
-
-#~ msgid "Invitations actives"
-#~ msgstr "הזמנות פעילות"
-
-#~ msgid "Chargement des invitations..."
-#~ msgstr "טוען הזמנות..."
-
-#~ msgid "Fréquence des Cartes Postales"
-#~ msgstr "תדירות גלויות"
-
-#~ msgid ""
-#~ "Augmentez temporairement la fréquence d'affichage des\n"
-#~ "                        nouvelles cartes postales"
-#~ " reçues pour qu'elles apparaissent plus "
-#~ "souvent."
-#~ msgstr ""
-#~ "הגדל זמנית את תדירות ההצגה של\n"
-#~ "                        גלויות חדשות שהתקבלו "
-#~ "כדי שיופיעו לעיתים קרובות יותר."
-
-#~ msgid "Activer le boost pour les cartes postales récentes"
-#~ msgstr "הפעל דחיפה לגלויות אחרונות"
-
-#~ msgid ""
-#~ "Durée du boost (jours)\n"
-#~ "                            :"
-#~ msgstr ""
-#~ "משך הדחיפה (ימים)\n"
-#~ "                            :"
-
-#~ msgid "Facteur de boost :"
-#~ msgstr "מקדם דחיפה:"
-
-#~ msgid "(Ex: 4 = 5x plus de chances d'apparaître)"
-#~ msgstr "(לדוגמה: 4 = סיכוי גדול פי 5 להופיע)"
-
-#~ msgid "Options de l'overlay"
-#~ msgstr "אפשרויות שכבת-על (Overlay)"
-
-#~ msgid "Activer l'icône de nouvelle carte postale dans l'overlay"
-#~ msgstr "הפעל סמל גלויה חדשה בשכבת-העל"
-
-#~ msgid "Importer depuis un Smartphone"
-#~ msgstr "ייבא מסמארטפון"
-
-#~ msgid ""
-#~ "Envoyez des photos directement depuis votre\n"
-#~ "                            téléphone via le navigateur."
-#~ msgstr ""
-#~ "שלח תמונות ישירות\n"
-#~ "                            מהטלפון שלך דרך הדפדפן."
-
-#~ msgid "Envoyer les photos"
-#~ msgstr "שלח תמונות"
-
-#~ msgid "Vignette"
-#~ msgstr "הכהיית שוליים"
-
-#~ msgid "Aucune invitation active."
-#~ msgstr "אין הזמנות פעילות."
-
-#~ msgid "Utilisé par"
-#~ msgstr "בשימוש על ידי"
-
-#~ msgid "Non utilisé"
-#~ msgstr "לא בשימוש"
-
-#~ msgid "Expire le"
-#~ msgstr "פג תוקף ב-"
-
-#~ msgid "Supprimer l'invitation"
-#~ msgstr "מחק הזמנה"
-
-#~ msgid "Erreur lors du chargement des invitations."
-#~ msgstr "שגיאה בטעינת ההזמנות."
-
-#~ msgid "Veuillez entrer un nom pour l'invité."
-#~ msgstr "אנא הזן שם עבור האורח."
-
-#~ msgid "Êtes-vous sûr de vouloir supprimer cette invitation ?"
-#~ msgstr "האם אתה בטוח שברצונך למחוק הזמנה זו?"
-
-#~ msgid "Révoquer l'accès"
-#~ msgstr "בטל גישה"
-
-#~ msgid ""
-#~ "Êtes-vous sûr de vouloir révoquer "
-#~ "l'accès pour cet invité ? Il ne"
-#~ " pourra plus envoyer de photos."
-#~ msgstr ""
-#~ "האם אתה בטוח שברצונך לבטל את הגישה"
-#~ " עבור אורח זה? הוא לא יוכל "
-#~ "לשלוח תמונות יותר."
-
-#~ msgid "Le nom d'utilisateur du bot n'a pas pu être récupéré."
-#~ msgstr "לא ניתן היה לאחזר את שם המשתמש של הבוט."
-
-#~ msgid "Copier le lien"
-#~ msgstr "העתק קישור"
-
-#~ msgid "La copie a échoué."
-#~ msgstr "ההעתקה נכשלה."
-
-#~ msgid "Importation réussie ! Rechargement de la page..."
-#~ msgstr "הייבוא הצליח! טוען מחדש את הדף..."
 

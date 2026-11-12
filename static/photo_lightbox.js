@@ -135,6 +135,11 @@ function attachPhotoLightboxActions(lightbox) {
                     hint.style.cssText = 'font-size:0.8em;color:#888';
                     hint.textContent = labels.dateOverride;
                     form.append(hint);
+                } else if (details.date_source === 'file') {
+                    const hint = document.createElement('p');
+                    hint.style.cssText = 'font-size:0.8em;color:#888';
+                    hint.textContent = labels.dateFromFile || 'Date from file (no EXIF data)';
+                    form.append(hint);
                 }
                 async function persistDate(value) {
                     const buttons = form.querySelectorAll('button');

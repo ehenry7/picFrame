@@ -13,6 +13,7 @@ from werkzeug.wrappers import Response
 from utils import photo_edits, metadata_utils
 from utils.image_filters import apply_filter_to_image
 from utils.photo_edit_routes import register_photo_edit_routes
+from utils.path_utils import to_static_url_path
 
 
 class PhotoEditsTests(unittest.TestCase):
@@ -44,6 +45,7 @@ class PhotoEditsTests(unittest.TestCase):
             "load_filter_states": lambda: dict(self.filter_states), "save_filter_states": save_states,
             "load_text_states": lambda: {},
             "logger": logging.getLogger(__name__),
+            "to_static_url_path": to_static_url_path,
         }
         source = Path(__file__).resolve().parents[1] / "app.py"
         tree = ast.parse(source.read_text(encoding="utf-8"))

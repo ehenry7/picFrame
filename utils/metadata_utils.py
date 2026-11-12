@@ -118,6 +118,7 @@ def get_photo_metadata(photo_path):
     date_ov = date_override(photo_path)
     if date_ov:
         metadata["dateTimeOriginal"] = date_ov
+        metadata.pop("dateSource", None)
     return metadata
 
 
@@ -181,11 +182,12 @@ def get_local_photo_metadata(path, relative):
 
 @lru_cache(maxsize=1024)
 def read_local_metadata(filename, modified, size):
+    metadata = {}
+    exif_date_found = False
     try:
         with Image.open(filename) as image:
             exif = image.getexif()
             fields = exif.get_ifd(34665) if 34665 in exif else {}
-            metadata = {}
             for value in (fields.get(36867), exif.get(36867),
                           fields.get(36868), exif.get(36868), exif.get(306)):
                 if not value:
@@ -198,6 +200,7 @@ def read_local_metadata(filename, modified, size):
                     logger.warning("[Metadata] Invalid EXIF date in %s: %r", filename, value)
                     continue
                 metadata["dateTimeOriginal"] = date.isoformat()
+                exif_date_found = True
                 break
             iptc = IptcImagePlugin.getiptcinfo(image) or {}
             for key, tag in (("city", (2, 90)), ("country", (2, 101))):
@@ -206,7 +209,17 @@ def read_local_metadata(filename, modified, size):
                     value = value.decode("utf-8", errors="replace")
                 if isinstance(value, str) and value.strip():
                     metadata[key] = value.strip()
-            return metadata
     except (OSError, ValueError, TypeError, SyntaxError) as error:
         logger.warning("[Metadata] Cannot read original photo %s: %s", filename, error)
-        return {}
+
+    # Fallback: use file modification time when no EXIF date is available.
+    if not exif_date_found:
+        try:
+            from datetime import timezone
+            file_time = datetime.fromtimestamp(modified / 1e9, tz=timezone.utc).replace(tzinfo=None)
+            metadata["dateTimeOriginal"] = file_time.isoformat()
+            metadata["dateSource"] = "file"
+        except (OSError, ValueError, OverflowError):
+            pass
+
+    return metadata

@@ -79,6 +79,8 @@ class PhotoCropTests(unittest.TestCase):
             "CROP_LOCK": photo_crop.CROP_LOCK,
             "load_text_states": lambda: {}, "load_polaroid_texts": lambda: {},
             "load_filter_states": lambda: {}, "is_slideshow_running": lambda: True,
+            "is_display_process_running": lambda: True,
+            "restart_display_process_for_update": self.restart,
             "restart_slideshow_for_update": self.restart, "_": lambda message: message,
             "logger": logging.getLogger(__name__), "add_text_to_image": Mock(),
             "add_text_to_polaroid": Mock(), "apply_filter_to_image": Mock(),

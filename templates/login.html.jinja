@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ _('Connexion') }} - PictureFrame</title>
+  <title>{{ _('Connection') }} - PictureFrame</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
@@ -53,20 +53,20 @@
 
       <form method="POST" action="{{ url_for('login') }}">
         <div class="mb-4">
-          <label for="username" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Utilisateur') }}</label>
+          <label for="username" class="block text-gray-700 text-sm font-bold mb-2">{{ _('User') }}</label>
           <input type="text" id="username" name="username" required maxlength="20"
             class="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500">
         </div>
 
         <div class="mb-6">
-          <label for="password" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Mot de passe') }}</label>
+          <label for="password" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Password') }}</label>
           <div class="relative">
             <input type="password" id="password" name="password" required maxlength="20"
               class="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10">
             <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
               <button type="button"
                 class="toggle-password-btn text-gray-500 hover:bg-gray-200 rounded-md transition-colors w-auto p-2 flex items-center justify-center mt-0 bg-transparent border-none font-normal"
-                data-target="password" title="{{ _('Afficher/Cacher le mot de passe') }}">
+                data-target="password" title="{{ _('Show/Hide Password') }}">
                 <i class="fas fa-eye"></i>
               </button>
             </div>
@@ -76,17 +76,17 @@
         <div class="flex items-center justify-center mt-8">
           <button type="submit"
             class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-150 ease-in-out w-full">
-            {{ _('Se connecter') }}
+            {{ _('Connect') }}
           </button>
         </div>
       </form>
       <div class="mt-6 pt-6 border-t border-gray-300">
         <a href="{{ url_for('upload_page') }}"
           class="w-full inline-block bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition-colors duration-300 text-center">{{
-          _('Envoyer des photos (Invité)') }}</a>
+          _('Send photos (guest)') }}</a>
       </div>
       <div class="text-center mt-6 text-sm">
-        <span class="font-semibold">{{ _('Langue') }}:</span>
+        <span class="font-semibold">{{ _('Language') }}:</span>
         {% set current_lang = get_locale() %}
         <a href="?lang=fr"
           class="{% if current_lang == 'fr' %}font-bold text-indigo-600{% else %}text-blue-600 hover:underline{% endif %}">FR</a>
