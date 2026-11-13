@@ -11,7 +11,7 @@ logs/
 config/
 credentials.json
 static/backups/
-static/prepared/  
+static/prepared/
 static/photos/
 cache/
 models/
@@ -20,3 +20,4 @@ static/.backups/
 templates/configure.html.jinja.bak
 *.code-workspace
 scripts/_untranslated.json
+.update_backup/
