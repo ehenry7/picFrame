@@ -772,6 +772,11 @@ def restore_backup():
 def git_pull():
     """Run git pull, return True on success."""
     try:
+        # Clean working tree so pull can fast-forward without conflicts.
+        # Discard local modifications and remove untracked files (except .update_backup).
+        log("Cleaning working tree before pull...")
+        subprocess.run(["git", "checkout", "--", "."], cwd=APP_DIR, capture_output=True, text=True, timeout=30)
+        subprocess.run(["git", "clean", "-fd", "-e", ".update_backup"], cwd=APP_DIR, capture_output=True, text=True, timeout=30)
         result = subprocess.run(
             ["git", "pull"],
             cwd=APP_DIR, capture_output=True, text=True, timeout=60)
