@@ -142,8 +142,22 @@ while true; do
     log "🚀 Starting the PictureFrame application..."
     log "========================================================"
 
+    # Verify flask_babel is importable before launching.
+    if ! $PYTHON_CMD -c "import flask_babel" 2>/dev/null; then
+        log "❌ flask_babel cannot be imported with: $PYTHON_CMD"
+        log "❌ Python path: $(which $PYTHON_CMD 2>/dev/null || echo 'not found')"
+        log "❌ Python version: $($PYTHON_CMD --version 2>&1)"
+        log "❌ Attempting install..."
+        $PIP_CMD flask-babel 2>&1 | tee -a logs/pictureframe.log
+        if ! $PYTHON_CMD -c "import flask_babel" 2>/dev/null; then
+            log "❌ Still cannot import flask_babel. Aborting."
+            log "❌ Try manually: $PYTHON_CMD -m pip install flask-babel"
+            exit 1
+        fi
+    fi
+
     # Start the application — output to both console and log file.
-    log "▶️ Executing: $PYTHON_CMD -u app.py"
+    log "▶️ Executing: $PYTHON_CMD -u app.py (path: $(which $PYTHON_CMD))"
     $PYTHON_CMD -u app.py 2>&1 | tee -a logs/pictureframe.log
 
     exit_code=${PIPESTATUS[0]}
