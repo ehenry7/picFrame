@@ -579,6 +579,45 @@ def _wmo_icon(code, is_day=True):
     return WMO_ICON_MAP.get(code, "01") + ("d" if is_day else "n")
 
 
+_verify_certs_cache = None
+
+def _get_verify_certs():
+    """Return a path to a CA bundle that includes system (Windows) certs.
+
+    Corporate proxies (e.g. Huawei) intercept HTTPS with a self-signed
+    certificate that is in the Windows cert store but NOT in certifi's
+    bundle.  This exports the system certs to a temp file and uses that
+    for requests verification.  Falls back to True (default) on failure.
+    """
+    global _verify_certs_cache
+    if _verify_certs_cache is not None:
+        return _verify_certs_cache
+    try:
+        import ssl, tempfile, atexit
+        ctx = ssl.create_default_context()
+        certs = ctx.get_ca_certs(binary_form=True)
+        if not certs:
+            return True
+        # Merge certifi's bundle with the Windows system certs.
+        import certifi
+        with open(certifi.where(), "rb") as f:
+            bundle = f.read()
+        pem_parts = [bundle]
+        for der in certs:
+            # DER_cert_to_PEM_cert returns str; encode to bytes.
+            pem_parts.append(ssl.DER_cert_to_PEM_cert(der).encode("ascii"))
+        tmp = tempfile.NamedTemporaryFile(
+            mode="wb", suffix=".pem", delete=False, prefix="pf_cacerts_")
+        tmp.write(b"\n".join(pem_parts))
+        tmp.close()
+        atexit.register(os.unlink, tmp.name)
+        _verify_certs_cache = tmp.name
+        return _verify_certs_cache
+    except Exception:
+        _verify_certs_cache = True
+        return True
+
+
 def get_weather_and_forecast(config):
     """Fetch current weather and a five-day forecast from Open-Meteo."""
     global _weather_and_forecast_data, _last_weather_and_forecast_fetch
@@ -628,7 +667,8 @@ def get_weather_and_forecast(config):
             params["temperature_unit"] = "fahrenheit"
             params["wind_speed_unit"] = "mph"
         response = requests.get(
-            "https://api.open-meteo.com/v1/forecast", params=params, timeout=10)
+            "https://api.open-meteo.com/v1/forecast", params=params, timeout=10,
+            verify=_get_verify_certs())
         response.raise_for_status()
         api_data = response.json()
 
