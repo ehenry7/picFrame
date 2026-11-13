@@ -1518,6 +1518,11 @@
                             <span class="font-mono text-xs text-gray-500" id="update-commit"></span>
                             <span class="text-gray-400">·</span>
                             <span class="text-xs text-gray-500">{{ _("Version") }} <span id="update-current-version" class="font-mono"></span></span>
+                            <button type="button" id="refresh-update-status-btn"
+                                class="ml-1 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded p-1 text-xs transition-colors"
+                                title="{{ _("Refresh git status") }}">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
                         </div>
                         <div id="update-available" class="hidden p-3 bg-blue-50 border border-blue-200 rounded-lg mb-3">
                             <p class="text-sm text-blue-800">
@@ -1537,10 +1542,6 @@
                         <button type="button" id="trigger-update-btn"
                             class="system-button bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded inline-flex items-center">
                             <i class="fas fa-download mr-2"></i>{{ _("Update now") }}
-                        </button>
-                        <button type="button" id="refresh-update-status-btn"
-                            class="system-button bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded inline-flex items-center">
-                            <i class="fas fa-sync-alt mr-2"></i>{{ _("Refresh") }}
                         </button>
                         <div id="update-backup-section" class="hidden mt-4 pt-4 border-t border-gray-200">
                             <h4 class="font-semibold text-sm text-gray-700 mb-2">{{ _("Previous version backup") }}</h4>
@@ -5019,19 +5020,19 @@
 
     <!-- Inline update/restart overlay — shown when the app exits for an update.
          Polls /api/ping until the server is back with a new instance ID. -->
-    <div id="update-overlay" class="hidden fixed inset-0 z-50 flex items-center justify-center"
+    <div id="update-overlay" class="hidden fixed inset-0 z-50 flex items-start justify-center pt-12"
          style="background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);">
-        <div class="text-center text-white p-8 rounded-2xl max-w-md"
+        <div class="text-center text-white p-6 rounded-2xl max-w-md"
              style="background: rgba(255,255,255,0.1);">
             <img src="{{ url_for('static', filename='pictureframe_logo.svg') }}" alt="PictureFrame"
-                 style="width: 120px; margin: 0 auto 20px;">
-            <h2 class="text-2xl font-semibold mb-4" id="update-overlay-title">{{ _("Updating...") }}</h2>
-            <div class="spinner" style="width: 50px; height: 50px; margin: 0 auto 20px;
-                 border: 5px solid rgba(255,255,255,0.3); border-top: 5px solid white;
+                 style="width: 100px; margin: 0 auto 16px;">
+            <h2 class="text-xl font-semibold mb-3" id="update-overlay-title">{{ _("Updating...") }}</h2>
+            <div class="spinner" style="width: 40px; height: 40px; margin: 0 auto 16px;
+                 border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid white;
                  border-radius: 50%; animation: spin 1s linear infinite;"></div>
             <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
             <p id="update-overlay-status" class="text-sm opacity-90 mb-2">{{ _("The server is restarting. Please wait...") }}</p>
-            <p id="update-overlay-countdown" class="text-3xl font-bold font-mono"></p>
+            <p id="update-overlay-countdown" class="text-2xl font-bold font-mono"></p>
         </div>
     </div>
 
