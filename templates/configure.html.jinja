@@ -4871,20 +4871,17 @@
                     refreshBtn.addEventListener('click', () => {
                         refreshBtn.disabled = true;
                         refreshBtn.querySelector('i').classList.add('fa-spin');
-                        // Reset UI state.
-                        loading.classList.remove('hidden');
-                        gitInfo.classList.add('hidden');
-                        notGit.classList.add('hidden');
+                        // Reset status messages only (keep git info line visible).
                         available.classList.add('hidden');
                         upToDate.classList.add('hidden');
                         backupSection.classList.add('hidden');
                         resultDiv.innerHTML = '';
                         loadUpdateStatus();
-                        // Re-enable after a short delay (loadUpdateStatus is async).
+                        // Re-enable after loadUpdateStatus completes (it's async).
                         setTimeout(() => {
                             refreshBtn.disabled = false;
                             refreshBtn.querySelector('i').classList.remove('fa-spin');
-                        }, 2000);
+                        }, 3000);
                     });
 
                     updateBtn.addEventListener('click', () => {
