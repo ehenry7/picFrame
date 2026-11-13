@@ -24,6 +24,8 @@ TARGET_SCRIPTS = [
     "app.py",
     "local_slideshow.py",
     "background_updater.py",
+    "start_pictureframe.sh",
+    "start_backgrounder.sh",
     "utils/display_message.py",
     "utils/render_pipeline.py",
     "utils/wallpaper_manager.py",
@@ -41,6 +43,8 @@ LOCK_FILES = [
 STATUS_FILES = [
     "pictureframe_slideshow_status",
     "pictureframe_current_photo",
+    "pictureframe_background_status",
+    "pictureframe_custom_playlist",
 ]
 
 
@@ -184,6 +188,17 @@ def main():
     if not dry_run:
         print("\nCleaning up PID and lock files...")
         cleanup_files()
+
+        # Final check: kill any processes that respawned (e.g. from a
+        # supervisor loop that was still running when we first killed).
+        time.sleep(1)
+        respawned = find_pictureframe_processes()
+        if respawned:
+            print(f"\n  {len(respawned)} process(es) respawned -- force killing again...")
+            for proc in respawned:
+                kill_process(proc, force=True)
+            time.sleep(1)
+            cleanup_files()
 
     print("\nDone.")
     return 0
