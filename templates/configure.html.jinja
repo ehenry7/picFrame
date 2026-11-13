@@ -4855,7 +4855,7 @@
                     const confirmRevert = {{ _("Do you want to restore the previous version? The application will restart.") | tojson }};
                     const confirmDeleteBackup = {{ _("Do you want to delete the previous version backup? This action is irreversible.") | tojson }};
                     const msgStartingUpdate = {{ _("Starting update...") | tojson }};
-                    const msgRedirecting = {{ _("Redirecting in 5 seconds...") | tojson }};
+                    const msgRedirecting = {{ _("Server will restart momentarily.") | tojson }};
                     const msgError = {{ _("Error") | tojson }};
                     const msgCommError = {{ _("Communication error with the server.") | tojson }};
                     const msgCommErrorShort = {{ _("Communication error.") | tojson }};
@@ -4864,7 +4864,9 @@
                     updateBtn.addEventListener('click', () => {
                         if (!confirm(confirmUpdate)) return;
                         updateBtn.disabled = true;
-                        showResult(msgStartingUpdate, false);
+                        // Show the waiting overlay IMMEDIATELY — the server may
+                        // exit before the fetch response arrives.
+                        window.__waitForServerRestart('{{ APP_INSTANCE_ID }}', {{ _("Updating...") | tojson }});
                         fetch('/api/trigger_update', { method: 'POST' })
                             .then(r => {
                                 if (!r.ok && r.status !== 500) {
@@ -4873,24 +4875,22 @@
                                 return r.json();
                             })
                             .then(data => {
-                                if (data.success) {
-                                    showResult(data.message + ' ' + msgRedirecting, false);
-                                    setTimeout(() => { window.location.href = '/rebooting?old_instance={{ APP_INSTANCE_ID }}'; }, 5000);
-                                } else {
+                                if (!data.success) {
+                                    document.getElementById('update-overlay').classList.add('hidden');
                                     showResult(data.message || msgError, true);
                                     updateBtn.disabled = false;
                                 }
                             })
                             .catch(() => {
-                                showResult(msgCommError, true);
-                                updateBtn.disabled = false;
+                                // Expected — the server is shutting down.
                             });
                     });
 
                     revertBtn.addEventListener('click', () => {
                         if (!confirm(confirmRevert)) return;
                         revertBtn.disabled = true;
-                        showResult(msgRestoring, false);
+                        // Show the waiting overlay IMMEDIATELY.
+                        window.__waitForServerRestart('{{ APP_INSTANCE_ID }}', {{ _("Restoring...") | tojson }});
                         fetch('/api/revert_to_backup', { method: 'POST' })
                             .then(r => {
                                 if (!r.ok && r.status !== 500) {
@@ -4899,17 +4899,14 @@
                                 return r.json();
                             })
                             .then(data => {
-                                if (data.success) {
-                                    showResult(data.message + ' ' + msgRedirecting, false);
-                                    setTimeout(() => { window.location.href = '/rebooting?old_instance={{ APP_INSTANCE_ID }}'; }, 5000);
-                                } else {
+                                if (!data.success) {
+                                    document.getElementById('update-overlay').classList.add('hidden');
                                     showResult(data.message || msgError, true);
                                     revertBtn.disabled = false;
                                 }
                             })
                             .catch(() => {
-                                showResult(msgCommErrorShort, true);
-                                revertBtn.disabled = false;
+                                // Expected — the server is shutting down.
                             });
                     });
 
@@ -4994,5 +4991,81 @@
             });
 
         </script>
+
+    <!-- Inline update/restart overlay — shown when the app exits for an update.
+         Polls /api/ping until the server is back with a new instance ID. -->
+    <div id="update-overlay" class="hidden fixed inset-0 z-50 flex items-center justify-center"
+         style="background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);">
+        <div class="text-center text-white p-8 rounded-2xl max-w-md"
+             style="background: rgba(255,255,255,0.1);">
+            <img src="{{ url_for('static', filename='pictureframe_logo.svg') }}" alt="PictureFrame"
+                 style="width: 120px; margin: 0 auto 20px;">
+            <h2 class="text-2xl font-semibold mb-4" id="update-overlay-title">{{ _("Updating...") }}</h2>
+            <div class="spinner" style="width: 50px; height: 50px; margin: 0 auto 20px;
+                 border: 5px solid rgba(255,255,255,0.3); border-top: 5px solid white;
+                 border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
+            <p id="update-overlay-status" class="text-sm opacity-90 mb-2">{{ _("The server is restarting. Please wait...") }}</p>
+            <p id="update-overlay-countdown" class="text-3xl font-bold font-mono"></p>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const overlay = document.getElementById('update-overlay');
+            const overlayTitle = document.getElementById('update-overlay-title');
+            const overlayStatus = document.getElementById('update-overlay-status');
+            const overlayCountdown = document.getElementById('update-overlay-countdown');
+
+            /**
+             * Show the update overlay and poll /api/ping until the server
+             * comes back with a new instance ID, then redirect to /configure.
+             * @param {string} oldInstanceId - The instance ID before the update.
+             * @param {string} title - Overlay title text.
+             */
+            window.__waitForServerRestart = function(oldInstanceId, title) {
+                overlayTitle.textContent = title;
+                overlay.classList.remove('hidden');
+
+                let remaining = 90;
+                const countdownInterval = setInterval(() => {
+                    remaining--;
+                    overlayCountdown.textContent = remaining > 0 ? remaining + 's' : '⏳';
+                }, 1000);
+
+                const checkInterval = setInterval(async () => {
+                    try {
+                        const resp = await fetch('/api/ping', { cache: 'no-cache' });
+                        if (!resp.ok) throw new Error('not ok');
+                        const data = await resp.json();
+
+                        // Server is back — check if it's a new instance.
+                        if (!oldInstanceId || (data.instance && data.instance !== oldInstanceId)) {
+                            clearInterval(checkInterval);
+                            clearInterval(countdownInterval);
+                            overlayStatus.textContent = {{ _("Server is back online! Redirecting...") | tojson }};
+                            overlayCountdown.textContent = '✅';
+                            setTimeout(() => { window.location.href = '/configure'; }, 1500);
+                        } else {
+                            overlayStatus.textContent = {{ _("Server is starting up...") | tojson }};
+                        }
+                    } catch (e) {
+                        // Server is still down — expected during update.
+                        overlayStatus.textContent = {{ _("Waiting for the server to come back...") | tojson }};
+                    }
+                }, 3000);
+
+                // Safety: after 120s, stop polling and show a manual link.
+                setTimeout(() => {
+                    if (overlay.classList.contains('hidden')) return;
+                    clearInterval(checkInterval);
+                    clearInterval(countdownInterval);
+                    overlayStatus.innerHTML = {{ _("The server is taking longer than expected. ") | tojson }}
+                        + '<a href="/configure" class="underline text-blue-300">' + {{ _("Click here to retry.") | tojson }} + '</a>';
+                    overlayCountdown.textContent = '';
+                }, 120000);
+            };
+        })();
+    </script>
 </body>
 </html>
