@@ -9,12 +9,19 @@ RESTART_CODE=42
 cd "$(dirname "$0")" || exit 1
 mkdir -p logs || exit 1
 
+# --- Helper: log to both console and log file --------------------------
+log() {
+    local msg="📟$(date +'%d-%m %H:%M:%S') 📟 $1"
+    echo "$msg"
+    echo "$msg" >> logs/pictureframe.log
+}
+
 # Prevent multiple instances.
 LOCK_FILE="/tmp/pictureframe_app.lock"
 if [ -f "$LOCK_FILE" ]; then
     PID=$(cat "$LOCK_FILE")
     if ps -p "$PID" > /dev/null; then
-        echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 ❌ Instance already running (PID: $PID). Exiting." >> logs/pictureframe.log
+        log "❌ Instance already running (PID: $PID). Exiting."
         exit 1
     fi
 fi
@@ -32,12 +39,12 @@ mkdir -p logs
 # installed before launching the app.
 
 if [ -f "venv/bin/activate" ]; then
-    echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 🐍 Activating virtual environment" >> logs/pictureframe.log
+    log "🐍 Activating virtual environment"
     . venv/bin/activate
     PIP_CMD="pip install"
     PYTHON_CMD="python3"
 else
-    echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 🐍 Using global Python (no venv found)" >> logs/pictureframe.log
+    log "🐍 Using global Python (no venv found)"
     # On Debian 12+ / Pi OS with PEP 668, --break-system-packages is needed.
     if python3 -c "import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)" 2>/dev/null; then
         PIP_CMD="pip3 install --break-system-packages"
@@ -48,17 +55,21 @@ else
 fi
 
 # Check and install core requirements if missing.
-echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 📦 Checking dependencies..." >> logs/pictureframe.log
+log "📦 Checking dependencies..."
 if ! $PYTHON_CMD -c "import flask, PIL, pygame, psutil, requests, flask_babel, piexif" 2>/dev/null; then
-    echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 📦 Installing core dependencies from requirements.txt..." >> logs/pictureframe.log
-    $PIP_CMD -r requirements.txt >> logs/pictureframe.log 2>&1
+    log "📦 Installing core dependencies from requirements.txt..."
+    $PIP_CMD -r requirements.txt 2>&1 | tee -a logs/pictureframe.log
+else
+    log "📦 All core dependencies are installed."
 fi
 
 # Check and install Pi-specific requirements if on a Raspberry Pi.
 if [ -f /proc/device-tree/model ]; then
     if ! $PYTHON_CMD -c "import RPi.GPIO" 2>/dev/null; then
-        echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 📦 Installing Pi-specific dependencies from requirements-pi.txt..." >> logs/pictureframe.log
-        $PIP_CMD -r requirements-pi.txt >> logs/pictureframe.log 2>&1
+        log "📦 Installing Pi-specific dependencies from requirements-pi.txt..."
+        $PIP_CMD -r requirements-pi.txt 2>&1 | tee -a logs/pictureframe.log
+    else
+        log "📦 Pi-specific dependencies are installed."
     fi
 fi
 
@@ -72,7 +83,7 @@ kill_pid_file() {
         if [ -n "$pid" ] && ps -p "$pid" > /dev/null 2>&1; then
             local cmd
             cmd=$(ps -p "$pid" -o comm= 2>/dev/null || echo "unknown")
-            echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 🧹 Terminating $label (PID: $pid, command: $cmd)" >> logs/pictureframe.log
+            log "🧹 Terminating $label (PID: $pid, command: $cmd)"
             kill "$pid" 2>/dev/null
             # Wait briefly for graceful exit, then force-kill if still alive.
             for i in 1 2 3; do
@@ -82,11 +93,11 @@ kill_pid_file() {
                 sleep 0.5
             done
             if ps -p "$pid" > /dev/null 2>&1; then
-                echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 🧹 Force-killing $label (PID: $pid)" >> logs/pictureframe.log
+                log "🧹 Force-killing $label (PID: $pid)"
                 kill -9 "$pid" 2>/dev/null
             fi
         else
-            echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 🧹 $label PID file found but process $pid is not running (stale)" >> logs/pictureframe.log
+            log "🧹 $label PID file found but process $pid is not running (stale)"
         fi
         rm -f "$pid_file"
     fi
@@ -102,7 +113,7 @@ kill_pattern() {
         for pid in $pids; do
             local cmd
             cmd=$(ps -p "$pid" -o args= 2>/dev/null | head -c 120 || echo "unknown")
-            echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 🧹 Terminating $label (PID: $pid, command: $cmd)" >> logs/pictureframe.log
+            log "🧹 Terminating $label (PID: $pid, command: $cmd)"
             kill "$pid" 2>/dev/null
         done
         sleep 0.5
@@ -110,7 +121,7 @@ kill_pattern() {
         pids=$(pgrep -f "$pattern" 2>/dev/null)
         if [ -n "$pids" ]; then
             for pid in $pids; do
-                echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 🧹 Force-killing $label (PID: $pid)" >> logs/pictureframe.log
+                log "🧹 Force-killing $label (PID: $pid)"
                 kill -9 "$pid" 2>/dev/null
             done
         fi
@@ -118,7 +129,7 @@ kill_pattern() {
 }
 
 cleanup() {
-    echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 🧹 Cleaning up existing PictureFrame processes..." >> logs/pictureframe.log
+    log "🧹 Cleaning up existing PictureFrame processes..."
 
     # Terminate the slideshow process via its PID file.
     kill_pid_file "/tmp/pictureframe_slideshow.pid" "slideshow"
@@ -140,28 +151,28 @@ while true; do
     # Clean up before each launch.
     cleanup
 
-    echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 ================================================================" >> logs/pictureframe.log
-    echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 🚀 Starting the PictureFrame application..." >> logs/pictureframe.log
-    echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 ================================================================" >> logs/pictureframe.log
+    log "========================================================"
+    log "🚀 Starting the PictureFrame application..."
+    log "========================================================"
 
-    # Start the application.
-    echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 ▶️ Executing: $PYTHON_CMD -u app.py" >> logs/pictureframe.log
-    $PYTHON_CMD -u app.py >> logs/pictureframe.log 2>&1
+    # Start the application — output to both console and log file.
+    log "▶️ Executing: $PYTHON_CMD -u app.py"
+    $PYTHON_CMD -u app.py 2>&1 | tee -a logs/pictureframe.log
 
-    exit_code=$?
-    echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 🛑 Application exited with code $exit_code" >> logs/pictureframe.log
+    exit_code=${PIPESTATUS[0]}
+    log "🛑 Application exited with code $exit_code"
 
     if [ $exit_code -eq 0 ]; then
-        echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 ✅ Normal shutdown (code 0)" >> logs/pictureframe.log
+        log "✅ Normal shutdown (code 0)"
         break
     fi
 
     if [ $exit_code -ne $RESTART_CODE ]; then
-        echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 🔄 Restart requested in 5s..." >> logs/pictureframe.log
+        log "🔄 Restart requested in 5s..."
         sleep 5 # Prevent a rapid loop if the application crashes.
         continue
     fi
 
-    echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 🔄 Restart requested (exit code 42). Relaunching in 2 seconds..." >> logs/pictureframe.log
+    log "🔄 Restart requested (exit code 42). Relaunching in 2 seconds..."
     sleep 2
 done
