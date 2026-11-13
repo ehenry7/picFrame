@@ -16,7 +16,7 @@ log() {
     echo "$msg" >> logs/pictureframe.log
 }
 
-# Prevent multiple instances.
+# Prevent multiple instances of this supervisor script.
 LOCK_FILE="/tmp/pictureframe_app.lock"
 if [ -f "$LOCK_FILE" ]; then
     PID=$(cat "$LOCK_FILE")
@@ -41,15 +41,15 @@ mkdir -p logs
 if [ -f "venv/bin/activate" ]; then
     log "🐍 Activating virtual environment"
     . venv/bin/activate
-    PIP_CMD="pip install"
+    PIP_CMD="python3 -m pip install"
     PYTHON_CMD="python3"
 else
     log "🐍 Using global Python (no venv found)"
     # On Debian 12+ / Pi OS with PEP 668, --break-system-packages is needed.
     if python3 -c "import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)" 2>/dev/null; then
-        PIP_CMD="pip3 install --break-system-packages"
+        PIP_CMD="python3 -m pip install --break-system-packages"
     else
-        PIP_CMD="pip3 install"
+        PIP_CMD="python3 -m pip install"
     fi
     PYTHON_CMD="python3"
 fi
@@ -58,7 +58,20 @@ fi
 log "📦 Checking dependencies..."
 if ! $PYTHON_CMD -c "import flask, PIL, pygame, psutil, requests, flask_babel, piexif" 2>/dev/null; then
     log "📦 Installing core dependencies from requirements.txt..."
+    log "📦 Using: $PIP_CMD -r requirements.txt"
     $PIP_CMD -r requirements.txt 2>&1 | tee -a logs/pictureframe.log
+    # Verify the install succeeded.
+    if ! $PYTHON_CMD -c "import flask_babel" 2>/dev/null; then
+        log "❌ Failed to install dependencies. Trying with pip3 directly..."
+        pip3 install flask-babel 2>&1 | tee -a logs/pictureframe.log
+    fi
+    if ! $PYTHON_CMD -c "import flask_babel" 2>/dev/null; then
+        log "❌ Cannot import flask_babel after install. Please run manually:"
+        log "❌   $PIP_CMD -r requirements.txt"
+        log "❌ Or: pip3 install --break-system-packages flask-babel"
+        exit 1
+    fi
+    log "📦 Dependencies installed successfully."
 else
     log "📦 All core dependencies are installed."
 fi
@@ -73,84 +86,58 @@ if [ -f /proc/device-tree/model ]; then
     fi
 fi
 
-# --- Helper: log and kill a process by PID file ------------------------
-kill_pid_file() {
-    local pid_file="$1"
-    local label="$2"
-    if [ -f "$pid_file" ]; then
-        local pid
-        pid=$(cat "$pid_file" 2>/dev/null)
-        if [ -n "$pid" ] && ps -p "$pid" > /dev/null 2>&1; then
-            local cmd
-            cmd=$(ps -p "$pid" -o comm= 2>/dev/null || echo "unknown")
-            log "🧹 Terminating $label (PID: $pid, command: $cmd)"
-            kill "$pid" 2>/dev/null
-            # Wait briefly for graceful exit, then force-kill if still alive.
-            for i in 1 2 3; do
-                if ! ps -p "$pid" > /dev/null 2>&1; then
-                    break
-                fi
-                sleep 0.5
-            done
-            if ps -p "$pid" > /dev/null 2>&1; then
-                log "🧹 Force-killing $label (PID: $pid)"
-                kill -9 "$pid" 2>/dev/null
-            fi
-        else
-            log "🧹 $label PID file found but process $pid is not running (stale)"
-        fi
-        rm -f "$pid_file"
-    fi
-}
-
-# --- Helper: log and kill processes matching a pattern -----------------
-kill_pattern() {
-    local pattern="$1"
-    local label="$2"
-    local pids
-    pids=$(pgrep -f "$pattern" 2>/dev/null)
-    if [ -n "$pids" ]; then
-        for pid in $pids; do
-            local cmd
-            cmd=$(ps -p "$pid" -o args= 2>/dev/null | head -c 120 || echo "unknown")
-            log "🧹 Terminating $label (PID: $pid, command: $cmd)"
-            kill "$pid" 2>/dev/null
-        done
-        sleep 0.5
-        # Force-kill any survivors.
-        pids=$(pgrep -f "$pattern" 2>/dev/null)
-        if [ -n "$pids" ]; then
-            for pid in $pids; do
-                log "🧹 Force-killing $label (PID: $pid)"
-                kill -9 "$pid" 2>/dev/null
-            done
-        fi
-    fi
-}
-
-cleanup() {
-    log "🧹 Cleaning up existing PictureFrame processes..."
+# --- One-time cleanup of stale processes (before first launch) ----------
+# Only run once at startup, NOT on every restart loop iteration.
+# This prevents killing the app we just started (exit code 143 bug).
+cleanup_stale() {
+    log "🧹 Cleaning up stale processes from previous run..."
 
     # Terminate the slideshow process via its PID file.
-    kill_pid_file "/tmp/pictureframe_slideshow.pid" "slideshow"
+    if [ -f /tmp/pictureframe_slideshow.pid ]; then
+        PID=$(cat /tmp/pictureframe_slideshow.pid 2>/dev/null)
+        if [ -n "$PID" ] && ps -p "$PID" > /dev/null 2>&1; then
+            log "🧹 Terminating slideshow (PID: $PID)"
+            kill "$PID" 2>/dev/null
+            sleep 1
+            ps -p "$PID" > /dev/null 2>&1 && kill -9 "$PID" 2>/dev/null
+        fi
+        rm -f /tmp/pictureframe_slideshow.pid
+    fi
 
     # Terminate the background updater process via its PID file.
-    kill_pid_file "/tmp/pictureframe_background.pid" "background updater"
+    if [ -f /tmp/pictureframe_background.pid ]; then
+        PID=$(cat /tmp/pictureframe_background.pid 2>/dev/null)
+        if [ -n "$PID" ] && ps -p "$PID" > /dev/null 2>&1; then
+            log "🧹 Terminating background updater (PID: $PID)"
+            kill "$PID" 2>/dev/null
+            sleep 1
+            ps -p "$PID" > /dev/null 2>&1 && kill -9 "$PID" 2>/dev/null
+        fi
+        rm -f /tmp/pictureframe_background.pid
+    fi
 
-    # Terminate any previous Flask application instance (app.py).
-    kill_pattern "python3 -u app.py" "Flask app (app.py -u)"
-    kill_pattern "python3 app.py" "Flask app (app.py)"
+    # Terminate any leftover app.py processes (but not this script).
+    CURRENT_PID=$$
+    for PID in $(pgrep -f "python3.*app\.py" 2>/dev/null); do
+        if [ "$PID" != "$CURRENT_PID" ]; then
+            log "🧹 Terminating leftover app.py (PID: $PID)"
+            kill "$PID" 2>/dev/null
+        fi
+    done
 
     # Terminate any ffmpeg child processes.
-    kill_pattern "ffmpeg" "ffmpeg"
+    for PID in $(pgrep -f "ffmpeg" 2>/dev/null); do
+        log "🧹 Terminating ffmpeg (PID: $PID)"
+        kill "$PID" 2>/dev/null
+    done
 
-    sleep 1 # Allow processes time to exit.
+    sleep 1
 }
 
-while true; do
-    # Clean up before each launch.
-    cleanup
+# Run cleanup once before the first launch.
+cleanup_stale
 
+while true; do
     log "========================================================"
     log "🚀 Starting the PictureFrame application..."
     log "========================================================"
@@ -167,8 +154,15 @@ while true; do
         break
     fi
 
+    if [ $exit_code -eq 143 ] || [ $exit_code -eq 137 ]; then
+        log "⚠️ Application was killed by signal (code $exit_code = SIGTERM/SIGKILL)"
+        log "⚠️ This may happen during shutdown. Restarting in 5s..."
+        sleep 5
+        continue
+    fi
+
     if [ $exit_code -ne $RESTART_CODE ]; then
-        log "🔄 Restart requested in 5s..."
+        log "🔄 Application crashed (code $exit_code). Restarting in 5s..."
         sleep 5 # Prevent a rapid loop if the application crashes.
         continue
     fi
