@@ -21,3 +21,4 @@ templates/configure.html.jinja.bak
 *.code-workspace
 scripts/_untranslated.json
 .update_backup/
+tmp*_update.py
