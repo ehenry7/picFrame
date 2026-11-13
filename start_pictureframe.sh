@@ -33,7 +33,7 @@ mkdir -p logs
 
 if [ -f "venv/bin/activate" ]; then
     echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 🐍 Activating virtual environment" >> logs/pictureframe.log
-    source venv/bin/activate
+    . venv/bin/activate
     PIP_CMD="pip install"
     PYTHON_CMD="python3"
 else
