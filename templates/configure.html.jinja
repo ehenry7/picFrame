@@ -4892,12 +4892,12 @@
                         window.__waitForServerRestart('{{ APP_INSTANCE_ID }}', {{ _("Updating...") | tojson }});
                         fetch('/api/trigger_update', { method: 'POST' })
                             .then(r => {
-                                if (!r.ok && r.status !== 500) {
-                                    return r.json().catch(() => ({ success: false, message: msgCommError }));
-                                }
+                                if (!r.ok) throw new Error('server down');
                                 return r.json();
                             })
                             .then(data => {
+                                // Only hide overlay if the server explicitly
+                                // refused the update (e.g. not a git repo).
                                 if (!data.success) {
                                     document.getElementById('update-overlay').classList.add('hidden');
                                     showResult(data.message || msgError, true);
@@ -4916,9 +4916,7 @@
                         window.__waitForServerRestart('{{ APP_INSTANCE_ID }}', {{ _("Restoring...") | tojson }});
                         fetch('/api/revert_to_backup', { method: 'POST' })
                             .then(r => {
-                                if (!r.ok && r.status !== 500) {
-                                    return r.json().catch(() => ({ success: false, message: msgCommError }));
-                                }
+                                if (!r.ok) throw new Error('server down');
                                 return r.json();
                             })
                             .then(data => {
