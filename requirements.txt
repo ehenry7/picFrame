@@ -1,6 +1,9 @@
 # requirements.txt — Cross-platform core dependencies (Windows + Linux/Pi)
 # Install with: pip install -r requirements.txt  (global Python, no venv)
 #
+# On Raspberry Pi OS (Debian 12+ / Bookworm) with PEP 668, use:
+#   pip3 install --break-system-packages -r requirements.txt
+#
 # These packages install cleanly on both Windows and Linux.
 # Pi-specific packages (GPIO, HEIC) are in requirements-pi.txt.
 
