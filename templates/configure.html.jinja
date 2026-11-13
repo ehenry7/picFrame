@@ -334,7 +334,10 @@
             </div>
         </div>
         <div class="flex justify-between items-center mb-2 h-auto py-2">
-            <img src="{{ url_for('static', filename='pictureframe_logo.svg') }}" alt="Logo PictureFrame" class="h-16">
+            <div class="flex flex-col items-start">
+                <img src="{{ url_for('static', filename='pictureframe_logo.svg') }}" alt="Logo PictureFrame" class="h-16">
+                <span class="text-xs text-gray-400 mt-1">v{{ APP_VERSION }}</span>
+            </div>
 
             <div id="live-preview-container" class="cadre-bois p-4 flex flex-col items-center">
                 <p id="live-preview-status" class="text-gray-500 italic hidden">{{ _("The slideshow is stopped.") }}</p>
@@ -1513,6 +1516,8 @@
                             <span class="font-mono text-sm" id="update-branch"></span>
                             <span class="text-gray-400">·</span>
                             <span class="font-mono text-xs text-gray-500" id="update-commit"></span>
+                            <span class="text-gray-400">·</span>
+                            <span class="text-xs text-gray-500">{{ _("Version") }} <span id="update-current-version" class="font-mono"></span></span>
                         </div>
                         <div id="update-available" class="hidden p-3 bg-blue-50 border border-blue-200 rounded-lg mb-3">
                             <p class="text-sm text-blue-800">
@@ -4820,6 +4825,7 @@
                                 gitInfo.classList.remove('hidden');
                                 document.getElementById('update-branch').textContent = data.branch || 'unknown';
                                 document.getElementById('update-commit').textContent = data.commit || '';
+                                document.getElementById('update-current-version').textContent = data.current_version || '';
                                 if (data.has_updates) {
                                     available.classList.remove('hidden');
                                     document.getElementById('update-available-text').textContent =

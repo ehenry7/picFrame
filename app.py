@@ -57,6 +57,8 @@ import secrets
 import signal
 import traceback
 
+from version import __version__ as APP_VERSION
+
 logging.getLogger(__name__).info("Startup: loading photo download and slideshow managers")
 from utils.auth import login_required # type: ignore
 # Mode-aware display process control: these resolve to the Pygame
@@ -274,6 +276,11 @@ def inject_locale():
 def inject_instance_id():
     """Inject the instance ID for restart tracking."""
     return dict(APP_INSTANCE_ID=APP_INSTANCE_ID)
+
+@app.context_processor
+def inject_version():
+    """Inject the application version into all template contexts."""
+    return dict(APP_VERSION=APP_VERSION)
 
 
 # Chemins de base
@@ -1677,6 +1684,7 @@ def ping():
     return jsonify({
         "status": "ok",
         "instance": APP_INSTANCE_ID,
+        "version": APP_VERSION,
         "slideshow_running": is_display_process_running(),
         "is_active_hours": is_active
     })
@@ -1691,11 +1699,12 @@ def update_status():
     try:
         from platform_utils import is_git_repo, git_get_info, git_has_updates, git_backup_exists
         if not is_git_repo():
-            return jsonify({"is_git_repo": False})
+            return jsonify({"is_git_repo": False, "current_version": APP_VERSION})
         has_updates, info = git_has_updates()
         return jsonify({
             "is_git_repo": True,
             "has_updates": has_updates,
+            "current_version": APP_VERSION,
             "commit": info.get("commit", ""),
             "branch": info.get("branch", ""),
             "behind_count": info.get("behind_count", 0),
@@ -1704,7 +1713,7 @@ def update_status():
         })
     except Exception as e:
         logger.error("update_status failed: %s", e)
-        return jsonify({"is_git_repo": False, "error": str(e)}), 500
+        return jsonify({"is_git_repo": False, "current_version": APP_VERSION, "error": str(e)}), 500
 
 
 @app.route('/api/trigger_update', methods=['POST'])
