@@ -5,13 +5,14 @@
 # Pi-specific packages (GPIO, HEIC) are in requirements-pi.txt.
 
 Flask==2.3.2
+Werkzeug==2.3.8
 requests==2.31.0
 truststore>=0.10; sys_platform == "win32"
 Pillow==10.4.0
 pygame
 psutil
-werkzeug
-Flask-Babel
+Flask-Babel==4.0.0
+Babel>=2.12
 piexif
 qrcode[pil]
 deep-translator
