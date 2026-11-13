@@ -1519,8 +1519,8 @@
                             <span class="text-gray-400">·</span>
                             <span class="text-xs text-gray-500">{{ _("Version") }} <span id="update-current-version" class="font-mono"></span></span>
                             <button type="button" id="refresh-update-status-btn"
-                                class="inline-flex items-center justify-center w-6 h-6 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded text-xs transition-colors"
-                                style="flex-shrink:0;"
+                                class="inline-flex items-center justify-center w-5 h-5 leading-none text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded text-xs transition-colors self-center"
+                                style="flex-shrink:0; line-height:1;"
                                 title="{{ _("Refresh git status") }}">
                                 <i class="fas fa-sync-alt"></i>
                             </button>
@@ -5055,37 +5055,54 @@
                     overlayCountdown.textContent = remaining > 0 ? remaining + 's' : '⏳';
                 }, 1000);
 
-                const checkInterval = setInterval(async () => {
-                    try {
-                        const resp = await fetch('/api/ping', { cache: 'no-cache' });
-                        if (!resp.ok) throw new Error('not ok');
-                        const data = await resp.json();
+                // Wait 8s before first poll — gives the old server time to
+                // shut down so we don't falsely detect it as "back online".
+                let consecutiveHits = 0;
+                let startedPolling = false;
 
-                        // Server is back — check if it's a new instance.
-                        if (!oldInstanceId || (data.instance && data.instance !== oldInstanceId)) {
-                            clearInterval(checkInterval);
-                            clearInterval(countdownInterval);
-                            overlayStatus.textContent = {{ _("Server is back online! Redirecting...") | tojson }};
-                            overlayCountdown.textContent = '✅';
-                            setTimeout(() => { window.location.href = '/configure'; }, 1500);
-                        } else {
-                            overlayStatus.textContent = {{ _("Server is starting up...") | tojson }};
-                        }
-                    } catch (e) {
-                        // Server is still down — expected during update.
-                        overlayStatus.textContent = {{ _("Waiting for the server to come back...") | tojson }};
-                    }
-                }, 3000);
-
-                // Safety: after 120s, stop polling and show a manual link.
                 setTimeout(() => {
-                    if (overlay.classList.contains('hidden')) return;
-                    clearInterval(checkInterval);
-                    clearInterval(countdownInterval);
-                    overlayStatus.innerHTML = {{ _("The server is taking longer than expected. ") | tojson }}
-                        + '<a href="/configure" class="underline text-blue-300">' + {{ _("Click here to retry.") | tojson }} + '</a>';
-                    overlayCountdown.textContent = '';
-                }, 120000);
+                    startedPolling = true;
+                    const checkInterval = setInterval(async () => {
+                        try {
+                            const resp = await fetch('/api/ping', { cache: 'no-cache' });
+                            if (!resp.ok) throw new Error('not ok');
+                            const data = await resp.json();
+
+                            // Server responded — check if it's a new instance.
+                            if (!oldInstanceId || (data.instance && data.instance !== oldInstanceId)) {
+                                consecutiveHits++;
+                                if (consecutiveHits >= 2) {
+                                    // Require 2 consecutive hits to avoid a
+                                    // transient response during shutdown.
+                                    clearInterval(checkInterval);
+                                    clearInterval(countdownInterval);
+                                    overlayStatus.textContent = {{ _("Server is back online! Redirecting...") | tojson }};
+                                    overlayCountdown.textContent = '✅';
+                                    setTimeout(() => { window.location.href = '/configure'; }, 1500);
+                                } else {
+                                    overlayStatus.textContent = {{ _("Server is responding, verifying...") | tojson }};
+                                }
+                            } else {
+                                consecutiveHits = 0;
+                                overlayStatus.textContent = {{ _("Server is starting up...") | tojson }};
+                            }
+                        } catch (e) {
+                            consecutiveHits = 0;
+                            // Server is still down — expected during update.
+                            overlayStatus.textContent = {{ _("Waiting for the server to come back...") | tojson }};
+                        }
+                    }, 3000);
+
+                    // Safety: after 120s, stop polling and show a manual link.
+                    setTimeout(() => {
+                        if (overlay.classList.contains('hidden')) return;
+                        clearInterval(checkInterval);
+                        clearInterval(countdownInterval);
+                        overlayStatus.innerHTML = {{ _("The server is taking longer than expected. ") | tojson }}
+                            + '<a href="/configure" class="underline text-blue-300">' + {{ _("Click here to retry.") | tojson }} + '</a>';
+                        overlayCountdown.textContent = '';
+                    }, 120000);
+                }, 8000);
             };
         })();
     </script>
