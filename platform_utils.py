@@ -784,6 +784,52 @@ def git_pull():
         log("git pull exception: " + str(e))
         return False
 
+def install_deps():
+    """Install dependencies from requirements.txt after git pull."""
+    req_file = os.path.join(APP_DIR, "requirements.txt")
+    if not os.path.isfile(req_file):
+        log("No requirements.txt found, skipping dependency install.")
+        return
+    # Determine pip command: use venv if present, else global with --break-system-packages.
+    venv_pip = os.path.join(APP_DIR, "venv", "bin", "pip")
+    if os.path.isfile(venv_pip):
+        pip_cmd = [venv_pip, "install", "-r", req_file]
+    elif IS_LINUX:
+        # PEP 668: --break-system-packages on Debian 12+/Pi OS Bookworm.
+        pip_cmd = [sys.executable, "-m", "pip", "install", "--break-system-packages", "-r", req_file]
+    else:
+        pip_cmd = [sys.executable, "-m", "pip", "install", "-r", req_file]
+    log("Installing dependencies: " + " ".join(pip_cmd))
+    try:
+        result = subprocess.run(pip_cmd, capture_output=True, text=True, timeout=300)
+        if result.stdout:
+            log("pip stdout: " + result.stdout[-500:])
+        if result.stderr:
+            log("pip stderr: " + result.stderr[-500:])
+        if result.returncode == 0:
+            log("Dependencies installed successfully.")
+        else:
+            log("pip install failed (rc=" + str(result.returncode) + ")")
+    except Exception as e:
+        log("pip install exception: " + str(e))
+
+    # Also install Pi-specific requirements if on a Pi.
+    pi_req = os.path.join(APP_DIR, "requirements-pi.txt")
+    if os.path.isfile(pi_req) and IS_LINUX and os.path.exists("/proc/device-tree/model"):
+        log("Installing Pi-specific dependencies...")
+        if os.path.isfile(venv_pip):
+            pi_cmd = [venv_pip, "install", "-r", pi_req]
+        else:
+            pi_cmd = [sys.executable, "-m", "pip", "install", "--break-system-packages", "-r", pi_req]
+        try:
+            result = subprocess.run(pi_cmd, capture_output=True, text=True, timeout=300)
+            if result.returncode == 0:
+                log("Pi-specific dependencies installed.")
+            else:
+                log("Pi pip install failed (rc=" + str(result.returncode) + ")")
+        except Exception as e:
+            log("Pi pip install exception: " + str(e))
+
 def restart_app():
     """Restart the application."""
     if IS_LINUX:
@@ -856,6 +902,9 @@ else:
     restore_backup()
     log("Backup restored after git pull failure.")
 
+log("Installing/updating dependencies...")
+install_deps()
+
 log("Restarting application...")
 restart_app()
 
@@ -869,6 +918,9 @@ kill_remaining()
 time.sleep(2)
 restore_backup()
 
+log("Reinstalling dependencies from backup...")
+install_deps()
+
 log("Backup restored. Restarting...")
 restart_app()
 
@@ -877,7 +929,7 @@ if health_check():
     sys.exit(0)
 
 log("CRITICAL: Rollback also failed! Manual intervention required.")
-log("Try running: cd " + APP_DIR + " && python app.py")
+log("Try running: cd " + APP_DIR + " && python3 -m pip install -r requirements.txt && python3 app.py")
 sys.exit(1)
 ''' % {"APP_DIR": app_dir_str}
 
