@@ -62,22 +62,77 @@ if [ -f /proc/device-tree/model ]; then
     fi
 fi
 
+# --- Helper: log and kill a process by PID file ------------------------
+kill_pid_file() {
+    local pid_file="$1"
+    local label="$2"
+    if [ -f "$pid_file" ]; then
+        local pid
+        pid=$(cat "$pid_file" 2>/dev/null)
+        if [ -n "$pid" ] && ps -p "$pid" > /dev/null 2>&1; then
+            local cmd
+            cmd=$(ps -p "$pid" -o comm= 2>/dev/null || echo "unknown")
+            echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 🧹 Terminating $label (PID: $pid, command: $cmd)" >> logs/pictureframe.log
+            kill "$pid" 2>/dev/null
+            # Wait briefly for graceful exit, then force-kill if still alive.
+            for i in 1 2 3; do
+                if ! ps -p "$pid" > /dev/null 2>&1; then
+                    break
+                fi
+                sleep 0.5
+            done
+            if ps -p "$pid" > /dev/null 2>&1; then
+                echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 🧹 Force-killing $label (PID: $pid)" >> logs/pictureframe.log
+                kill -9 "$pid" 2>/dev/null
+            fi
+        else
+            echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 🧹 $label PID file found but process $pid is not running (stale)" >> logs/pictureframe.log
+        fi
+        rm -f "$pid_file"
+    fi
+}
+
+# --- Helper: log and kill processes matching a pattern -----------------
+kill_pattern() {
+    local pattern="$1"
+    local label="$2"
+    local pids
+    pids=$(pgrep -f "$pattern" 2>/dev/null)
+    if [ -n "$pids" ]; then
+        for pid in $pids; do
+            local cmd
+            cmd=$(ps -p "$pid" -o args= 2>/dev/null | head -c 120 || echo "unknown")
+            echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 🧹 Terminating $label (PID: $pid, command: $cmd)" >> logs/pictureframe.log
+            kill "$pid" 2>/dev/null
+        done
+        sleep 0.5
+        # Force-kill any survivors.
+        pids=$(pgrep -f "$pattern" 2>/dev/null)
+        if [ -n "$pids" ]; then
+            for pid in $pids; do
+                echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 🧹 Force-killing $label (PID: $pid)" >> logs/pictureframe.log
+                kill -9 "$pid" 2>/dev/null
+            done
+        fi
+    fi
+}
+
 cleanup() {
     echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 🧹 Cleaning up existing PictureFrame processes..." >> logs/pictureframe.log
-    # Terminate the slideshow process if it is running.
-    if [ -f /tmp/pictureframe_slideshow.pid ]; then
-        pkill -F /tmp/pictureframe_slideshow.pid 2>/dev/null || true
-        rm -f /tmp/pictureframe_slideshow.pid
-    fi
-    # Terminate the background updater process if it is running.
-    if [ -f /tmp/pictureframe_background.pid ]; then
-        pkill -F /tmp/pictureframe_background.pid 2>/dev/null || true
-        rm -f /tmp/pictureframe_background.pid
-    fi
+
+    # Terminate the slideshow process via its PID file.
+    kill_pid_file "/tmp/pictureframe_slideshow.pid" "slideshow"
+
+    # Terminate the background updater process via its PID file.
+    kill_pid_file "/tmp/pictureframe_background.pid" "background updater"
+
     # Terminate any previous Flask application instance (app.py).
-    pkill -f "python3 -u app.py" 2>/dev/null || true
-    pkill -f "python3 app.py" 2>/dev/null || true
-    pkill -f ffmpeg 2>/dev/null || true
+    kill_pattern "python3 -u app.py" "Flask app (app.py -u)"
+    kill_pattern "python3 app.py" "Flask app (app.py)"
+
+    # Terminate any ffmpeg child processes.
+    kill_pattern "ffmpeg" "ffmpeg"
+
     sleep 1 # Allow processes time to exit.
 }
 
@@ -86,10 +141,11 @@ while true; do
     cleanup
 
     echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 ================================================================" >> logs/pictureframe.log
-    echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 🚀 Starting the PictureFrame application... 🚀🚀🚀🚀🚀🚀🚀🚀🚀" >> logs/pictureframe.log
+    echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 🚀 Starting the PictureFrame application..." >> logs/pictureframe.log
     echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 ================================================================" >> logs/pictureframe.log
 
     # Start the application.
+    echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 ▶️ Executing: $PYTHON_CMD -u app.py" >> logs/pictureframe.log
     $PYTHON_CMD -u app.py >> logs/pictureframe.log 2>&1
 
     exit_code=$?
@@ -106,6 +162,6 @@ while true; do
         continue
     fi
 
-    echo "[start_pictureframe] Restart requested. Relaunching the application in 2 seconds..." >> logs/pictureframe.log
+    echo "📟📟$(date +'%d-%m %H:%M:%S') 📟 🔄 Restart requested (exit code 42). Relaunching in 2 seconds..." >> logs/pictureframe.log
     sleep 2
 done
