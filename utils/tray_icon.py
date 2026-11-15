@@ -29,6 +29,22 @@ API_PREVIOUS = f"{APP_URL}/api/slideshow/previous"
 API_PAUSE = f"{APP_URL}/api/slideshow/toggle_pause"
 
 
+def _send_command(command):
+    """Write a command directly to the background updater's command queue.
+
+    Uses the shared enqueue_slideshow_command from platform_utils so
+    the queue path and format match what background_updater.py consumes.
+    """
+    try:
+        from platform_utils import enqueue_slideshow_command
+        enqueue_slideshow_command(command, process="background")
+        logger.debug("Command '%s' enqueued for background", command)
+    except Exception as exc:
+        logger.warning("Failed to send command '%s': %s", command, exc)
+        # Fallback: try the Flask API.
+        _post_api(f"{APP_URL}/api/slideshow/{command}")
+
+
 def _post_api(url):
     """Send a POST to an API endpoint; ignore errors (server may be starting)."""
     try:
@@ -46,15 +62,15 @@ def _open_settings(icon, item):
 
 
 def _next_photo(icon, item):
-    _post_api(API_NEXT)
+    _send_command("next")
 
 
 def _previous_photo(icon, item):
-    _post_api(API_PREVIOUS)
+    _send_command("previous")
 
 
 def _toggle_pause(icon, item):
-    _post_api(API_PAUSE)
+    _send_command("toggle_pause")
 
 
 def _exit_app(icon, item):
