@@ -328,10 +328,16 @@ def start_background_updater():
 
         if rendered_files:
             applied = set_wallpaper_per_monitor(rendered_files)
-            logger.info(
-                "🖼️ Wallpaper updated (%d monitor(s), photo %d/%d): %s",
-                len(rendered_files), playlist_index + 1, len(playlist),
-                Path(photo_path).name)
+            if rotate_photo:
+                logger.info(
+                    "🖼️ Wallpaper updated (%d monitor(s), photo %d/%d): %s",
+                    len(rendered_files), playlist_index + 1, len(playlist),
+                    Path(photo_path).name)
+            else:
+                logger.info(
+                    "🖼️ Wallpaper overlay refresh (cached photo %d/%d): %s",
+                    playlist_index + 1, len(playlist),
+                    Path(photo_path).name)
             update_status_file({
                 "current_photo": str(photo_path),
                 "photo_index": playlist_index + 1,
