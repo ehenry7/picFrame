@@ -26,6 +26,7 @@ from platform_utils import (
 )
 from utils.config_manager import load_config
 from utils.metadata_utils import get_photo_metadata
+from utils.tray_icon import start_tray_icon
 
 # ── Paths �───────────────────────────────────────────────────────
 
@@ -82,6 +83,7 @@ logger = logging.getLogger(__name__)
 paused = False
 next_photo_requested = False
 previous_photo_requested = False
+_exit_requested = False
 
 
 def update_status_file(new_fields):
@@ -223,6 +225,18 @@ def start_background_updater():
     # rotates so memory doesn't grow unbounded.
     photo_surface_cache = {}
 
+    # System tray icon (Windows/Linux desktop).  Provides quick access to
+    # settings, photo controls, and exit.  Disabled on headless Pi.
+    tray_icon = None
+    if os.name == "nt" or os.environ.get("DISPLAY"):
+        try:
+            def _on_exit():
+                global _exit_requested
+                _exit_requested = True
+            tray_icon = start_tray_icon(exit_callback=_on_exit)
+        except Exception as exc:
+            logger.debug("Tray icon not started: %s", exc)
+
     # The overlay data cache fetches weather/tides asynchronously; wait a
     # few seconds so the very first wallpaper already shows them.
     try:
@@ -358,6 +372,13 @@ def start_background_updater():
         previous_photo_requested = False
         while True:
             handle_commands()
+
+            # Exit requested via tray icon — shut down cleanly.
+            if _exit_requested:
+                logger.info("Exit requested via tray icon, shutting down...")
+                update_status_file({"paused": False, "last_error": "Exited by user"})
+                return
+
             if next_photo_requested or previous_photo_requested:
                 break
             now = time.monotonic()
