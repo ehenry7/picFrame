@@ -151,7 +151,8 @@ def fit_photo_to_style(pil_image, width, height, style="fit"):
 
 
 def compose_background(photo_path, width, height, config, main_font,
-                       photo_metadata=None, bottom_inset=0):
+                       photo_metadata=None, bottom_inset=0,
+                       photo_surface_cache=None):
     """Compose a photo with overlays onto an off-screen surface.
 
     Args:
@@ -165,6 +166,12 @@ def compose_background(photo_path, width, height, config, main_font,
             overlay.
         bottom_inset: pixels to reserve at the bottom (e.g. Windows taskbar)
             so overlays are not hidden behind it.
+        photo_surface_cache: optional dict used to skip re-loading the photo
+            when only the overlay has changed.  The cache key is
+            ``(photo_path, width, height, style)`` and the value is a
+            ``pygame.Surface`` (the fitted photo, without overlays).  The
+            caller is responsible for invalidating the cache when the photo
+            rotates.
 
     Returns:
         A ``pygame.Surface`` of exactly ``width × height`` pixels, or ``None``
@@ -172,21 +179,34 @@ def compose_background(photo_path, width, height, config, main_font,
     """
     from PIL import Image
 
-    try:
-        with Image.open(photo_path) as image:
-            style = config.get("background_display_style", "fit")
-            if style not in DISPLAY_STYLES:
-                style = "fit"
-            pil_image = fit_photo_to_style(image, width, height, style)
-    except Exception as exc:
-        logger.error("Cannot read photo %s: %s", photo_path, exc)
-        return None
+    style = config.get("background_display_style", "fit")
+    if style not in DISPLAY_STYLES:
+        style = "fit"
 
-    surface = pygame.image.fromstring(
-        pil_image.tobytes(), pil_image.size, pil_image.mode)
-    draw_overlay(surface, width, height, config, main_font, photo_metadata,
+    cache_key = (str(photo_path), width, height, style)
+
+    # Try to reuse a cached photo surface (overlay-only repaint).
+    if photo_surface_cache is not None and cache_key in photo_surface_cache:
+        base_surface = photo_surface_cache[cache_key].copy()
+    else:
+        try:
+            with Image.open(photo_path) as image:
+                pil_image = fit_photo_to_style(image, width, height, style)
+        except Exception as exc:
+            logger.error("Cannot read photo %s: %s", photo_path, exc)
+            return None
+
+        surface = pygame.image.fromstring(
+            pil_image.tobytes(), pil_image.size, pil_image.mode)
+        base_surface = surface
+
+        # Store the clean photo (without overlays) for future reuse.
+        if photo_surface_cache is not None:
+            photo_surface_cache[cache_key] = base_surface.copy()
+
+    draw_overlay(base_surface, width, height, config, main_font, photo_metadata,
                  bottom_inset=bottom_inset)
-    return surface
+    return base_surface
 
 
 def save_surface_atomic(surface, output_path):

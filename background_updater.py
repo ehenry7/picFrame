@@ -217,6 +217,12 @@ def start_background_updater():
 
     update_status_file({"paused": False})
 
+    # Photo surface cache: avoids reloading and re-fitting the photo from
+    # disk when only the overlay text has changed (e.g. clock minute tick).
+    # Keyed by (photo_path, width, height, style).  Cleared when the photo
+    # rotates so memory doesn't grow unbounded.
+    photo_surface_cache = {}
+
     # The overlay data cache fetches weather/tides asynchronously; wait a
     # few seconds so the very first wallpaper already shows them.
     try:
@@ -277,6 +283,9 @@ def start_background_updater():
 
         if rotate_photo:
             photo_deadline = now + interval
+            # Photo is changing — clear the surface cache so the old
+            # photo's fitted image doesn't linger in memory.
+            photo_surface_cache.clear()
 
         photo_path = playlist[playlist_index]
         main_font = load_main_font(config)
@@ -303,7 +312,8 @@ def start_background_updater():
 
             surface = compose_background(photo_path, mon_w, mon_h, config,
                                          main_font, photo_metadata,
-                                         bottom_inset=mon_inset)
+                                         bottom_inset=mon_inset,
+                                         photo_surface_cache=photo_surface_cache)
             if surface is None:
                 all_ok = False
                 continue
