@@ -1,0 +1,9 @@
+// PictureFrame boot splash: full-screen image, letterboxed.
+screen_width = Window.GetWidth();
+screen_height = Window.GetHeight();
+image = Image("splash.png");
+scale = Math.Min(screen_width / image.GetWidth(), screen_height / image.GetHeight());
+resized = image.Scale(image.GetWidth() * scale, image.GetHeight() * scale);
+sprite = Sprite(resized);
+sprite.SetX((screen_width - resized.GetWidth()) / 2);
+sprite.SetY((screen_height - resized.GetHeight()) / 2);

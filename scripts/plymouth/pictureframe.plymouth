@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=PictureFrame
+Description=PictureFrame boot splash
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/pictureframe
+ScriptFile=/usr/share/plymouth/themes/pictureframe/pictureframe.script

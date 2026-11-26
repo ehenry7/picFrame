@@ -780,3 +780,24 @@ cd /d/dev/picFrame && ssh henry-pi "cd /home/henry/picFrame && tar cf - \
 - **User photos are intentionally NOT synced:** `static/photos` (57M) and the processed derivatives in `static/prepared` (13M) plus static/.backups (2M phone-upload backups) stay on the Pi only. Never run `rsync --delete` against these directories, in either direction.
 - `venv/` is Linux-only (273M) - recreate on Windows with `python -m venv venv`.
 - Keep the repo checkout in sync with git (`git -C /home/henry/picFrame status`) before/after code transfers; the Pi currently has uncommitted edits in `AGENTS.md` and `start_pictureframe.sh`.
+
+### Boot splash, display mode and startup path (Pi)
+
+- **Plymouth theme** `pictureframe` (`/usr/share/plymouth/themes/pictureframe/`) shows
+  `static/splash_boot.png` ("Booting PictureFrame" + version + http URL).
+  Reinstall with `scripts/install_plymouth.sh` (sets theme, adds `splash quiet
+  plymouth.ignore-serial-consoles` to `/boot/firmware/cmdline.txt`, sets
+  `disable_splash=1`, rebuilds the initramfs).
+- **sway wallpaper** shows `static/splash.png` ("Starting up...") for the gap between
+  the compositor starting and the app window appearing. Config lines:
+  `output HDMI-A-2 bg .../static/splash.png fill`, `output HDMI-A-2 mode 1920x1080`,
+  `xwayland force`.
+- **Do not `swaymsg reload` after changing `xwayland` lines** - sway cannot change
+  the xwayland mode at runtime and shows an error bar until the next restart.
+- **SDL driver**: the slideshow runs on X11/Xwayland (`SDL_VIDEODRIVER=x11`,
+  `DISPLAY=:0` in `start_pictureframe.sh`) because SDL's Wayland init blocks ~25 s
+  on this Pi. If X11 is unavailable the code falls back to Wayland automatically.
+- Panel must run **1920x1080** to match the app render size; 1920x1200 produces
+  letterbox bars.
+- Regenerate splash images with `./venv/bin/python3 scripts/make_splash.py`
+  (bakes the current version and the wlan0 IP into both images).

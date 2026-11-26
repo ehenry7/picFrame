@@ -2498,9 +2498,9 @@ def set_resolution():
         if is_display_process_running():
             stop_display_process()
             start_display_process()
-            message = _("Applied resolution: %(width) SX %(height)s. The slideshow has been restarted.", width=width, height=height)
+            message = _("Applied resolution: %(width)sx%(height)s. The slideshow has been restarted.", width=width, height=height)
         else:
-            message = _("Applied resolution: %(width) SX %(height)s. The slideshow was not in progress.", width=width, height=height)
+            message = _("Applied resolution: %(width)sx%(height)s. The slideshow was not in progress.", width=width, height=height)
 
         return jsonify({"success": True, "message": message})
     except Exception as e:
