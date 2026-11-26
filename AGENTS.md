@@ -699,11 +699,16 @@ Source (USB/Browser)
 - **Target host:** Raspberry Pi 4 Model B Rev 1.4, hostname `Henry`, Debian 13 (trixie), kernel 6.18.x aarch64.
 - Network: `192.168.2.234/16` on `wlan0` (WiFi, DHCP), gateway `192.168.2.1`. Ed25519 key auth already installed in `~/.ssh/authorized_keys`.
 
-### Storage (card was upgraded 2026-11-26)
+### Storage (card upgraded to a fast UHS-I 64GB card 2026-11-26)
 
-- Running from a **64GB SD card** (was 32GB), cloned with a headless rsync procedure.
-  - Root PARTUUID: `d9463e74-02` (new card). Old 32GB card = intact backup: PARTUUID `8eef1faf`.
+- Running from a **64GB SDXC card** (was 32GB), cloned with a headless rsync procedure.
+  - Root PARTUUID: `d9463e74-02`. Old 32GB card = intact backup: PARTUUID `8eef1faf`.
   - Root fs: ext4, 57G total, ~45G free after cleanup (previously 98% full).
+  - Card identity (verified 2026-11-26 after the fast-card swap): CID `c94d604d53534430610000dc99a1a500`, name `MSSD0`, MID `0xC9`, OEM `0x4d60`, manufacture date `05/2026`. Sysfs exposes **no vendor/model string and no speed-class field**, so the brand cannot be verified in software; capacity authenticity would need an `f3`/`h2testw` run.
+  - **Duplicate-PARTUUID caveat:** the swap preserved the clone's disk id, so both the old and the new card report `d9463e74-*`. Harmless with one card inserted; run `sfdisk --disk-id` to change it before ever attaching both, otherwise boot becomes ambiguous.
+- **Link speed (already at the host maximum):** `mmc0: new UHS-I speed DDR50 SDXC card`; `/sys/kernel/debug/mmc0/ios` reports 50 MHz, 4-bit bus, DDR50 timing, 1.8 V signalling. The Pi 4 SDHCI has no SDR104, so DDR50/SDR50 is the ceiling (~45 MB/s read) — a faster card cannot show its full spec on this machine.
+- **Measured throughput (2026-11-26, direct I/O):** 40.3 MB/s sequential read (512 MB), 26–28 MB/s sequential write (256 MB + fsync), ~2 900 IOPS / 11.4 MB/s 4K random read @ QD32. Confirms the card runs at / near the Pi 4 host limit.
+- **Thermals vs storage:** at the same check `vcgencmd get_throttled` = `0xe0008` (soft temperature limit active; throttling has occurred) with **no under-voltage bits**. Slowness seen at that moment was thermal, not the SD card.
 - **Gotcha:** `piclone` (SD Card Copier) is GUI-only — over SSH it aborts with `cannot open display`, and with `xvfb` it silently waits for a GUI click. Do not use it unattended.
 - **Headless clone recipe used:** `sfdisk` partition copy (p1 512M vfat at 16384, p2 ext4 to end) → `mkfs.vfat -n bootfs` / `mkfs.ext4 -L rootfs` → `rsync -aHAX --numeric-ids` with excludes (`/dev /proc /sys /tmp /run /mnt /media /boot/firmware /lost+found`) → `sfdisk --disk-id` to assign a NEW disk id (must differ, otherwise duplicate PARTUUIDs make boot ambiguous when both cards are attached) → patch `cmdline.txt` + `/etc/fstab` to the new PARTUUID → verify read-only mounts before shutting down. Script left on the Pi at `/home/henry/clone.sh`.
 
