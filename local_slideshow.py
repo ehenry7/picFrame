@@ -1940,7 +1940,14 @@ def start_slideshow():
         logger.info("[startup] stabilization wait done at %.1fs", time.monotonic() - _t0)
         
         # ✅ NEW: Initialize only the display and font modules to save CPU (avoid initializing the mixer).
-        pygame.display.init()
+        try:
+            pygame.display.init()
+        except pygame.error as exc:
+            logger.warning("[startup] preferred driver unavailable (%s); retrying on Wayland", exc)
+            pygame.display.quit()
+            os.environ["SDL_VIDEODRIVER"] = "wayland"
+            os.environ.pop("DISPLAY", None)
+            pygame.display.init()
         logger.info("[startup] display.init done at %.1fs", time.monotonic() - _t0)
         pygame.font.init()
         logger.info("[startup] font.init done at %.1fs", time.monotonic() - _t0)

@@ -1390,8 +1390,8 @@ def schedule_worker():
     # This section runs only once when the application starts.
     try:
         logger.info("📅 Initial startup sequence.")
-        # Wait for the system to stabilize before changing the display.
-        time.sleep(5)
+        # Brief settle only: the slideshow shows a splash photo immediately.
+        time.sleep(1)
         config = load_config()
         output_name = get_display_output_name()
         if output_name:
@@ -3494,34 +3494,41 @@ def log_server_readiness():
 
 
 def main():
+    _app_start = time.monotonic()
     threading.excepthook = log_thread_exception
     # CLI mode override must be applied before the scheduler and the child
     # processes read the run mode.
     apply_forced_app_mode(parse_cli_args())
     logger.info("Startup: migrating guest folders")
     migrate_guest_folders()
-    logger.info("Startup: guest folder migration complete")
-
-    # Check for git updates at startup (non-blocking, just logs a suggestion).
-    try:
-        from platform_utils import is_git_repo, git_has_updates
-        if is_git_repo():
-            has_updates, info = git_has_updates()
-            if has_updates:
-                count = info.get("behind_count", 0)
-                logger.info("Startup: git repo is %d commit(s) behind origin. "
-                           "An update is available in the Maintenance tab.", count)
-            else:
-                logger.info("Startup: git repo is up to date (commit %s).",
-                           info.get("commit", "unknown"))
-    except Exception as exc:
-        logger.debug("Startup: git check skipped: %s", exc)
+    logger.info("Startup: guest folder migration complete (%.1fs)",
+                time.monotonic() - _app_start)
 
     for name, target in (
         ("slideshow-scheduler", schedule_worker),
     ):
         logger.info("Startup: starting worker %s", name)
         threading.Thread(name=name, target=run_worker, args=(target,), daemon=True).start()
+    logger.info("Startup: display scheduler thread started (%.1fs)",
+                time.monotonic() - _app_start)
+
+    # The git update check may touch the network: keep it off the startup path.
+    def _git_update_check():
+        try:
+            from platform_utils import is_git_repo, git_has_updates
+            if is_git_repo():
+                has_updates, info = git_has_updates()
+                if has_updates:
+                    count = info.get("behind_count", 0)
+                    logger.info("Startup: git repo is %d commit(s) behind origin. "
+                               "An update is available in the Maintenance tab.", count)
+                else:
+                    logger.info("Startup: git repo is up to date (commit %s).",
+                               info.get("commit", "unknown"))
+        except Exception as exc:
+            logger.debug("Startup: git check skipped: %s", exc)
+
+    threading.Thread(name="git-update-check", target=_git_update_check, daemon=True).start()
 
     logger.info("Startup: binding HTTP server to 0.0.0.0:7090; local URL http://127.0.0.1:7090")
     threading.Thread(name="http-readiness", target=log_server_readiness, daemon=True).start()
