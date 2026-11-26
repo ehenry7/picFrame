@@ -608,3 +608,41 @@ button:hover {
     width: 80px !important;
   }
 }
+/* Save/Cancel for pending filter changes in the fullscreen toolbar */
+.photo-lightbox-pending { display: inline-flex; gap: 6px; flex-shrink: 0; }
+.photo-lightbox-pending.hidden { display: none; }
+.photo-lightbox-pending button { padding: 4px 10px; border-radius: 6px; background: #2563eb; color: #fff; font-size: 13px; }
+.photo-lightbox-pending button + button { background: #6b7280; }
+
+/* Compact filter dropdown with fly-out submenus */
+.filter-menu { position: relative; display: inline-block; width: 100%; }
+.filter-menu-button { display: flex; align-items: center; justify-content: space-between; gap: 6px; width: 100%; padding: 3px 8px; font-size: 12px; text-align: left; background: #fff; border: 1px solid #d1d5db; border-radius: 4px; color: #111; cursor: pointer; }
+.filter-menu-button i { font-size: 10px; opacity: .6; }
+.filter-menu-current { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.filter-menu-panel { position: absolute; left: 0; top: 100%; margin-top: 4px; min-width: 170px; max-height: 60vh; overflow-y: auto; background: #fff; border: 1px solid #d1d5db; border-radius: 6px; box-shadow: 0 4px 16px #0003; z-index: 1000; display: none; }
+.filter-menu-panel.open { display: block; }
+.filter-menu-row { position: relative; }
+.filter-menu-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; padding: 6px 10px; font-size: 12px; text-align: left; background: transparent; color: #111; border: 0; cursor: pointer; }
+.filter-menu-item:hover, .filter-menu-item.active { background: #eef2ff; }
+.filter-submenu { position: absolute; left: 100%; top: 0; min-width: 180px; max-height: 60vh; overflow-y: auto; background: #fff; border: 1px solid #d1d5db; border-radius: 6px; box-shadow: 0 4px 16px #0003; display: none; z-index: 1001; }
+.filter-submenu.open { display: block; }
+.photo-lightbox-actions .filter-menu-panel { top: auto; bottom: 100%; margin: 0 0 6px; }
+.photo-lightbox-actions .filter-submenu { top: auto; bottom: 0; }
+
+/* Larger touch targets for the touch screen */
+.filter-menu-button { min-height: 44px; font-size: 15px; padding: 8px 12px; }
+.filter-menu-item { min-height: 44px; font-size: 15px; padding: 10px 14px; }
+.filter-submenu .filter-menu-item { min-height: 40px; }
+.photo-lightbox-actions button { padding: 10px; font-size: 20px; min-width: 44px; min-height: 44px; }
+.photo-lightbox-actions select, .photo-lightbox-actions input { font-size: 16px; }
+.photo-lightbox-pending button { min-height: 44px; padding: 10px 16px; font-size: 15px; }
+.import-button { min-height: 44px; font-size: 15px; }
+
+/* Touch devices: larger controls overall */
+@media (pointer: coarse) {
+  .filter-menu-button, .filter-menu-item { min-height: 48px; font-size: 17px; }
+  .filter-submenu .filter-menu-item { min-height: 46px; }
+  .photo-lightbox-actions button { min-width: 48px; min-height: 48px; font-size: 22px; }
+  .photo-lightbox-pending button { min-height: 48px; font-size: 16px; padding: 10px 18px; }
+  button, input, select { font-size: 15px; }
+}

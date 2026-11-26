@@ -209,7 +209,7 @@ class PhotoFilterTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[1]
         source = (root / "templates" / "configure.html.jinja").read_text(encoding="utf-8")
         self.assertEqual(source.count('_("B&W Background")'), 2)
-        for language in ("en", "fr", "he"):
+        for language in ("en", "he"):
             with self.subTest(language=language):
                 translations = gettext.translation("messages", str(root / "translations"), [language])
                 background = translations.gettext("B&W Background")

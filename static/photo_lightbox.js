@@ -22,18 +22,87 @@ function attachPhotoLightboxActions(lightbox) {
         bar.addEventListener('keydown', event => {
             if (event.key !== 'Escape') event.stopPropagation();
         });
+        const labels = window.photoEditLabels;
         const filter = sourceSelect.cloneNode(true);
         filter.value = sourceSelect.value;
+        let savedFilter = sourceSelect.value;
         filter.setAttribute('aria-label', sourceSelect.options[sourceSelect.selectedIndex].textContent.trim());
-        bar.append(filter);
+        filter.style.display = 'none';
+        bar.append(window.createFilterMenu ? window.createFilterMenu(filter) : filter);
+
+        // Pending selection: nothing is applied until "Save" is pressed.
+        const pendingBar = document.createElement('span');
+        pendingBar.className = 'photo-lightbox-pending hidden';
+        const saveButton = document.createElement('button');
+        saveButton.type = 'button';
+        saveButton.className = 'photo-lightbox-save';
+        saveButton.textContent = labels.save;
+        const cancelButton = document.createElement('button');
+        cancelButton.type = 'button';
+        cancelButton.textContent = labels.cancel;
+        pendingBar.append(saveButton, cancelButton);
+        bar.append(pendingBar);
+
+        const setPending = on => pendingBar.classList.toggle('hidden', !on);
+
+        const applyPending = async () => {
+            saveButton.disabled = cancelButton.disabled = true;
+            try {
+                sourceSelect.value = filter.value;
+                sourceSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                savedFilter = filter.value;
+                setPending(false);
+            } finally {
+                saveButton.disabled = cancelButton.disabled = false;
+            }
+        };
+
+        // Live preview of the pending selection (nothing is saved yet).
+        const previewImage = () => slide.slideNode.querySelector('.gslide-image img');
+        let previewUrl = null;
+        const clearPreview = () => {
+            if (previewUrl) {
+                URL.revokeObjectURL(previewUrl);
+                previewUrl = null;
+            }
+        };
+        const showPreview = async value => {
+            const image = previewImage();
+            if (!image) return;
+            clearPreview();
+            if (value === savedFilter) {
+                image.src = tile.querySelector('img').src;
+                return;
+            }
+            try {
+                const response = await fetch('/api/filter_preview', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ photo: sourceSelect.dataset.photo, filter: value })
+                });
+                if (!response.ok) return;
+                const blob = await response.blob();
+                previewUrl = URL.createObjectURL(blob);
+                const target = previewImage();
+                if (target) target.src = previewUrl;
+            } catch (error) { /* keep the current image on failure */ }
+        };
+
         filter.addEventListener('change', () => {
             filter.setAttribute('aria-label', filter.options[filter.selectedIndex].textContent.trim());
-            sourceSelect.value = filter.value;
-            sourceSelect.dispatchEvent(new Event('change', { bubbles: true }));
+            setPending(filter.value !== savedFilter);
             updateStrengthAvailability();
+            showPreview(filter.value);
+        });
+        saveButton.addEventListener('click', applyPending);
+        cancelButton.addEventListener('click', () => {
+            filter.value = savedFilter;
+            filter.setAttribute('aria-label', filter.options[filter.selectedIndex].textContent.trim());
+            updateStrengthAvailability();
+            setPending(false);
+            showPreview(savedFilter);
         });
         const photo = sourceSelect.dataset.photo;
-        const labels = window.photoEditLabels;
         const strengthLabel = document.createElement('label');
         strengthLabel.textContent = labels.strength;
         const strength = document.createElement('input');
@@ -288,6 +357,7 @@ function attachPhotoLightboxActions(lightbox) {
             locationDialog?.remove();
             dateDialog?.remove();
             observers.forEach(observer => observer.disconnect());
+            clearPreview();
             bar.remove();
         };
     }

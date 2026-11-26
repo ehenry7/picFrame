@@ -12,7 +12,7 @@ class ZoomLabelTests(unittest.TestCase):
         labels = "\n".join(line for line in source.splitlines()
                            if "<label" in line and ('for="pan_zoom_factor"' in line
                                                     or 'for="pan_zoom_start_factor"' in line))
-        for language in ("en", "fr", "he"):
+        for language in ("en", "he"):
             with self.subTest(language=language):
                 environment = Environment(extensions=["jinja2.ext.i18n"])
                 translations = gettext.translation(

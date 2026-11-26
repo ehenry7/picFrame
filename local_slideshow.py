@@ -10,6 +10,7 @@ import pygame
 import traceback
 import requests
 from PIL import Image, ImageOps, ImageFilter, ImageDraw
+from utils.frames import FRAME_STYLES
 import signal
 import re
 import socket
@@ -68,6 +69,8 @@ _icon_cache = {} # Cache for loaded weather icons.
 # --- Global variables for slideshow control ---
 paused = False
 next_photo_requested = False
+# Last displayed photo: prevents a repeat across cycle boundaries.
+_cycle_state = {'last': None, 'recent': []}
 previous_photo_requested = False
 
 # Internal state for the status file.
@@ -907,6 +910,8 @@ def draw_pause_icon(screen, screen_width, screen_height):
     from utils import slideshow_controls
     slideshow_controls.draw(screen, screen_width, screen_height, paused)
 
+VARIANT_SUFFIXES = ('_polaroid.jpg', '_thumbnail.jpg', '_postcard.jpg') + tuple(f'_{style}.jpg' for style in FRAME_STYLES)
+
 def get_path_to_display(photo_path_obj, source, filter_states):
     """
     Determine the correct file path to display based on the source and filters.
@@ -918,14 +923,12 @@ def get_path_to_display(photo_path_obj, source, filter_states):
     path_to_display = str(photo_path_obj)
 
     # Priority 1: Explicit user filter.
-    if active_filter == 'polaroid':
-        polaroid_path = photo_path_obj.with_name(f"{photo_path_obj.stem}_polaroid.jpg")
-        if polaroid_path.exists():
-            path_to_display = str(polaroid_path)
-    elif active_filter == 'postcard':
-        postcard_path = photo_path_obj.with_name(f"{photo_path_obj.stem}_postcard.jpg")
-        if postcard_path.exists():
-            path_to_display = str(postcard_path)
+    # Variant-based filters (polaroid, postcard, decorative frames) live next
+    # to the base file as <stem>_<filter>.jpg; corrections are baked in.
+    if active_filter and active_filter not in {'none', 'original', 'grayscale', 'sepia', 'vignette', 'vintage'}:
+        variant_path = photo_path_obj.with_name(f"{photo_path_obj.stem}_{active_filter}.jpg")
+        if variant_path.exists():
+            path_to_display = str(variant_path)
             
     return path_to_display
 
@@ -941,7 +944,7 @@ def build_playlist(media_list, config, favorites):
     for media_path in media_list:
         playlist.append(media_path)
         relative_path = str(Path(media_path).relative_to(PREPARED_BASE_DIR))
-        normalized_relative_path = re.sub(r'(_polaroid|_postcard)\.jpg$', '.jpg', relative_path)
+        normalized_relative_path = re.sub(r'(_polaroid|_postcard|_' + '|_'.join(FRAME_STYLES) + r')\.jpg$', '.jpg', relative_path)
 
         if normalized_relative_path in favorites:
             for _ in range(favorite_boost): playlist.append(media_path)
@@ -967,7 +970,8 @@ def build_playlist(media_list, config, favorites):
                             for _ in range(anniversary_boost_factor): playlist.append(media_path)
                     except Exception as e:
                         logger.debug(f"Error reading the date for the anniversary boost: {e}")
-    return playlist
+    # One entry per photo per cycle: never repeat a photo before the others.
+    return list(dict.fromkeys(playlist))
 
 try:
     import RPi.GPIO as GPIO
@@ -2088,7 +2092,7 @@ def start_slideshow():
                 for source in display_sources:
                     source_dir = PREPARED_BASE_DIR / source
                     if source_dir.is_dir():
-                        base_photos = [f for f in source_dir.iterdir() if f.is_file() and (f.suffix.lower() in ('.jpg', '.jpeg', '.png') or f.suffix.lower() in VIDEO_EXTENSIONS) and not f.name.endswith(('_polaroid.jpg', '_thumbnail.jpg', '_postcard.jpg'))]
+                        base_photos = [f for f in source_dir.iterdir() if f.is_file() and (f.suffix.lower() in ('.jpg', '.jpeg', '.png') or f.suffix.lower() in VIDEO_EXTENSIONS) and not f.name.endswith(VARIANT_SUFFIXES)]
                         for photo_path_obj in base_photos:
                             # Filter out videos if the option is disabled.
                             if photo_path_obj.suffix.lower() in VIDEO_EXTENSIONS and not slideshow_video_enabled:
@@ -2099,6 +2103,13 @@ def start_slideshow():
                 
                 playlist = build_playlist(all_media, config, favorites)
                 random.shuffle(playlist)
+                # Push photos shown just before the cycle change to the end,
+                # so a new cycle never re-opens with something seen moments ago.
+                recent = set(_cycle_state.get('recent') or [])
+                if recent:
+                    playlist.sort(key=lambda path: path in recent)
+                _cycle_state['recent'] = []
+                logger.info(f'New playlist cycle: {len(playlist)} photos shuffled')
             
             # --- Load the font on every iteration ---
             # This is more robust, especially after a display reset.
@@ -2205,6 +2216,9 @@ def start_slideshow():
                 previous_photo_requested = False
 
                 logger.info(f"🖼️ Affichage de la photo: {photo_path}")
+                _cycle_state['last'] = photo_path
+                _cycle_state.setdefault('recent', []).append(photo_path)
+                _cycle_state['recent'] = _cycle_state['recent'][-8:]
                 
                 # --- Fan control ---
                 if GPIO_AVAILABLE:
@@ -2317,7 +2331,6 @@ def start_slideshow():
                     playlist_index += 1
 
                 # Handle playlist looping.
-                if playlist_index >= len(playlist): playlist_index = 0
                 if playlist_index < 0: playlist_index = len(playlist) - 1
 
             # --- Custom playlist completion logic ---

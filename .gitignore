@@ -22,3 +22,9 @@ templates/configure.html.jinja.bak
 scripts/_untranslated.json
 .update_backup/
 tmp*_update.py
+
+# Google Photos OAuth credentials
+secrets/
+
+# Local backups
+AGENTS.md.bak-*

@@ -6,7 +6,7 @@ app = Flask(__name__)
 app.config['BABEL_TRANSLATION_DIRECTORIES'] = str(Path(__file__).resolve().parents[1] / 'translations')
 app.secret_key = 'test'
 app.config['BABEL_DEFAULT_LOCALE'] = 'fr'
-app.config['LANGUAGES'] = {'fr': 'Francais', 'en': 'English', 'he': 'Hebrew'}
+app.config['LANGUAGES'] = {'en': 'English', 'he': 'Hebrew'}
 babel = Babel(app, locale_selector=lambda: 'he')
 
 with app.test_request_context('/?lang=he'):

@@ -4,21 +4,21 @@
     <summary class="cursor-pointer">{{ _("Date format reference") }}</summary>
     <p class="mt-1">{{ _("Combine these codes with spaces or punctuation. Month and weekday names follow the slideshow's system locale.") }}</p>
     <ul class="list-disc ml-5 mt-1">
-        <li><code>%Y</code> — {{ _("Four-digit year") }} (2026); <code>%y</code> — {{ _("Two-digit year") }} (26)</li>
-        <li><code>%m</code> — {{ _("Month number") }} (01–12); <code>%d</code> — {{ _("Day of month") }} (01–31)</li>
-        <li><code>%B</code> / <code>%b</code> — {{ _("Full / abbreviated month name") }}</li>
-        <li><code>%A</code> / <code>%a</code> — {{ _("Full / abbreviated weekday name") }}</li>
-        <li><code>%H</code> / <code>%I</code> — {{ _("Hour (24-hour / 12-hour)") }}; <code>%p</code> — AM/PM</li>
-        <li><code>%M</code> / <code>%S</code> — {{ _("Minute / second") }}; <code>%%</code> — %</li>
+        <li><code>%Y</code> â€” {{ _("Four-digit year") }} (2026); <code>%y</code> â€” {{ _("Two-digit year") }} (26)</li>
+        <li><code>%m</code> â€” {{ _("Month number") }} (01â€“12); <code>%d</code> â€” {{ _("Day of month") }} (01â€“31)</li>
+        <li><code>%B</code> / <code>%b</code> â€” {{ _("Full / abbreviated month name") }}</li>
+        <li><code>%A</code> / <code>%a</code> â€” {{ _("Full / abbreviated weekday name") }}</li>
+        <li><code>%H</code> / <code>%I</code> â€” {{ _("Hour (24-hour / 12-hour)") }}; <code>%p</code> â€” AM/PM</li>
+        <li><code>%M</code> / <code>%S</code> â€” {{ _("Minute / second") }}; <code>%%</code> â€” %</li>
     </ul>
     <p class="mt-1">{{ _("Examples (15 June 2020):") }}</p>
     <ul class="list-disc ml-5">
-        <li><code>%Y</code> → 2020</li>
-        <li><code>%d/%m/%Y</code> → 15/06/2020</li>
-        <li><code>%m/%d/%Y</code> → 06/15/2020</li>
-        <li><code>%Y-%m-%d</code> → 2020-06-15</li>
-        <li><code>%d %B %Y</code> → 15 June 2020</li>
-        <li><code>%B %Y</code> → June 2020</li>
+        <li><code>%Y</code> â†’ 2020</li>
+        <li><code>%d/%m/%Y</code> â†’ 15/06/2020</li>
+        <li><code>%m/%d/%Y</code> â†’ 06/15/2020</li>
+        <li><code>%Y-%m-%d</code> â†’ 2020-06-15</li>
+        <li><code>%d %B %Y</code> â†’ 15 June 2020</li>
+        <li><code>%B %Y</code> â†’ June 2020</li>
     </ul>
 </details>
 {% endmacro %}
@@ -48,14 +48,41 @@
 <option value="{{ value }}" {% if active_filter == value %}selected{% endif %}>{{ label }}</option>
 {% endfor %}
 {% endmacro %}
+{% macro frame_style_options(active_filter, has_polaroid=false, has_postcard=false) %}
+<optgroup label="{{ _('Frames') }}">
+    {% if has_polaroid %}<option value="polaroid" {% if active_filter == 'polaroid' %}selected{% endif %}>{{ _("Polaroid") }}</option>{% endif %}
+    {% if has_postcard %}<option value="postcard" {% if active_filter == 'postcard' %}selected{% endif %}>{{ _("Postcards") }}</option>{% endif %}
+    {% for value, label in [
+        ('cork', _('Cork board')), ('filmstrip', _('Film strip')), ('slide', _('35 mm slide')),
+        ('mat', _('Museum mat')), ('album', _('Album corners')), ('torn', _('Torn paper')),
+        ('newspaper', _('Newspaper clip')), ('datestamp', _('Retro date stamp')),
+        ('washi', _('Washi tape')), ('gilded', _('Gilded frame')),
+        ('instax', _('Instax mini')), ('lomo', _('Lomo / toy camera'))
+    ] %}
+    <option value="{{ value }}" {% if active_filter == value %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+</optgroup>
+{% endmacro %}
+
+{% macro correction_filter_options(active_filter) %}
+<optgroup label="{{ _('Corrections') }}">
+    <option value="grayscale" {% if active_filter=='grayscale' %}selected{% endif %}>{{ _("Black & White") }}</option>
+    <option value="sepia" {% if active_filter=='sepia' %}selected{% endif %}>{{ _("Sepia") }}</option>
+    <option value="vignette" {% if active_filter=='vignette' %}selected{% endif %}>{{ _("B&W Background") }}</option>
+    <option value="vintage" {% if active_filter=='vintage' %}selected{% endif %}>{{ _("Vintage") }}</option>
+    {{ extra_filter_options(active_filter) }}
+    <option value="polaroid_vintage" {% if active_filter=='polaroid_vintage' %}selected{% endif %}>{{ _("Polaroid Vintage") }}</option>
+</optgroup>
+{% endmacro %}
 <html lang="{{ get_locale() }}" dir="{{ 'rtl' if get_locale() == 'he' else 'ltr' }}">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('Configuration') }} - PictureFrame</title>
+    <title>{{ _('Configuration') }} - PictureFrame - {{ SERVER_IP }}</title>
+    <script>window.FRAME_STYLES = {{ frame_styles|tojson }};</script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v={{ APP_INSTANCE_ID }}">
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <!-- GLightbox CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
@@ -320,9 +347,6 @@
             <div class="language-selector text-sm">
                 <span class="font-semibold">{{ _('Language') }}:</span>
                 {% set current_lang = get_locale() %}
-                <a href="?lang=fr"
-                    class="{% if current_lang == 'fr' %}font-bold text-indigo-600{% else %}text-blue-600 hover:underline{% endif %}">FR</a>
-                |
                 <a href="?lang=en"
                     class="{% if current_lang == 'en' %}font-bold text-indigo-600{% else %}text-blue-600 hover:underline{% endif %}">EN</a>
                 |
@@ -337,6 +361,7 @@
             <div class="flex flex-col items-start">
                 <img src="{{ url_for('static', filename='pictureframe_logo.svg') }}" alt="Logo PictureFrame" class="h-16">
                 <span class="text-xs text-gray-400 mt-1">v{{ APP_VERSION }}</span>
+                <span class="text-sm font-bold text-indigo-600 mt-1">{{ SERVER_IP }}</span>
             </div>
 
             <div id="live-preview-container" class="cadre-bois p-4 flex flex-col items-center">
@@ -393,10 +418,10 @@
         <div id="group-diaporama" class="sub-nav-group hidden">
             <div class="tabs flex overflow-x-auto pb-2">
                 <button class="tablink inline-flex items-center" onclick="openTab(event, 'tab-affichage')"
-                    title="{{ _('Gérez les paramètres d\'affichage du diaporama, la durée, les transitions...') }}"><i
+                    title="{{ _('GÃ©rez les paramÃ¨tres d\'affichage du diaporama, la durÃ©e, les transitions...') }}"><i
                         class="fas fa-desktop fa-fw mr-2"></i>{{ _('Display') }}</button>
                 <button class="tablink inline-flex items-center" onclick="openTab(event, 'tab-heure')"
-                    title="{{ _('Configurez l\'affichage de l\'heure, la météo et les marées.') }}"><i
+                    title="{{ _('Configurez l\'affichage de l\'heure, la mÃ©tÃ©o et les marÃ©es.') }}"><i
                         class="fas fa-clock fa-fw mr-2"></i>{{ _('Clock & Info') }}</button>
                 <button class="tablink inline-flex items-center" onclick="openTab(event, 'tab-metadata')"><i
                         class="fas fa-info-circle fa-fw mr-2"></i>{{ _('Metadata') }}</button>
@@ -442,7 +467,7 @@
                     title="{{ _('Manage backups and system checks.') }}"><i
                         class="fas fa-tools fa-fw mr-2"></i>{{ _('Maintenance') }}</button>
                 <button class="tablink inline-flex items-center" onclick="openTab(event, 'tab-stats')"
-                    title="{{ _('Consultez les statistiques d\'utilisation du système.') }}"><i
+                    title="{{ _('Consultez les statistiques d\'utilisation du systÃ¨me.') }}"><i
                         class="fas fa-chart-bar fa-fw mr-2"></i>{{ _('Statistics') }}</button>
                 <button class="tablink inline-flex items-center" onclick="openTab(event, 'tab-logs')"
                     title="{{ _('Check the system logs.') }}"><i class="fas fa-file-alt fa-fw mr-2"></i>{{
@@ -579,7 +604,7 @@
                         </div>
                         <button type="button" id="detect-resolution-btn"
                             class="ml-4 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-3 rounded text-sm"
-                            title="{{ _('Détecter la résolution de l\'écran actif') }}">{{ _('Detect') }}</button>
+                            title="{{ _('DÃ©tecter la rÃ©solution de l\'Ã©cran actif') }}">{{ _('Detect') }}</button>
                     </div>
                     <div style="margin-top: 16px;">
                         <label>
@@ -1310,6 +1335,41 @@
                     </div>
                     <div id="usb-import-status" class="status-messages"></div>
 
+                    <!-- Google Photos (Picker API) -->
+                    <div id="google-photos-section" class="mt-4 pt-4 border-t border-gray-200">
+                        <p class="text-sm text-gray-600 mb-2">{{ _("Import photos from your Google Photos library.") }}</p>
+                        <div id="google-photos-status" class="text-sm text-gray-500 mb-2"></div>
+
+                        <div id="google-photos-disconnected" class="hidden">
+                            <button type="button" id="google-photos-connect-btn"
+                                class="import-button bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                                <i class="fab fa-google"></i> {{ _("Connect Google Photos") }}
+                            </button>
+                            <div id="google-photos-code-form" class="hidden mt-3">
+                                <p class="text-sm text-gray-600 mb-1">{{ _("Authorize in the Google tab that just opened, then copy the address of the page that fails to load (it contains code=...) or the code itself, and paste it here.") }}</p>
+                                <input type="text" id="google-photos-code-input"
+                                    class="w-full p-2 border rounded mb-2"
+                                    placeholder="http://localhost:8888/oauth2callback?code=... or 4/0Ax...">
+                                <button type="button" id="google-photos-exchange-btn"
+                                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                    {{ _("Finish connection") }}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="google-photos-connected" class="hidden">
+                            <button type="button" id="google-photos-pick-btn"
+                                class="import-button bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                <i class="fas fa-images"></i> {{ _("Select photos from Google Photos") }}
+                            </button>
+                            <button type="button" id="google-photos-disconnect-btn"
+                                class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded ml-2">
+                                {{ _("Disconnect") }}
+                            </button>
+                            <div id="google-photos-import-status" class="status-messages mt-2"></div>
+                        </div>
+                    </div>
+
                     <!-- NEW: Container for the preparation preview -->
                     <div id="preparation-preview-container"
                         class="hidden mt-4 p-3 bg-gray-100 rounded-lg border text-center">
@@ -1372,7 +1432,7 @@
                 </legend>
                 <div class="flex justify-between items-center mb-4">
                     <p class="text-gray-600">{{ _('Approve or reject submitted photos. Approved photos
-                        will be added to the “Guests” source.') }}</p>
+                        will be added to the â€œGuestsâ€� source.') }}</p>
                     <button type="button" id="refresh-pending-btn"
                         class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded inline-flex items-center"><i
                             class="fas fa-sync-alt mr-2"></i>{{ _("Refresh") }}</button>
@@ -1514,9 +1574,9 @@
                         <div class="flex items-center gap-2 mb-2" style="align-items:center;">
                             <i class="fab fa-git-alt text-gray-600"></i>
                             <span class="font-mono text-sm" id="update-branch"></span>
-                            <span class="text-gray-400">·</span>
+                            <span class="text-gray-400">Â - </span>
                             <span class="font-mono text-xs text-gray-500" id="update-commit"></span>
-                            <span class="text-gray-400">·</span>
+                            <span class="text-gray-400">Â - </span>
                             <span class="text-xs text-gray-500" style="display:inline-flex; align-items:center;">{{ _("Version") }} <span id="update-current-version" class="font-mono"></span></span>
                             <button type="button" id="refresh-update-status-btn"
                                 class="text-gray-500 hover:text-blue-500 rounded transition-colors"
@@ -1665,7 +1725,7 @@
                     <h3>{{ _("System control") }}</h3>
                 </legend>
                 <form method="POST" action="/restart_app"
-                    onsubmit="return confirm('{{ _('Êtes-vous sûr de vouloir redémarrer UNIQUEMENT l\'application web ? Le système d\'exploitation ne sera pas redémarré.') }}');">
+                    onsubmit="return confirm('{{ _('ÃŠtes-vous sÃ»r de vouloir redÃ©marrer UNIQUEMENT l\'application web ? Le systÃ¨me d\'exploitation ne sera pas redÃ©marrÃ©.') }}');">
                     <button type="submit"
                         class="system-button bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">
                         <i class="fas fa-redo"></i> {{ _("Reboot Application Web") }}
@@ -1674,7 +1734,7 @@
                 <!-- Restart form -->
                 <form id="rebootForm" action="/system_reboot" method="POST"
                     class="flex items-center gap-3 mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg"
-                    onsubmit="return confirm('Êtes-vous sûr de vouloir redémarrer le système ?');">
+                    onsubmit="return confirm('ÃŠtes-vous sÃ»r de vouloir redÃ©marrer le systÃ¨me ?');">
                     <button type="submit"
                         class="system-button bg-yellow-500 hover:bg-yellow-700 text-gray-800 font-bold py-2 px-4 rounded flex-1">
                         <i class="fas fa-sync-alt mr-1"></i>{{ _("Restart the system") }}
@@ -1850,30 +1910,10 @@
                                 {% if media.type == 'image' %}
                                 <select class="filter-select text-xs rounded border-gray-300 py-1 w-full"
                                     data-photo="{{ photo_path }}">
-                                    <option value="none" {% if active_filter=='none' %}selected{% endif %}>{{
-                                        _("Filter...") }}</option>
-                                    <option value="grayscale" {% if active_filter=='grayscale' %}selected{% endif %}>{{
-                                        _("Black & White") }}</option>
-                                    <option value="sepia" {% if active_filter=='sepia' %}selected{% endif %}>{{
-                                        _("Sepia") }}</option>
-                                    <option value="vignette" {% if active_filter=='vignette' %}selected{% endif %}>{{
-                                        _("B&W Background") }}</option>
-                                    <option value="vintage" {% if active_filter=='vintage' %}selected{% endif %}>{{
-                                        _("Vintage") }}</option>
-                                    {{ extra_filter_options(active_filter) }}
-                                    {% if has_polaroid %}
-                                    <option value="polaroid" {% if active_filter=='polaroid' %}selected{% endif %}>{{
-                                        _("Polaroid") }}</option>
-                                    {% endif %}
-                                    {% if media.get('has_postcard') %}
-                                    <option value="postcard" {% if active_filter=='postcard' %}selected{% endif %}>{{
-                                        _("Postcards") }}</option>
-                                    {% endif %}
-                                    <option value="polaroid_vintage" {% if active_filter=='polaroid_vintage'
-                                        %}selected{% endif %}>{{ _("Polaroid Vintage") }}</option>
-                                    <option value="original" class="text-blue-600 font-semibold">{{ _("Original") }}
-                                    </option>
-                                </select>
+                                    <option value="none" {% if active_filter=='none' %}selected{% endif %}>{{ _("Filter...") }}</option>
+                                    {{ correction_filter_options(active_filter) }}
+                                    {{ frame_style_options(active_filter, has_polaroid, media.get('has_postcard')) }}
+                                    <option value="original" class="text-blue-600 font-semibold">{{ _("Original") }}</option></select>
                                 {% endif %}
                                 <div class="flex justify-end items-center w-full gap-x-2">
                                     {% if media.type == 'image' %}
@@ -2091,30 +2131,10 @@
                             {% if media.type == 'image' %}
                             <select class="filter-select text-xs rounded border-gray-300 py-1 w-full"
                                 data-photo="{{ photo_path }}">
-                                <option value="none" {% if active_filter=='none' %}selected{% endif %}>{{ _("Filter...")
-                                    }}</option>
-                                <option value="grayscale" {% if active_filter=='grayscale' %}selected{% endif %}>{{
-                                    _("Black & White") }}</option>
-                                <option value="sepia" {% if active_filter=='sepia' %}selected{% endif %}>{{ _("Sepia")
-                                    }}</option>
-                                <option value="vignette" {% if active_filter=='vignette' %}selected{% endif %}>{{
-                                    _("B&W Background") }}</option>
-                                <option value="vintage" {% if active_filter=='vintage' %}selected{% endif %}>{{
-                                    _("Vintage") }}</option>
-                                {{ extra_filter_options(active_filter) }}
-                                {% if has_polaroid %}
-                                <option value="polaroid" {% if active_filter=='polaroid' %}selected{% endif %}>{{
-                                    _("Polaroid") }}</option>
-                                {% endif %}
-                                {% if media.get('has_postcard') %}
-                                <option value="postcard" {% if active_filter=='postcard' %}selected{% endif %}>{{
-                                    _("Postcards") }}</option>
-                                {% endif %}
-                                <option value="polaroid_vintage" {% if active_filter=='polaroid_vintage' %}selected{%
-                                    endif %}>{{ _("Polaroid Vintage") }}</option>
-                                <option value="original" class="text-blue-600 font-semibold">{{ _("Original") }}
-                                </option>
-                            </select>
+                                <option value="none" {% if active_filter=='none' %}selected{% endif %}>{{ _("Filter...") }}</option>
+                                    {{ correction_filter_options(active_filter) }}
+                                    {{ frame_style_options(active_filter, has_polaroid, media.get('has_postcard')) }}
+                                    <option value="original" class="text-blue-600 font-semibold">{{ _("Original") }}</option></select>
                             {% endif %}
                             <div class="flex justify-end items-center w-full gap-x-2">
                                 {% if media.type == 'image' %}
@@ -2346,7 +2366,7 @@
         </script>
         <script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
         <script src="{{ url_for('static', filename='photo_editor.js') }}"></script>
-        <script src="{{ url_for('static', filename='photo_lightbox.js') }}"></script>
+        <script src="{{ url_for('static', filename='photo_lightbox.js') }}?v={{ APP_INSTANCE_ID }}"></script>
         <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
         <script>
             const lightbox = GLightbox({
@@ -2500,7 +2520,7 @@
                         statusLight.className = 'w-4 h-4 rounded-full bg-red-500';
                         statusText.textContent = "{{ _('Outlet Status: Off') }}";
                     } else if (data.status === 'disabled') {
-                        statusIndicator.classList.add('hidden'); // Cacher si non configuré
+                        statusIndicator.classList.add('hidden'); // Cacher si non configurÃ©
                     } else { // error, unknown, unavailable...
                         statusLight.className = 'w-4 h-4 rounded-full bg-yellow-500';
                         // NEW: Display the detailed API error message.
@@ -2535,7 +2555,7 @@
                     const data = await response.json();
 
                     if (!data.success) {
-                        console.error("Erreur récupération photos en attente:", data.message);
+                        console.error("Erreur rÃ©cupÃ©ration photos en attente:", data.message);
                         return;
                     }
 
@@ -2659,6 +2679,168 @@
                 }
             }
 
+            // ----- GOOGLE PHOTOS (Picker API) -----
+            (function () {
+                const COLORS = {
+                    info: 'bg-blue-100 text-blue-800 border-blue-300',
+                    success: 'bg-green-100 text-green-800 border-green-300',
+                    error: 'bg-red-100 text-red-800 border-red-300'
+                };
+
+                function show(el, text, kind) {
+                    if (!el) { return; }
+                    el.innerHTML = '';
+                    const box = document.createElement('div');
+                    box.className = `p-2 mb-1 rounded border ${COLORS[kind] || COLORS.info}`;
+                    box.textContent = text;
+                    el.appendChild(box);
+                }
+
+                function byId(id) { return document.getElementById(id); }
+
+                async function refreshStatus() {
+                    const statusDiv = byId('google-photos-status');
+                    const box = byId('google-photos-disconnected');
+                    const connectedBox = byId('google-photos-connected');
+                    if (!statusDiv) { return; }
+                    try {
+                        const response = await fetch('/api/google_photos/status');
+                        const data = await response.json();
+                        if (!data.client_configured) {
+                            statusDiv.textContent = "{{ _('Google OAuth client not configured yet.') }}";
+                            box?.classList.add('hidden');
+                            connectedBox?.classList.add('hidden');
+                            return;
+                        }
+                        if (!data.connected) {
+                            statusDiv.textContent = "{{ _('Not connected.') }}";
+                            box?.classList.remove('hidden');
+                            connectedBox?.classList.add('hidden');
+                            return;
+                        }
+                        statusDiv.textContent = "{{ _('Connected.') }}";
+                        box?.classList.add('hidden');
+                        connectedBox?.classList.remove('hidden');
+                    } catch (error) {
+                        statusDiv.textContent = "{{ _('Cannot read Google Photos status.') }}";
+                    }
+                }
+
+                function prepareSource(statusDiv) {
+                    const source = new EventSource('/prepare-photos?source=google');
+                    source.onmessage = (event) => {
+                        try {
+                            const data = JSON.parse(event.data);
+                            show(statusDiv, `{{ _("Preparation :") }} ${data.message}`, data.type === 'error' ? 'error' : 'info');
+                            if (data.type === 'complete' || data.type === 'error' || data.type === 'done') {
+                                source.close();
+                            }
+                        } catch (error) { /* ignore */ }
+                    };
+                    source.onerror = () => source.close();
+                }
+
+                async function pollSession(sessionId) {
+                    const statusDiv = byId('google-photos-import-status');
+                    show(statusDiv, "{{ _('Waiting for your selection in Google Photos...') }}", 'info');
+                    const deadline = Date.now() + 5 * 60 * 1000;
+                    while (Date.now() < deadline) {
+                        await new Promise(resolve => setTimeout(resolve, 3000));
+                        try {
+                            const response = await fetch(`/api/google_photos/session/${sessionId}`);
+                            if (!response.ok) {
+                                show(statusDiv, `{{ _('Session check failed (HTTP') }} ${response.status})`, 'error');
+                                return;
+                            }
+                            const data = await response.json();
+                            if (!data.success) {
+                                show(statusDiv, data.message, 'error');
+                                return;
+                            }
+                            if (!data.media_items_set) { continue; }
+                            show(statusDiv, "{{ _('Selection received. Downloading...') }}", 'info');
+                            const importResponse = await fetch(`/api/google_photos/import/${sessionId}`, { method: 'POST' });
+                            const importData = await importResponse.json();
+                            if (importData.success) {
+                                show(statusDiv, importData.message, 'success');
+                                prepareSource(statusDiv);
+                            } else {
+                                show(statusDiv, importData.message, 'error');
+                            }
+                            return;
+                        } catch (error) {
+                            show(statusDiv, "{{ _('Network error while checking the selection.') }}", 'error');
+                            return;
+                        }
+                    }
+                    show(statusDiv, "{{ _('No selection received. Please start again.') }}", 'error');
+                }
+
+                function wire() {
+                    byId('google-photos-connect-btn')?.addEventListener('click', async () => {
+                        const statusDiv = byId('google-photos-status');
+                        try {
+                            const response = await fetch('/api/google_photos/auth_url');
+                            const data = await response.json();
+                            if (!data.success) { show(statusDiv, data.message, 'error'); return; }
+                            window.open(data.url, '_blank');
+                            byId('google-photos-code-form')?.classList.remove('hidden');
+                        } catch (error) {
+                            show(statusDiv, "{{ _('Cannot start the Google authorization.') }}", 'error');
+                        }
+                    });
+
+                    byId('google-photos-exchange-btn')?.addEventListener('click', async () => {
+                        const statusDiv = byId('google-photos-status');
+                        const code = byId('google-photos-code-input')?.value || '';
+                        try {
+                            const response = await fetch('/api/google_photos/exchange', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ code })
+                            });
+                            const data = await response.json();
+                            if (data.success) {
+                                show(statusDiv, data.message, 'success');
+                                byId('google-photos-code-form')?.classList.add('hidden');
+                                refreshStatus();
+                            } else {
+                                show(statusDiv, data.message, 'error');
+                            }
+                        } catch (error) {
+                            show(statusDiv, "{{ _('Connection failed.') }}", 'error');
+                        }
+                    });
+
+                    byId('google-photos-pick-btn')?.addEventListener('click', async () => {
+                        const statusDiv = byId('google-photos-import-status');
+                        show(statusDiv, "{{ _('Opening the Google Photos picker...') }}", 'info');
+                        try {
+                            const response = await fetch('/api/google_photos/pick', { method: 'POST' });
+                            const data = await response.json();
+                            if (!data.success) { show(statusDiv, data.message, 'error'); return; }
+                            window.open(data.picker_uri, '_blank');
+                            pollSession(data.session_id);
+                        } catch (error) {
+                            show(statusDiv, "{{ _('Cannot open the Google Photos picker.') }}", 'error');
+                        }
+                    });
+
+                    byId('google-photos-disconnect-btn')?.addEventListener('click', async () => {
+                        await fetch('/api/google_photos/disconnect', { method: 'POST' });
+                        refreshStatus();
+                    });
+
+                    refreshStatus();
+                }
+
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', wire);
+                } else {
+                    wire();
+                }
+            })();
+
             function showToast(message, duration = 3000) {
                 const toast = document.getElementById('global-toast');
                 const toastMessage = document.getElementById('global-toast-message');
@@ -2712,8 +2894,8 @@
                     }
                     new Sortable(grid, {
                         animation: 150,
-                        ghostClass: 'bg-blue-200', // Classe pour le fantôme de l'élément déplacé
-                        dataIdAttr: 'data-id', // Spécifie quel attribut utiliser pour l'ordre
+                        ghostClass: 'bg-blue-200', // Classe pour le fantÃ´me de l'Ã©lÃ©ment dÃ©placÃ©
+                        dataIdAttr: 'data-id', // SpÃ©cifie quel attribut utiliser pour l'ordre
                         onEnd: function (evt) {
                             // Automatically save when the user finishes moving an item.
                             const playlistId = evt.to.dataset.playlistId;
@@ -2858,7 +3040,7 @@
                 if (tabId === 'tab-favoris' && clickedButton && !clickedButton.classList.contains('active')) {
                     localStorage.setItem('activeTab', 'tab-favoris'); // On s'assure de revenir sur le bon onglet
                     location.reload();
-                    return; // On arrête l'exécution pour laisser le rechargement se faire
+                    return; // On arrÃªte l'exÃ©cution pour laisser le rechargement se faire
                 }
 
                 const tabcontent = document.getElementsByClassName("tabcontent");
@@ -2887,7 +3069,7 @@
                 const saveButton = document.getElementById('save-changes-btn');
                 const tabsWithoutSaveButton = ['tab-apercu', 'tab-actions', 'tab-validation', 'tab-favoris', 'tab-playlists', 'tab-network', 'tab-maintenance', 'tab-stats', 'tab-logs'];
                 if (tabId === 'tab-validation') {
-                    refreshValidationTab(); // On rafraîchit la grille et le badge
+                    refreshValidationTab(); // On rafraÃ®chit la grille et le badge
                 }
                 if (saveButton) {
                     saveButton.style.display = tabsWithoutSaveButton.includes(tabId) ? 'none' : 'block';
@@ -3047,7 +3229,7 @@
                 // If no valid group is found, return to the default group.
                 if (!activeMainGroup || !document.getElementById(activeMainGroup)) {
                     activeMainGroup = 'group-diaporama';
-                    activeTabId = 'tab-affichage'; // Réinitialiser aussi l'onglet
+                    activeTabId = 'tab-affichage'; // RÃ©initialiser aussi l'onglet
                 }
 
                 // Use the 'load' event (instead of DOMContentLoaded) to ensure everything is ready.
@@ -3076,9 +3258,9 @@
                 // --- Remaining page loading logic ---
 
                 // Update the badge on load (and the grid if the tab is already active).
-                refreshValidationTab(); // Appel initial pour mettre à jour le badge
+                refreshValidationTab(); // Appel initial pour mettre Ã  jour le badge
 
-                setInterval(refreshValidationTab, 15000); // Et le mettre à jour périodiquement
+                setInterval(refreshValidationTab, 15000); // Et le mettre Ã  jour pÃ©riodiquement
 
                 // Update the favorites badge.
                 const favoritesCount = {{ favorite_photos | length }};
@@ -3155,7 +3337,7 @@
             document.querySelectorAll('.delete-all-btn').forEach(button => {
                 button.addEventListener('click', async (event) => {
                     const source = button.dataset.source;
-                    const confirmDelete = confirm(`Êtes-vous sûr de vouloir supprimer TOUTES les photos de la source "${button.dataset.sourceLabel}" ? Cette action est irréversible.`);
+                    const confirmDelete = confirm(`ÃŠtes-vous sÃ»r de vouloir supprimer TOUTES les photos de la source "${button.dataset.sourceLabel}" ? Cette action est irrÃ©versible.`);
                     if (!confirmDelete) return;
 
                     try {
@@ -3179,7 +3361,7 @@
             document.querySelectorAll('.filter-select').forEach(select => {
                 select.addEventListener('change', async (event) => {
                     try {
-                        await photoEditor.applyFilter(select.dataset.photo, event.target.value);
+                        if ((window.FRAME_STYLES || []).includes(event.target.value)) { const response = await fetch("/api/frame_style", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ photo: select.dataset.photo, style: event.target.value }) }); const data = await response.json(); if (!data.success) { throw new Error(data.message); } const tileImg = select.closest(".photo-tile")?.querySelector("img"); if (tileImg && data.new_path) { tileImg.src = data.new_path + "?t=" + Date.now(); } } else { await photoEditor.applyFilter(select.dataset.photo, event.target.value); }
                     } catch (error) {
                         alert(error.message);
                     }
@@ -3232,7 +3414,7 @@
                         const btn = event.currentTarget;
                         const photo = btn.dataset.photo;
 
-                        btn.disabled = true; // Empêcher les clics multiples
+                        btn.disabled = true; // EmpÃªcher les clics multiples
 
                         try {
                             const result = await photoEditor.favorite(photo);
@@ -3413,7 +3595,7 @@
                                     body: JSON.stringify({ id: playlistId })
                                 });
                                 const result = await response.json();
-                                alert(result.message); // Affiche le message de succès ou d'erreur
+                                alert(result.message); // Affiche le message de succÃ¨s ou d'erreur
                             } catch (e) {
                                 alert("{{ _('Communication error.') }}");
                             } finally {
@@ -3599,7 +3781,7 @@
                                 restoreButtons();
                             }
                         } catch (e) {
-                            displayMessage(statusDiv, "{{ _('Données d\'import invalides reçues du serveur.') }}", 'error');
+                            displayMessage(statusDiv, "{{ _('DonnÃ©es d\'import invalides reÃ§ues du serveur.') }}", 'error');
                             importEventSource.close();
                             restoreButtons();
                         }
@@ -3645,7 +3827,7 @@
                             tideApiStatus.className = 'font-mono text-red-600';
                         }
                     } catch (error) {
-                        console.error("Erreur de communication avec l'API des marées:", error);
+                        console.error("Erreur de communication avec l'API des marÃ©es:", error);
                         tideApiStatus.textContent = "{{ _('Server connection error.') }}";
                         tideApiStatus.className = 'font-mono text-red-600';
                     }
@@ -3710,7 +3892,7 @@
                             statusSpan.className = result.success ? "ml-4 font-medium text-green-600" : "ml-4 font-medium text-red-600";
 
                             if (result.success) {
-                                fetchTideInfo(); // Rafraîchir l'affichage de l'état des marées
+                                fetchTideInfo(); // RafraÃ®chir l'affichage de l'Ã©tat des marÃ©es
                             }
                         } catch (error) {
                             statusSpan.textContent = "{{ _('Communication error with the server.') }}";
@@ -3723,7 +3905,7 @@
 
                 // Periodic update.
                 fetchTideInfo(); // Appel initial
-                setInterval(fetchTideInfo, 30000); // Mise à jour toutes les 30 secondes
+                setInterval(fetchTideInfo, 30000); // Mise Ã  jour toutes les 30 secondes
 
                 // ----- IMPORT SMARTPHONE -----
                 const photoFilesInput = document.getElementById('photo-files-input');
@@ -3851,7 +4033,7 @@
                                 musicUploadInput.value = '';
                                 musicUploadFilename.textContent = '';
                                 musicUploadBtn.classList.add('hidden');
-                                await loadMusicFiles(); // Rafraîchir les listes de sélection de musique
+                                await loadMusicFiles(); // RafraÃ®chir les listes de sÃ©lection de musique
                             } else { displayMessage(musicUploadStatus, result.message, 'error'); }
                         } catch (error) {
                             displayMessage(musicUploadStatus, "{{ _('Communication error.') }}", 'error');
@@ -3877,7 +4059,7 @@
                                     const result = await response.json();
                                     if (result.success) {
                                         showToast(result.message);
-                                        await loadMusicFiles(); // Rafraîchir les listes partout
+                                        await loadMusicFiles(); // RafraÃ®chir les listes partout
                                     } else { alert(result.message); }
                                 } catch (e) { alert(i18n.commErrorServer); }
                             }
@@ -4103,12 +4285,12 @@
                         }
 
                     } catch (error) {
-                        console.error("Impossible de récupérer l'état du diaporama:", error);
+                        console.error("Impossible de rÃ©cupÃ©rer l'Ã©tat du diaporama:", error);
                     }
                 }
 
-                fetchAndPopulateResolutions(); // Charger les résolutions au démarrage
-                setInterval(updateSlideshowControlsState, 5000); // Mettre à jour l'état des boutons
+                fetchAndPopulateResolutions(); // Charger les rÃ©solutions au dÃ©marrage
+                setInterval(updateSlideshowControlsState, 5000); // Mettre Ã  jour l'Ã©tat des boutons
                 updateSlideshowControlsState(); // Appel initial
 
                 // --- Resolution detection ---
@@ -4130,7 +4312,7 @@
                                 document.getElementById('display_width').value = data.width;
                                 document.getElementById('display_height').value = data.height;
                                 detectResBtn.innerHTML = "{{ _('Detected!') }}";
-                                detectResBtn.title = `Détecté : ${data.width}x${data.height}`;
+                                detectResBtn.title = `DÃ©tectÃ© : ${data.width}x${data.height}`;
                             } else {
                                 detectResBtn.innerHTML = "{{ _('Failure') }}";
                                 detectResBtn.title = data.message || "{{ _('Error during detection.') }}";
@@ -4294,8 +4476,8 @@
                                 maintainAspectRatio: false,
                                 scales: {
                                     y: {
-                                        beginAtZero: true, // Forcer l'axe Y à commencer à 0
-                                        max: 100, // L'utilisation ne peut pas dépasser 100%
+                                        beginAtZero: true, // Forcer l'axe Y Ã  commencer Ã  0
+                                        max: 100, // L'utilisation ne peut pas dÃ©passer 100%
                                         ticks: {
                                             callback: function (value) {
                                                 return value + '%'; // Ajouter le symbole %
@@ -4332,13 +4514,13 @@
                             data: {
                                 labels: labels,
                                 datasets: [{
-                                    label: 'Température CPU (°C)',
+                                    label: 'TempÃ©rature CPU (Â°C)',
                                     data: temps,
                                     borderColor: 'rgba(239, 68, 68, 1)', // red-500
                                     backgroundColor: 'rgba(252, 165, 165, 0.2)', // red-300 avec transparence
                                     borderWidth: 2,
                                     fill: true,
-                                    tension: 0.3 // Lignes légèrement incurvées
+                                    tension: 0.3 // Lignes lÃ©gÃ¨rement incurvÃ©es
                                 }]
                             },
                             options: {
@@ -4346,10 +4528,10 @@
                                 maintainAspectRatio: false,
                                 scales: {
                                     y: {
-                                        beginAtZero: false, // Ne pas forcer l'axe Y à commencer à 0
+                                        beginAtZero: false, // Ne pas forcer l'axe Y Ã  commencer Ã  0
                                         ticks: {
                                             callback: function (value) {
-                                                return value + '°C';
+                                                return value + 'Â°C';
                                             }
                                         }
                                     }
@@ -4431,7 +4613,7 @@
                         updateElements(actionsLivePreviewStatus, actionsLivePreviewImage, actionsLivePreviewControls, actionsLivePreviewBox);
                         updateElements(playlistLivePreviewStatus, playlistLivePreviewImage);
                     } catch (error) {
-                        console.error('Erreur de mise à jour de l\'aperçu en direct:', error);
+                        console.error('Erreur de mise Ã  jour de l\'aperÃ§u en direct:', error);
                         ['live-preview-metadata', 'playlist-live-preview-metadata',
                          'live-preview-location', 'playlist-live-preview-location'].forEach(id => {
                             const caption = document.getElementById(id);
@@ -4472,18 +4654,18 @@
                         const data = await response.json();
                         if (data.success) {
                             if (data.is_connected) {
-                                stateSpan.textContent = "Connecté";
+                                stateSpan.textContent = "ConnectÃ©";
                                 stateSpan.className = "text-green-600 font-semibold";
                                 ssidSpan.textContent = data.ssid;
                                 ipSpan.textContent = data.ip_address;
                             } else {
-                                stateSpan.textContent = "Non connecté";
+                                stateSpan.textContent = "Non connectÃ©";
                                 stateSpan.className = "text-red-600 font-semibold";
                                 ssidSpan.textContent = "N/A";
                                 ipSpan.textContent = "N/A";
                             }
                         } else {
-                            throw new Error("Réponse de l'API invalide");
+                            throw new Error("RÃ©ponse de l'API invalide");
                         }
                     } catch (error) {
                         console.error("Erreur de communication avec l'API Wi-Fi:", error);
@@ -4508,21 +4690,21 @@
 
                         if (data.success) {
                             if (data.state === "UP") {
-                                stateSpan.textContent = "Activée";
+                                stateSpan.textContent = "ActivÃ©e";
                                 stateSpan.className = "font-mono text-green-600";
                                 ipSpan.textContent = data.ip_address;
-                                toggleBtn.textContent = "Désactiver";
+                                toggleBtn.textContent = "DÃ©sactiver";
                                 toggleBtn.className = "system-button bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded";
                                 toggleBtn.dataset.nextState = "down";
                             } else if (data.state === "DOWN") {
-                                stateSpan.textContent = "Désactivée";
+                                stateSpan.textContent = "DÃ©sactivÃ©e";
                                 stateSpan.className = "font-mono text-gray-500";
                                 ipSpan.textContent = "N/A";
                                 toggleBtn.textContent = "Activer";
                                 toggleBtn.className = "system-button bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded";
                                 toggleBtn.dataset.nextState = "up";
                             } else { // NOT_FOUND
-                                stateSpan.textContent = "Non trouvée";
+                                stateSpan.textContent = "Non trouvÃ©e";
                                 stateSpan.className = "font-mono text-red-600";
                                 ipSpan.textContent = "N/A";
                                 toggleBtn.textContent = "Indisponible";
@@ -4531,7 +4713,7 @@
                                 return;
                             }
                             toggleBtn.disabled = false;
-                        } else { throw new Error(data.message || "Réponse API invalide"); }
+                        } else { throw new Error(data.message || "RÃ©ponse API invalide"); }
                     } catch (error) {
                         console.error(`Erreur de communication pour l'interface ${interfaceName}:`, error);
                         stateSpan.textContent = "Erreur"; ipSpan.textContent = "N/A";
@@ -4597,7 +4779,7 @@
                             document.getElementById('disk-usage').textContent = i18n.notAvailable;
                         }
                     } catch (error) {
-                        console.error("{{ _('Erreur de communication avec l\'API système:') }}", error);
+                        console.error("{{ _('Erreur de communication avec l\'API systÃ¨me:') }}", error);
                         document.getElementById('cpu-temp').textContent = i18n.error;
                         document.getElementById('cpu-usage').textContent = i18n.error;
                         document.getElementById('ram-usage').textContent = i18n.error;
@@ -4631,7 +4813,7 @@
                         }
                     } catch (error) {
                         console.error("Erreur de communication avec l'API logs:", error);
-                        logContentElement.textContent = "{{ _('Erreur de connexion à l\'API des logs.') }}";
+                        logContentElement.textContent = "{{ _('Erreur de connexion Ã  l\'API des logs.') }}";
                     }
                 }
 
@@ -4663,7 +4845,7 @@
                 // Update system information (use longer intervals to reduce load).
                 setInterval(fetchSystemInfo, 10000); // 10 secondes
                 setTimeout(() => {
-                    fetchWifiStatus();  // Premier ping après 15s
+                    fetchWifiStatus();  // Premier ping aprÃ¨s 15s
                     setInterval(fetchWifiStatus, 3000);  // Puis toutes les 3s
                 }, 15000);
 
@@ -4693,18 +4875,18 @@
                         });
                         const data = await response.json();
                         if (data.success) {
-                            fetchLogs(); // Rafraîchir la vue pour montrer que le log est vide
+                            fetchLogs(); // RafraÃ®chir la vue pour montrer que le log est vide
                         } else {
                             alert(`{{ _('Erreur lors de l\'effacement du log :') }} ${data.message}`);
                         }
                     } catch (error) {
-                        alert("{{ _('Erreur de connexion à l\'API pour effacer les logs.') }}");
+                        alert("{{ _('Erreur de connexion Ã  l\'API pour effacer les logs.') }}");
                     }
                 });
 
                 // Initial call on page load for system information and logs.
                 fetchSystemInfo();
-                loadLogFiles(); // Remplacer l'appel direct à fetchLogs par celui-ci
+                loadLogFiles(); // Remplacer l'appel direct Ã  fetchLogs par celui-ci
                 fetchInterfaceStatus('eth0');
                 fetchWifiStatus();
 
@@ -4717,7 +4899,7 @@
                 if (scanBtn) {
                     // Function to get a colored Wi-Fi icon based on signal strength.
                     function getSignalIconHtml(signal) {
-                        let colorClass = 'text-gray-400'; // Faible ou par défaut
+                        let colorClass = 'text-gray-400'; // Faible ou par dÃ©faut
                         if (signal > 75) {
                             colorClass = 'text-green-500'; // Fort
                         } else if (signal > 50) {
@@ -4867,7 +5049,7 @@
                     const msgCommErrorShort = {{ _("Communication error.") | tojson }};
                     const msgRestoring = {{ _("Restoring...") | tojson }};
 
-                    // Refresh button — re-checks git status without full page reload.
+                    // Refresh button â€” re-checks git status without full page reload.
                     const refreshBtn = document.getElementById('refresh-update-status-btn');
                     refreshBtn.addEventListener('click', () => {
                         refreshBtn.disabled = true;
@@ -4888,7 +5070,7 @@
                     updateBtn.addEventListener('click', () => {
                         if (!confirm(confirmUpdate)) return;
                         updateBtn.disabled = true;
-                        // Show the waiting overlay IMMEDIATELY — the server may
+                        // Show the waiting overlay IMMEDIATELY â€” the server may
                         // exit before the fetch response arrives.
                         window.__waitForServerRestart('{{ APP_INSTANCE_ID }}', {{ _("Updating...") | tojson }});
                         fetch('/api/trigger_update', { method: 'POST' })
@@ -4906,7 +5088,7 @@
                                 }
                             })
                             .catch(() => {
-                                // Expected — the server is shutting down.
+                                // Expected â€” the server is shutting down.
                             });
                     });
 
@@ -4928,7 +5110,7 @@
                                 }
                             })
                             .catch(() => {
-                                // Expected — the server is shutting down.
+                                // Expected â€” the server is shutting down.
                             });
                     });
 
@@ -5014,7 +5196,7 @@
 
         </script>
 
-    <!-- Inline update/restart overlay — shown when the app exits for an update.
+    <!-- Inline update/restart overlay â€” shown when the app exits for an update.
          Polls /api/ping until the server is back with a new instance ID. -->
     <div id="update-overlay" class="hidden fixed inset-0 z-50 flex items-start justify-center pt-12"
          style="background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);">
@@ -5052,10 +5234,10 @@
                 let remaining = 90;
                 const countdownInterval = setInterval(() => {
                     remaining--;
-                    overlayCountdown.textContent = remaining > 0 ? remaining + 's' : '⏳';
+                    overlayCountdown.textContent = remaining > 0 ? remaining + 's' : 'â�³';
                 }, 1000);
 
-                // Wait 15s before first poll — gives the old server time to
+                // Wait 15s before first poll â€” gives the old server time to
                 // shut down so we don't falsely detect it as "back online".
                 let consecutiveHits = 0;
                 let startedPolling = false;
@@ -5068,7 +5250,7 @@
                             if (!resp.ok) throw new Error('not ok');
                             const data = await resp.json();
 
-                            // Server responded — check if it's a new instance.
+                            // Server responded â€” check if it's a new instance.
                             if (!oldInstanceId || (data.instance && data.instance !== oldInstanceId)) {
                                 consecutiveHits++;
                                 if (consecutiveHits >= 3) {
@@ -5077,7 +5259,7 @@
                                     clearInterval(checkInterval);
                                     clearInterval(countdownInterval);
                                     overlayStatus.textContent = {{ _("Server is back online! Redirecting...") | tojson }};
-                                    overlayCountdown.textContent = '✅';
+                                    overlayCountdown.textContent = 'âœ…';
                                     setTimeout(() => { window.location.href = '/configure'; }, 1500);
                                 } else {
                                     overlayStatus.textContent = {{ _("Server is responding, verifying...") | tojson }};
@@ -5088,7 +5270,7 @@
                             }
                         } catch (e) {
                             consecutiveHits = 0;
-                            // Server is still down — expected during update.
+                            // Server is still down â€” expected during update.
                             overlayStatus.textContent = {{ _("Waiting for the server to come back...") | tojson }};
                         }
                     }, 3000);
@@ -5106,5 +5288,17 @@
             };
         })();
     </script>
+<script src="{{ url_for('static', filename='filter_menu.js') }}?v={{ APP_INSTANCE_ID }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.filter-select').forEach(select => {
+        if (select.dataset.menuReady) return;
+        select.dataset.menuReady = '1';
+        const menu = createFilterMenu(select);
+        select.style.display = 'none';
+        select.parentNode.insertBefore(menu, select);
+    });
+});
+</script>
 </body>
 </html>

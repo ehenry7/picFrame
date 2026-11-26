@@ -87,6 +87,7 @@ from utils.metadata_utils import get_photo_metadata, format_photo_metadata, form
 from utils.photo_import import PHOTO_EXTENSIONS, photo_digest, stream_digest
 from utils.photo_crop import original_photo, oriented_image, validate_crop, load_crops, save_crops, CROP_LOCK
 from utils.image_filters import apply_filter_to_image, add_text_to_polaroid, add_text_to_image, create_polaroid_effect
+from utils.frames import FRAME_STYLES, render_frame
 from utils.weather_cities import CITIES as WEATHER_CITIES
 from utils.path_utils import to_static_url_path
 import secrets
@@ -99,6 +100,34 @@ from platform_utils import (
 )
 
 APP_INSTANCE_ID = secrets.token_hex(8)
+
+_SERVER_IP_CACHE = {"ip": None, "at": 0.0}
+
+
+def get_server_ip() -> str:
+    """Best-effort LAN IP of this device (cached for a minute)."""
+    import time as _time
+
+    now = _time.time()
+    cached = _SERVER_IP_CACHE.get("ip")
+    if cached and now - _SERVER_IP_CACHE.get("at", 0) < 60:
+        return cached
+    ip = "127.0.0.1"
+    try:
+        import socket
+
+        probe = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            probe.connect(("8.8.8.8", 80))
+            ip = probe.getsockname()[0]
+        finally:
+            probe.close()
+    except OSError:
+        pass
+    _SERVER_IP_CACHE["ip"] = ip
+    _SERVER_IP_CACHE["at"] = now
+    return ip
+
 
 # ============================================================
 # Configure logging with emojis.
@@ -211,6 +240,15 @@ def log_request_start():
     logger.info("HTTP started: %s %s", request.method, request.path)
 
 @app.after_request
+def no_cache_html(response):
+    """Prevent browsers (kiosks, tablets) from keeping stale HTML pages."""
+    if response.mimetype == "text/html":
+        response.headers["Cache-Control"] = "no-store, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+    return response
+
+
+@app.after_request
 def log_request_finished(response):
     elapsed = time.monotonic() - g.request_started
     log = logger.warning if elapsed >= 2 else logger.info
@@ -247,7 +285,7 @@ def get_locale():
     # If called from a background worker thread, return the default language.
     from flask import has_request_context
     if not has_request_context():
-        return app.config.get('BABEL_DEFAULT_LOCALE', 'fr')
+        return app.config.get('BABEL_DEFAULT_LOCALE', 'en')
 
     # 1. If a 'lang' argument is passed in the URL.
     lang = request.args.get('lang')
@@ -261,8 +299,8 @@ def get_locale():
     return request.accept_languages.best_match(list(app.config['LANGUAGES'].keys()))
 
 # --- Babel configuration (i18n) ---
-app.config['LANGUAGES'] = {'fr': 'Français', 'en': 'English', 'he': 'עברית'}
-app.config['BABEL_DEFAULT_LOCALE'] = 'fr'
+app.config['LANGUAGES'] = {'en': 'English', 'he': 'עברית'}
+app.config['BABEL_DEFAULT_LOCALE'] = 'en'
 babel = Babel(app, locale_selector=get_locale)
 
 # --- End of Babel configuration ---
@@ -281,6 +319,17 @@ def inject_instance_id():
 def inject_version():
     """Inject the application version into all template contexts."""
     return dict(APP_VERSION=APP_VERSION)
+
+
+@app.context_processor
+def inject_server_ip():
+    """Expose the address used to reach the UI (falls back to the LAN IP)."""
+    from flask import has_request_context
+
+    host = None
+    if has_request_context():
+        host = (request.host or "").split(":")[0] or None
+    return dict(SERVER_IP=host or get_server_ip())
 
 
 # Chemins de base
@@ -501,7 +550,7 @@ def get_prepared_photos_by_source():
                 
                 # Identify base media (not Polaroid, thumbnail, or postcard variants).
                 base_media = sorted(
-                    [f for f in all_files_in_dir if f.is_file() and not f.name.endswith(('_polaroid.jpg', '_thumbnail.jpg', '_postcard.jpg'))]
+                    [f for f in all_files_in_dir if f.is_file() and not f.name.endswith(('_polaroid.jpg', '_thumbnail.jpg', '_postcard.jpg') + tuple(f'_{style}.jpg' for style in FRAME_STYLES))]
                 )
 
                 media_data_list = []
@@ -1004,7 +1053,8 @@ def configure():
         slideshow_running=slideshow_running,
         pending_photos=pending_photos_list,
         weather_cities=WEATHER_CITIES,
-        available_timezones=get_available_timezones(config.get('timezone'))
+        available_timezones=get_available_timezones(config.get('timezone')),
+        frame_styles=list(FRAME_STYLES)
     )
 
 @app.route("/import-usb")
@@ -3476,6 +3526,226 @@ def main():
     logger.info("Startup: binding HTTP server to 0.0.0.0:7090; local URL http://127.0.0.1:7090")
     threading.Thread(name="http-readiness", target=log_server_readiness, daemon=True).start()
     app.run(host='0.0.0.0', port=7090, use_reloader=False)
+
+
+# ============================================================
+# Decorative frames (non-destructive variants: <stem>_<style>.jpg)
+# ============================================================
+
+@app.route('/api/frame_style', methods=['POST'])
+@login_required
+def frame_style_api():
+    """Render a frame style variant for a prepared photo, or clear it."""
+    data = request.get_json(silent=True) or {}
+    photo_rel = data.get('photo')
+    style = (data.get('style') or '').strip()
+
+    if not photo_rel or not style:
+        return jsonify({"success": False, "message": "Missing photo or frame style."}), 400
+
+    base_path = PREPARED_DIR / photo_rel
+    if not base_path.resolve().is_relative_to(PREPARED_DIR.resolve()):
+        return jsonify({"success": False, "message": "Invalid photo path."}), 400
+    if not base_path.is_file():
+        return jsonify({"success": False, "message": f"Photo not found: {photo_rel}"}), 404
+
+    base_url = url_for('static', filename=to_static_url_path(f'prepared/{photo_rel}'))
+
+    if style in ('none', 'original', 'base'):
+        states = load_filter_states()
+        states.pop(photo_rel, None)
+        save_filter_states(states)
+        return jsonify({"success": True, "message": "Frame removed.", "new_path": base_url})
+
+    if style not in FRAME_STYLES:
+        return jsonify({"success": False, "message": f"Unknown frame style: {style}"}), 400
+
+    config = load_config()
+    width = int(config.get('display_width') or 1920)
+    height = int(config.get('display_height') or 1080)
+    caption = load_text_states().get(photo_rel, "")
+
+    date_text = ""
+    try:
+        from datetime import datetime as _datetime
+        metadata = get_photo_metadata(str(base_path)) or {}
+        for field in ("subSecDateTimeOriginal", "dateTimeOriginal", "DateTimeOriginal",
+                      "subSecCreateDate", "createDate", "fileCreatedAt"):
+            if metadata.get(field):
+                date_text = _datetime.fromisoformat(
+                    str(metadata[field]).replace('Z', '+00:00')
+                ).strftime(config.get('photo_date_format', '%d %B %Y %H:%M'))
+                break
+    except Exception as exc:  # metadata is optional for frames
+        logger.debug("Frame date unavailable for %s: %s", photo_rel, exc)
+
+    try:
+        image = render_frame(str(base_path), style, (width, height),
+                             caption=caption, date_text=date_text)
+        target = base_path.with_name(f"{base_path.stem}_{style}.jpg")
+        temp_target = target.with_suffix('.jpg.tmp')
+        image.save(temp_target, format='JPEG', quality=90)
+        temp_target.replace(target)
+
+        states = load_filter_states()
+        states[photo_rel] = style
+        save_filter_states(states)
+
+        new_url = url_for('static', filename=to_static_url_path(
+            f'prepared/{photo_rel.rsplit(".", 1)[0]}_{style}.jpg'))
+        logger.info("Frame %s rendered for %s", style, photo_rel)
+        return jsonify({"success": True, "message": f"{FRAME_STYLES[style]} applied.",
+                        "new_path": new_url})
+    except Exception as exc:
+        logger.exception("Frame rendering failed for %s", photo_rel)
+        return jsonify({"success": False, "message": f"Frame rendering failed: {exc}"}), 500
+
+
+
+
+@app.route('/api/filter_preview', methods=['POST'])
+@login_required
+def filter_preview_api():
+    """Return a JPEG preview of a filter/frame without modifying any file."""
+    import io
+    import shutil
+    import tempfile
+
+    data = request.get_json(silent=True) or {}
+    photo_rel = data.get('photo')
+    style = (data.get('filter') or '').strip()
+    if not photo_rel or not style:
+        return jsonify({"success": False, "message": "Missing photo or filter."}), 400
+
+    base_path = PREPARED_DIR / photo_rel
+    if not base_path.resolve().is_relative_to(PREPARED_DIR.resolve()) or not base_path.is_file():
+        return jsonify({"success": False, "message": "Photo not found."}), 404
+
+    try:
+        if style in ('none', 'original', 'base', 'polaroid', 'postcard', 'polaroid_vintage'):
+            variant = base_path.with_name(f"{base_path.stem}_{style}.jpg")
+            source = variant if variant.exists() else base_path
+            return Response(source.read_bytes(), mimetype='image/jpeg')
+
+        if style in FRAME_STYLES:
+            config = load_config()
+            image = render_frame(
+                str(base_path), style,
+                (int(config.get('display_width') or 1920), int(config.get('display_height') or 1080)))
+            buffer = io.BytesIO()
+            image.save(buffer, format='JPEG', quality=85)
+            return Response(buffer.getvalue(), mimetype='image/jpeg')
+
+        # Destructive corrections are simulated on a temporary copy.
+        with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as handle:
+            temp_path = handle.name
+        try:
+            shutil.copy2(base_path, temp_path)
+            apply_filter_to_image(temp_path, style)
+            return Response(open(temp_path, 'rb').read(), mimetype='image/jpeg')
+        finally:
+            try:
+                os.remove(temp_path)
+            except OSError:
+                pass
+    except Exception as exc:
+        logger.exception("Filter preview failed for %s (%s)", photo_rel, style)
+        return jsonify({"success": False, "message": f"Preview failed: {exc}"}), 500
+
+
+@app.route('/api/google_photos/status')
+@login_required
+def google_photos_status():
+    from utils import google_photos
+    return jsonify({
+        "success": True,
+        "client_configured": google_photos.client_configured(),
+        "connected": google_photos.connected(),
+    })
+
+
+@app.route('/api/google_photos/auth_url')
+@login_required
+def google_photos_auth_url():
+    from utils import google_photos
+    try:
+        return jsonify({
+            "success": True,
+            "url": google_photos.build_authorization_url(),
+            "redirect_uri": google_photos.DEFAULT_REDIRECT_URI,
+        })
+    except google_photos.GooglePhotosError as exc:
+        return jsonify({"success": False, "message": str(exc)}), 400
+
+
+@app.route('/api/google_photos/exchange', methods=['POST'])
+@login_required
+def google_photos_exchange():
+    from utils import google_photos
+    payload = request.get_json(silent=True) or {}
+    code = google_photos.normalize_code(payload.get("code", ""))
+    redirect_uri = payload.get("redirect_uri") or google_photos.DEFAULT_REDIRECT_URI
+    if not code:
+        return jsonify({"success": False, "message": "Missing authorization code."}), 400
+    try:
+        google_photos.exchange_code(code, redirect_uri)
+        return jsonify({"success": True, "message": "Google Photos connected."})
+    except google_photos.GooglePhotosError as exc:
+        return jsonify({"success": False, "message": str(exc)}), 400
+
+
+@app.route('/api/google_photos/pick', methods=['POST'])
+@login_required
+def google_photos_pick():
+    from utils import google_photos
+    try:
+        session = google_photos.create_session()
+        return jsonify({
+            "success": True,
+            "session_id": session.get("id"),
+            "picker_uri": session.get("pickerUri"),
+        })
+    except google_photos.GooglePhotosError as exc:
+        return jsonify({"success": False, "message": str(exc)}), 400
+
+
+@app.route('/api/google_photos/session/<session_id>')
+@login_required
+def google_photos_session(session_id):
+    from utils import google_photos
+    try:
+        session = google_photos.get_session(session_id)
+        return jsonify({
+            "success": True,
+            "media_items_set": bool(session.get("mediaItemsSet")),
+        })
+    except google_photos.GooglePhotosError as exc:
+        return jsonify({"success": False, "message": str(exc)}), 400
+
+
+@app.route('/api/google_photos/import/<session_id>', methods=['POST'])
+@login_required
+def google_photos_import(session_id):
+    from utils import google_photos
+    try:
+        result = google_photos.import_session(session_id)
+        return jsonify({
+            "success": True,
+            "imported": result["imported"],
+            "total": result["total"],
+            "errors": result["errors"],
+            "message": f"Imported {result['imported']} of {result['total']} item(s) from Google Photos.",
+        })
+    except google_photos.GooglePhotosError as exc:
+        return jsonify({"success": False, "message": str(exc)}), 400
+
+
+@app.route('/api/google_photos/disconnect', methods=['POST'])
+@login_required
+def google_photos_disconnect():
+    from utils import google_photos
+    google_photos.disconnect()
+    return jsonify({"success": True, "message": "Google Photos disconnected."})
 
 
 if __name__ == '__main__':

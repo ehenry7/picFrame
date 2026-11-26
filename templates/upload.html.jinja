@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{ _('Send photos') }} - PictureFrame</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v={{ APP_INSTANCE_ID }}">
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
 </head>
 
@@ -72,9 +72,6 @@
       <div class="text-center mt-6 text-sm">
         <span class="font-semibold">{{ _('Language') }}:</span>
         {% set current_lang = get_locale() %}
-        <a href="?lang=fr"
-          class="{% if current_lang == 'fr' %}font-bold text-indigo-600{% else %}text-blue-600 hover:underline{% endif %}">FR</a>
-        |
         <a href="?lang=en"
           class="{% if current_lang == 'en' %}font-bold text-indigo-600{% else %}text-blue-600 hover:underline{% endif %}">EN</a>
         |
@@ -85,7 +82,7 @@
   </div>
 
   <div class="text-center text-xs text-gray-400 fixed bottom-2 left-0 right-0">
-    PictureFrame v{{ APP_VERSION }}
+    PictureFrame v{{ APP_VERSION }} - {{ SERVER_IP }}
   </div>
 
 </body>

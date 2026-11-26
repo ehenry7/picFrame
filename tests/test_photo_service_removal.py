@@ -126,7 +126,7 @@ class PhotoServiceRemovalTests(unittest.TestCase):
         media = {"path": "immich/photo.jpg", "type": "image", "is_favorite": True,
                  "has_polaroid": False, "has_postcard": False, "active_filter": "none",
                  "text": "", "polaroid_text": "", "metadata_text": "", "location_text": ""}
-        for language in ("en", "fr", "he"):
+        for language in ("en", "he"):
             with self.subTest(language=language):
                 translations = gettext.translation("messages", str(ROOT / "translations"),
                                                    languages=[language])
