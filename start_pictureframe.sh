@@ -7,6 +7,17 @@
 RESTART_CODE=42
 
 cd "$(dirname "$0")" || exit 1
+
+# SDL's Wayland driver blocks ~25s on this Pi; Xwayland (X11) initialises in
+# ~0.2s, so prefer it whenever an X socket is available.
+if [ -n "$WAYLAND_DISPLAY" ]; then
+    if [ -S "/tmp/.X11-unix/X0" ]; then
+        export DISPLAY=:0
+        export SDL_VIDEODRIVER=x11
+    else
+        export SDL_VIDEODRIVER=wayland
+    fi
+fi
 mkdir -p logs || exit 1
 
 # --- Helper: log to both console and log file --------------------------
