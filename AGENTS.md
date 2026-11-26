@@ -685,3 +685,98 @@ Source (USB/Browser)
 - **Default branch:** `main`
 - **License:** See `LICENSE` file
 - **Language:** Code comments are primarily in French; documentation is bilingual (French + English).
+
+---
+
+## Remote Access & Pi Operations (verified 2026-11-26)
+
+### Connection
+
+- **SSH alias:** `ssh henry-pi` (key-based, passwordless). Defined in the dev machine's `~/.ssh/config`:
+  `Host henry-pi` → `HostName 192.168.2.234`, `User henry`, `IdentityFile C:/Users/ehenry/.ssh/id_ed25519`.
+- Direct form: `ssh henry@192.168.2.234`. No password needed; do not store passwords in this repo.
+- `sudo` is passwordless for `henry` (`NOPASSWD: ALL`), so `sudo -n <cmd>` works over SSH.
+- **Target host:** Raspberry Pi 4 Model B Rev 1.4, hostname `Henry`, Debian 13 (trixie), kernel 6.18.x aarch64.
+- Network: `192.168.2.234/16` on `wlan0` (WiFi, DHCP), gateway `192.168.2.1`. Ed25519 key auth already installed in `~/.ssh/authorized_keys`.
+
+### Storage (card was upgraded 2026-11-26)
+
+- Running from a **64GB SD card** (was 32GB), cloned with a headless rsync procedure.
+  - Root PARTUUID: `d9463e74-02` (new card). Old 32GB card = intact backup: PARTUUID `8eef1faf`.
+  - Root fs: ext4, 57G total, ~45G free after cleanup (previously 98% full).
+- **Gotcha:** `piclone` (SD Card Copier) is GUI-only — over SSH it aborts with `cannot open display`, and with `xvfb` it silently waits for a GUI click. Do not use it unattended.
+- **Headless clone recipe used:** `sfdisk` partition copy (p1 512M vfat at 16384, p2 ext4 to end) → `mkfs.vfat -n bootfs` / `mkfs.ext4 -L rootfs` → `rsync -aHAX --numeric-ids` with excludes (`/dev /proc /sys /tmp /run /mnt /media /boot/firmware /lost+found`) → `sfdisk --disk-id` to assign a NEW disk id (must differ, otherwise duplicate PARTUUIDs make boot ambiguous when both cards are attached) → patch `cmdline.txt` + `/etc/fstab` to the new PARTUUID → verify read-only mounts before shutting down. Script left on the Pi at `/home/henry/clone.sh`.
+
+### Power
+
+- The Pi needs a proper PSU (Pi 4: 3A+, ideally the official 5A). A shared/marginal supply caused **under-voltage reboots a few seconds after boot**.
+- Symptoms to check: `vcgencmd get_throttled` (bit for under-voltage), `vcgencmd measure_volts`, `dmesg | grep -i undervoltage`.
+- Currently on a dedicated supply; the touchscreen has its own power. USB card readers/shields plugged in alongside can also push the rail down.
+
+### Displays (two outputs, side by side)
+
+| Output | Panel | Mode | Position |
+|---|---|---|---|
+| `HDMI-A-1` | LG HDR 4K | 3840×2160 @30Hz | `0,0` |
+| `HDMI-A-2` | ANMITE (touchscreen) | 1920×1080 @60Hz | `3840,0` |
+
+### Touchscreen (critical mapping)
+
+- ANMITE touchscreen with **WCH USB-HID touch controller** (`27c0:0859`, product string `wch.cn TouchScreen`).
+- **No driver installation required** — kernel `hid-multitouch` binds automatically. Device nodes: `/dev/input/event4` = true touchscreen (`ID_INPUT_TOUCHSCREEN=1`), `/dev/input/event5` = mouse-emulation fallback. libinput reports capability `touch`, physical size 216×91mm, ABS range `X 0..16383`, `Y 0..9599`.
+- **Enumerates only if the screen is powered when it initializes.** If touch disappears, power-cycle the screen — a Pi reboot with the screen off does not help.
+- **sway must map the touch device to the right output**, otherwise touches stretch across the 5760×2160 dual-monitor desktop and land offset. Persistent config in `~/.config/sway/config`:
+  ```
+  input "10176:2137:wch.cn_TouchScreen_(USB_1-1.4)" map_to_output HDMI-A-2
+  ```
+  The suffix `(USB_1-1.4)` is the USB port — **update this line if the cable is moved to another port**, or touch will mis-map again.
+- Live (no reboot): `swaymsg input '<identifier>' map_to_output HDMI-A-2` with `XDG_RUNTIME_DIR=/run/user/1000 WAYLAND_DISPLAY=wayland-1 SWAYSOCK=/run/user/1000/sway-ipc.1000.*.sock`.
+- If offset persists after output mapping, calibrate with `swaymsg input '<identifier>' map_from_region x1 y1 x2 y2` (sub-region of the ABS area).
+
+### Session & app lifecycle
+
+- LightDM autologin → **sway** on tty1 (labwc/wayfire are not used). `~/.config/sway/config` runs `exec bash /home/henry/picFrame/start_pictureframe.sh`.
+- Process chain: `start_pictureframe.sh` (supervisor `while true`) → `app.py` (Flask, port 7090; nginx :80 proxy) → `local_slideshow.py` (pygame fullscreen) + `background_updater.py`.
+- `for_window` rules force `python3`/`mpv` windows fullscreen with no border — **the mouse cursor is hidden by your own app**, which makes touch testing look broken. Testing procedure:
+  1. `kill <supervisor pid>` first — otherwise `app.py`/the loop respawns the slideshow immediately (a killed slideshow comes back within seconds);
+  2. then `pkill -f 'python3 -u app.py'` and kill `local_slideshow.py` by PID;
+  3. test on the bare desktop;
+  4. restart with `cd ~/picFrame && XDG_RUNTIME_DIR=/run/user/1000 WAYLAND_DISPLAY=wayland-1 nohup bash start_pictureframe.sh &`.
+- **Beware `pkill -f local_slideshow` from a wrapper shell**: the pattern also matches the invoking shell's own command line and kills your session (ssh exit 255). Use the `[l]ocal_slideshow` bracket trick or exact PIDs.
+- Logs: `~/picFrame/logs/pictureframe.log`. Exit code 42 = restart requested; 143/137 = killed by signal (loop restarts in 5s).
+
+### Disk hygiene
+
+- Between 16–17 Nov 2026, a **Xwayland crash storm** wrote 903 core dumps (~19GB) into `/home/henry`, filling the card to 98%. They were deleted; three were `file`-identified as `Xwayland :0 -rootless` cores.
+- Check periodically: `ls ~/core.* | wc -l; du -sh ~/core.*`. Consider capping cores (e.g. `kernel.core_pattern` via sysctl or `DefaultLimitCORE=0`) if crashes recur.
+- `local_slideshow.py` was observed at ~100% CPU on one core for extended periods — worth profiling if frame rate/jank becomes an issue.
+
+### Quick command reference
+
+```
+ssh henry-pi                             # connect
+vcgencmd get_throttled                  # 0x0 = healthy (under-voltage bits = power problem)
+df -h / && lsblk                        # capacity / devices
+wlr-randr                               # outputs (needs XDG_RUNTIME_DIR + WAYLAND_DISPLAY)
+swaymsg -t get_inputs                   # input devices + mapping
+swaymsg -t get_outputs
+journalctl -n 200 | grep -i undervolt
+tail -f ~/picFrame/logs/pictureframe.log
+curl -s localhost:7090 | head           # app/web UI (nginx proxies :80 -> :7090)
+```
+
+### Local <-> Pi sync (dev machine)
+
+Pull the project to the Windows dev folder (excludes venv, logs, caches and the user photo library):
+
+```bash
+cd /d/dev/picFrame && ssh henry-pi "cd /home/henry/picFrame && tar cf - \
+  --exclude=./venv --exclude=./logs --exclude=./.update_backup \
+  --exclude=__pycache__ --exclude=./cache \
+  --exclude=./static/photos --exclude=./static/prepared --exclude=./static/.backups \
+  --exclude='*.pyc' ." | tar xf - -C /d/dev/picFrame
+```
+
+- **User photos are intentionally NOT synced:** `static/photos` (57M) and the processed derivatives in `static/prepared` (13M) plus static/.backups (2M phone-upload backups) stay on the Pi only. Never run `rsync --delete` against these directories, in either direction.
+- `venv/` is Linux-only (273M) - recreate on Windows with `python -m venv venv`.
+- Keep the repo checkout in sync with git (`git -C /home/henry/picFrame status`) before/after code transfers; the Pi currently has uncommitted edits in `AGENTS.md` and `start_pictureframe.sh`.
