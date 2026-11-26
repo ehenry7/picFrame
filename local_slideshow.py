@@ -1923,22 +1923,27 @@ def display_video(screen, video_path, screen_width, screen_height, config, main_
 
 # Main slideshow loop.
 def start_slideshow():
+    _t0 = time.monotonic()
     pi_model = get_pi_model()
     global _current_background_music
     photo_loader = ThreadPoolExecutor(max_workers=2, thread_name_prefix="slideshow-photo")
     try:
         logger.debug(f"📸 Starting slideshow initialization.")
         config = load_config()
+        logger.info("[startup] config loaded in %.0f ms", (time.monotonic() - _t0) * 1000)
         logger.debug(f"📸 Config loaded. show_clock: {config.get('show_clock')}, show_weather: {config.get('show_weather')}")
         
       
         
         time.sleep(2)
         logger.debug(f"📸 Attente de 2s pour stabilisation ")
+        logger.info("[startup] stabilization wait done at %.1fs", time.monotonic() - _t0)
         
         # ✅ NEW: Initialize only the display and font modules to save CPU (avoid initializing the mixer).
         pygame.display.init()
+        logger.info("[startup] display.init done at %.1fs", time.monotonic() - _t0)
         pygame.font.init()
+        logger.info("[startup] font.init done at %.1fs", time.monotonic() - _t0)
         logger.debug(f"📸 Pygame display and font modules initialized.")
         
         # ✅ FORCE initialization of the display module.
@@ -1977,7 +1982,52 @@ def start_slideshow():
             (SCREEN_WIDTH, SCREEN_HEIGHT),
             get_pygame_display_flags()
         )
+        logger.info("[startup] set_mode done at %.1fs", time.monotonic() - _t0)
         logger.info(f"✅ Display created successfully: {screen.get_size()}")
+
+        # --- Startup splash: show a photo right away while the playlist builds.
+        try:
+            splash_path = None
+            try:
+                with open(CURRENT_PHOTO_FILE, "r", encoding="utf-8") as handle:
+                    relative = handle.read().strip()
+                candidate = Path(BASE_DIR) / "static" / relative
+                if relative and candidate.is_file():
+                    splash_path = candidate
+            except Exception:
+                splash_path = None
+            if splash_path is None:
+                for source in ("google", "smartphone", "usb", "guests"):
+                    directory = PREPARED_BASE_DIR / source
+                    if directory.is_dir():
+                        for entry in sorted(directory.glob("*.jpg")):
+                            if entry.is_file() and not entry.name.endswith(
+                                    ("_polaroid.jpg", "_postcard.jpg", "_thumbnail.jpg")):
+                                splash_path = entry
+                                break
+                    if splash_path is not None:
+                        break
+            if splash_path is not None:
+                with Image.open(splash_path) as splash_image:
+                    splash_image = splash_image.convert("RGB")
+                    image_width, image_height = splash_image.size
+                    ratio = max(SCREEN_WIDTH / image_width, SCREEN_HEIGHT / image_height)
+                    splash_image = splash_image.resize(
+                        (max(1, int(image_width * ratio)), max(1, int(image_height * ratio))),
+                        Image.LANCZOS)
+                    left = (splash_image.width - SCREEN_WIDTH) // 2
+                    top = (splash_image.height - SCREEN_HEIGHT) // 2
+                    splash_image = splash_image.crop(
+                        (left, top, left + SCREEN_WIDTH, top + SCREEN_HEIGHT))
+                    splash_surface = pygame.image.fromstring(
+                        splash_image.tobytes(), splash_image.size, "RGB")
+                    screen.blit(splash_surface, (0, 0))
+                    pygame.display.flip()
+                    logger.info("[startup] splash photo shown at %.1fs (%.1fs before playlist ready)",
+                                time.monotonic() - _t0,
+                                time.monotonic() - _t0)
+        except Exception as exc:
+            logger.warning("[startup] splash photo failed: %s", exc)
         
         pygame.mouse.set_visible(False)
         logger.debug(f"📸 Mouse cursor hidden.")       
