@@ -18,6 +18,14 @@ if [ -n "$WAYLAND_DISPLAY" ]; then
         export SDL_VIDEODRIVER=wayland
     fi
 fi
+
+# swaymsg needs the compositor socket (present when sway starts us, absent
+# when the app is started from a plain SSH shell).
+if [ -z "$SWAYSOCK" ]; then
+    for sock in /run/user/1000/sway-ipc.*.sock; do
+        [ -S "$sock" ] && export SWAYSOCK="$sock" && break
+    done
+fi
 mkdir -p logs || exit 1
 
 # --- Helper: log to both console and log file --------------------------
