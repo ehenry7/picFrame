@@ -13,7 +13,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 ROOT = Path(__file__).resolve().parent.parent
 LOGO = ROOT / "static" / "logo.png"
-SIZE = (1920, 1080)
+SIZE = (1920, 1200)
 
 
 def app_version() -> str:
