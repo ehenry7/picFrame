@@ -1282,7 +1282,7 @@ def draw_overlay(screen, screen_width, screen_height, config, main_font, photo_m
                     bg_color_rgba = bg_color_rgba + (128,)
 
                 # Create a background surface across the full display width.
-                bg_height = tide_rect.height + 10  # Ajouter 5px de padding en haut et en bas
+                bg_height = tide_rect.height + 10  # Add 5px padding at the top and bottom
                 bg_surface = pygame.Surface((screen_width, bg_height), pygame.SRCALPHA)
                 bg_surface.fill(bg_color_rgba)
                 # Position the background vertically to frame the text.

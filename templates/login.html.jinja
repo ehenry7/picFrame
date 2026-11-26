@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 
-<html lang="{{ get_locale() }}" dir="{{ 'rtl' if get_locale() == 'he' else 'ltr' }}">
+<html lang="{{ get_locale() }}" dir="ltr">
 
 
 
@@ -173,20 +173,6 @@
       </div>
 
       <div class="text-center mt-6 text-sm">
-
-        <span class="font-semibold">{{ _('Language') }}:</span>
-
-        {% set current_lang = get_locale() %}
-
-        <a href="?lang=en"
-
-          class="{% if current_lang == 'en' %}font-bold text-indigo-600{% else %}text-blue-600 hover:underline{% endif %}">EN</a>
-
-        |
-
-        <a href="?lang=he"
-
-          class="{% if current_lang == 'he' %}font-bold text-indigo-600{% else %}text-blue-600 hover:underline{% endif %}">HE</a>
 
       </div>
 

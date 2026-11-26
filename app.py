@@ -299,7 +299,7 @@ def get_locale():
     return request.accept_languages.best_match(list(app.config['LANGUAGES'].keys()))
 
 # --- Babel configuration (i18n) ---
-app.config['LANGUAGES'] = {'en': 'English', 'he': 'עברית'}
+app.config['LANGUAGES'] = {'en': 'English'}
 app.config['BABEL_DEFAULT_LOCALE'] = 'en'
 babel = Babel(app, locale_selector=get_locale)
 
@@ -2869,7 +2869,7 @@ def get_system_info_api():
             "cpu_temp_history": list(cpu_temp_history),
             "cpu_usage_history": list(cpu_usage_history),
             "ram_usage_history": list(ram_usage_history),
-            "disk_usage_history": list(disk_usage_history) # Ajouter l'historique pour le graphique
+            "disk_usage_history": list(disk_usage_history) # Add the history for the chart
         })
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})

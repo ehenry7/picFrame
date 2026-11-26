@@ -4,21 +4,21 @@
     <summary class="cursor-pointer">{{ _("Date format reference") }}</summary>
     <p class="mt-1">{{ _("Combine these codes with spaces or punctuation. Month and weekday names follow the slideshow's system locale.") }}</p>
     <ul class="list-disc ml-5 mt-1">
-        <li><code>%Y</code> â€” {{ _("Four-digit year") }} (2026); <code>%y</code> â€” {{ _("Two-digit year") }} (26)</li>
-        <li><code>%m</code> â€” {{ _("Month number") }} (01â€“12); <code>%d</code> â€” {{ _("Day of month") }} (01â€“31)</li>
-        <li><code>%B</code> / <code>%b</code> â€” {{ _("Full / abbreviated month name") }}</li>
-        <li><code>%A</code> / <code>%a</code> â€” {{ _("Full / abbreviated weekday name") }}</li>
-        <li><code>%H</code> / <code>%I</code> â€” {{ _("Hour (24-hour / 12-hour)") }}; <code>%p</code> â€” AM/PM</li>
-        <li><code>%M</code> / <code>%S</code> â€” {{ _("Minute / second") }}; <code>%%</code> â€” %</li>
+        <li><code>%Y</code> - {{ _("Four-digit year") }} (2026); <code>%y</code> - {{ _("Two-digit year") }} (26)</li>
+        <li><code>%m</code> - {{ _("Month number") }} (01-12); <code>%d</code> - {{ _("Day of month") }} (01-31)</li>
+        <li><code>%B</code> / <code>%b</code> - {{ _("Full / abbreviated month name") }}</li>
+        <li><code>%A</code> / <code>%a</code> - {{ _("Full / abbreviated weekday name") }}</li>
+        <li><code>%H</code> / <code>%I</code> - {{ _("Hour (24-hour / 12-hour)") }}; <code>%p</code> - AM/PM</li>
+        <li><code>%M</code> / <code>%S</code> - {{ _("Minute / second") }}; <code>%%</code> - %</li>
     </ul>
     <p class="mt-1">{{ _("Examples (15 June 2020):") }}</p>
     <ul class="list-disc ml-5">
-        <li><code>%Y</code> â†’ 2020</li>
-        <li><code>%d/%m/%Y</code> â†’ 15/06/2020</li>
-        <li><code>%m/%d/%Y</code> â†’ 06/15/2020</li>
-        <li><code>%Y-%m-%d</code> â†’ 2020-06-15</li>
-        <li><code>%d %B %Y</code> â†’ 15 June 2020</li>
-        <li><code>%B %Y</code> â†’ June 2020</li>
+        <li><code>%Y</code> â†' 2020</li>
+        <li><code>%d/%m/%Y</code> â†' 15/06/2020</li>
+        <li><code>%m/%d/%Y</code> â†' 06/15/2020</li>
+        <li><code>%Y-%m-%d</code> â†' 2020-06-15</li>
+        <li><code>%d %B %Y</code> â†' 15 June 2020</li>
+        <li><code>%B %Y</code> â†' June 2020</li>
     </ul>
 </details>
 {% endmacro %}
@@ -74,7 +74,7 @@
     <option value="polaroid_vintage" {% if active_filter=='polaroid_vintage' %}selected{% endif %}>{{ _("Polaroid Vintage") }}</option>
 </optgroup>
 {% endmacro %}
-<html lang="{{ get_locale() }}" dir="{{ 'rtl' if get_locale() == 'he' else 'ltr' }}">
+<html lang="{{ get_locale() }}" dir="ltr">
 
 <head>
     <meta charset="UTF-8">
@@ -345,13 +345,6 @@
     <div class="relative z-10 container mx-auto p-4 bg-white/80 backdrop-blur-md rounded-xl shadow-xl mt-8">
         <div class="flex justify-between items-center mb-4">
             <div class="language-selector text-sm">
-                <span class="font-semibold">{{ _('Language') }}:</span>
-                {% set current_lang = get_locale() %}
-                <a href="?lang=en"
-                    class="{% if current_lang == 'en' %}font-bold text-indigo-600{% else %}text-blue-600 hover:underline{% endif %}">EN</a>
-                |
-                <a href="?lang=he"
-                    class="{% if current_lang == 'he' %}font-bold text-indigo-600{% else %}text-blue-600 hover:underline{% endif %}">HE</a>
             </div>
             <div class="logout-link">
                 <a href="/logout">{{ _('Disconnect') }}</a>
@@ -418,10 +411,10 @@
         <div id="group-diaporama" class="sub-nav-group hidden">
             <div class="tabs flex overflow-x-auto pb-2">
                 <button class="tablink inline-flex items-center" onclick="openTab(event, 'tab-affichage')"
-                    title="{{ _('GÃ©rez les paramÃ¨tres d\'affichage du diaporama, la durÃ©e, les transitions...') }}"><i
+                    title="{{ _('Gérez les paramètres d\'affichage du diaporama, la durée, les transitions...') }}"><i
                         class="fas fa-desktop fa-fw mr-2"></i>{{ _('Display') }}</button>
                 <button class="tablink inline-flex items-center" onclick="openTab(event, 'tab-heure')"
-                    title="{{ _('Configurez l\'affichage de l\'heure, la mÃ©tÃ©o et les marÃ©es.') }}"><i
+                    title="{{ _('Configurez l\'affichage de l\'heure, la météo et les marées.') }}"><i
                         class="fas fa-clock fa-fw mr-2"></i>{{ _('Clock & Info') }}</button>
                 <button class="tablink inline-flex items-center" onclick="openTab(event, 'tab-metadata')"><i
                         class="fas fa-info-circle fa-fw mr-2"></i>{{ _('Metadata') }}</button>
@@ -467,7 +460,7 @@
                     title="{{ _('Manage backups and system checks.') }}"><i
                         class="fas fa-tools fa-fw mr-2"></i>{{ _('Maintenance') }}</button>
                 <button class="tablink inline-flex items-center" onclick="openTab(event, 'tab-stats')"
-                    title="{{ _('Consultez les statistiques d\'utilisation du systÃ¨me.') }}"><i
+                    title="{{ _('Consultez les statistiques d\'utilisation du système.') }}"><i
                         class="fas fa-chart-bar fa-fw mr-2"></i>{{ _('Statistics') }}</button>
                 <button class="tablink inline-flex items-center" onclick="openTab(event, 'tab-logs')"
                     title="{{ _('Check the system logs.') }}"><i class="fas fa-file-alt fa-fw mr-2"></i>{{
@@ -604,7 +597,7 @@
                         </div>
                         <button type="button" id="detect-resolution-btn"
                             class="ml-4 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-3 rounded text-sm"
-                            title="{{ _('DÃ©tecter la rÃ©solution de l\'Ã©cran actif') }}">{{ _('Detect') }}</button>
+                            title="{{ _('Détecter la résolution de l\'écran actif') }}">{{ _('Detect') }}</button>
                     </div>
                     <div style="margin-top: 16px;">
                         <label>
@@ -1432,7 +1425,7 @@
                 </legend>
                 <div class="flex justify-between items-center mb-4">
                     <p class="text-gray-600">{{ _('Approve or reject submitted photos. Approved photos
-                        will be added to the â€œGuestsâ€� source.') }}</p>
+                        will be added to the "Guests" source.') }}</p>
                     <button type="button" id="refresh-pending-btn"
                         class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded inline-flex items-center"><i
                             class="fas fa-sync-alt mr-2"></i>{{ _("Refresh") }}</button>
@@ -1574,9 +1567,9 @@
                         <div class="flex items-center gap-2 mb-2" style="align-items:center;">
                             <i class="fab fa-git-alt text-gray-600"></i>
                             <span class="font-mono text-sm" id="update-branch"></span>
-                            <span class="text-gray-400">Â - </span>
+                            <span class="text-gray-400"> - </span>
                             <span class="font-mono text-xs text-gray-500" id="update-commit"></span>
-                            <span class="text-gray-400">Â - </span>
+                            <span class="text-gray-400"> - </span>
                             <span class="text-xs text-gray-500" style="display:inline-flex; align-items:center;">{{ _("Version") }} <span id="update-current-version" class="font-mono"></span></span>
                             <button type="button" id="refresh-update-status-btn"
                                 class="text-gray-500 hover:text-blue-500 rounded transition-colors"
@@ -1725,7 +1718,7 @@
                     <h3>{{ _("System control") }}</h3>
                 </legend>
                 <form method="POST" action="/restart_app"
-                    onsubmit="return confirm('{{ _('ÃŠtes-vous sÃ»r de vouloir redÃ©marrer UNIQUEMENT l\'application web ? Le systÃ¨me d\'exploitation ne sera pas redÃ©marrÃ©.') }}');">
+                    onsubmit="return confirm('{{ _('Êtes-vous sûr de vouloir redémarrer UNIQUEMENT l\'application web ? Le système d\'exploitation ne sera pas redémarré.') }}');">
                     <button type="submit"
                         class="system-button bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">
                         <i class="fas fa-redo"></i> {{ _("Reboot Application Web") }}
@@ -1734,7 +1727,7 @@
                 <!-- Restart form -->
                 <form id="rebootForm" action="/system_reboot" method="POST"
                     class="flex items-center gap-3 mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg"
-                    onsubmit="return confirm('ÃŠtes-vous sÃ»r de vouloir redÃ©marrer le systÃ¨me ?');">
+                    onsubmit="return confirm('Are you sure you want to restart the system?');">
                     <button type="submit"
                         class="system-button bg-yellow-500 hover:bg-yellow-700 text-gray-800 font-bold py-2 px-4 rounded flex-1">
                         <i class="fas fa-sync-alt mr-1"></i>{{ _("Restart the system") }}
@@ -1849,7 +1842,7 @@
                                 class="delete-all-btn bg-red-600 hover:bg-red-700 text-white text-xs font-semibold py-1 px-3 rounded inline-flex items-center"
                                 data-source="{{ source_name }}"
                                 data-source-label="{{ source_labels.get(source_name, source_name.capitalize()) }}"
-                                title="{{ _('Supprimer toutes les photos de la source \'%(source)s\'', source=source_labels.get(source_name, source_name.capitalize())) }}">
+                                title="{{ _('Delete all photos from the source \'%(source)s\'', source=source_labels.get(source_name, source_name.capitalize())) }}">
                                 <i class="fas fa-trash-alt mr-2"></i>
                                 <span>{{ _("Delete All") }}</span>
                             </button>
@@ -2520,7 +2513,7 @@
                         statusLight.className = 'w-4 h-4 rounded-full bg-red-500';
                         statusText.textContent = "{{ _('Outlet Status: Off') }}";
                     } else if (data.status === 'disabled') {
-                        statusIndicator.classList.add('hidden'); // Cacher si non configurÃ©
+                        statusIndicator.classList.add('hidden'); // Cacher si non configuré
                     } else { // error, unknown, unavailable...
                         statusLight.className = 'w-4 h-4 rounded-full bg-yellow-500';
                         // NEW: Display the detailed API error message.
@@ -2555,7 +2548,7 @@
                     const data = await response.json();
 
                     if (!data.success) {
-                        console.error("Erreur rÃ©cupÃ©ration photos en attente:", data.message);
+                        console.error("Error récupération photos en attente:", data.message);
                         return;
                     }
 
@@ -2616,7 +2609,7 @@
                         }
                     }
                 } catch (error) {
-                    console.error("Erreur lors de l'actualisation des photos en attente:", error);
+                    console.error("Error lors de l'actualisation des photos en attente:", error);
                 }
             }
 
@@ -2635,7 +2628,7 @@
                         alert("{{ _('Error :') }} " + result.message);
                     }
                 } catch (error) {
-                    console.error("Erreur lors de l'action:", error);
+                    console.error("Error lors de l'action:", error);
                     alert("{{ _('Communication error with the server.') }}");
                 }
             }
@@ -2894,8 +2887,8 @@
                     }
                     new Sortable(grid, {
                         animation: 150,
-                        ghostClass: 'bg-blue-200', // Classe pour le fantÃ´me de l'Ã©lÃ©ment dÃ©placÃ©
-                        dataIdAttr: 'data-id', // SpÃ©cifie quel attribut utiliser pour l'ordre
+                        ghostClass: 'bg-blue-200', // Classe pour le fantôme de l'élément déplacé
+                        dataIdAttr: 'data-id', // Spécifie quel attribut utiliser pour l'ordre
                         onEnd: function (evt) {
                             // Automatically save when the user finishes moving an item.
                             const playlistId = evt.to.dataset.playlistId;
@@ -3040,7 +3033,7 @@
                 if (tabId === 'tab-favoris' && clickedButton && !clickedButton.classList.contains('active')) {
                     localStorage.setItem('activeTab', 'tab-favoris'); // On s'assure de revenir sur le bon onglet
                     location.reload();
-                    return; // On arrÃªte l'exÃ©cution pour laisser le rechargement se faire
+                    return; // On arrête l'exécution pour laisser le rechargement se faire
                 }
 
                 const tabcontent = document.getElementsByClassName("tabcontent");
@@ -3069,7 +3062,7 @@
                 const saveButton = document.getElementById('save-changes-btn');
                 const tabsWithoutSaveButton = ['tab-apercu', 'tab-actions', 'tab-validation', 'tab-favoris', 'tab-playlists', 'tab-network', 'tab-maintenance', 'tab-stats', 'tab-logs'];
                 if (tabId === 'tab-validation') {
-                    refreshValidationTab(); // On rafraÃ®chit la grille et le badge
+                    refreshValidationTab(); // On rafraîchit la grille et le badge
                 }
                 if (saveButton) {
                     saveButton.style.display = tabsWithoutSaveButton.includes(tabId) ? 'none' : 'block';
@@ -3229,7 +3222,7 @@
                 // If no valid group is found, return to the default group.
                 if (!activeMainGroup || !document.getElementById(activeMainGroup)) {
                     activeMainGroup = 'group-diaporama';
-                    activeTabId = 'tab-affichage'; // RÃ©initialiser aussi l'onglet
+                    activeTabId = 'tab-affichage'; // Réinitialiser aussi l'onglet
                 }
 
                 // Use the 'load' event (instead of DOMContentLoaded) to ensure everything is ready.
@@ -3258,9 +3251,9 @@
                 // --- Remaining page loading logic ---
 
                 // Update the badge on load (and the grid if the tab is already active).
-                refreshValidationTab(); // Appel initial pour mettre Ã  jour le badge
+                refreshValidationTab(); // Appel initial pour mettre à jour le badge
 
-                setInterval(refreshValidationTab, 15000); // Et le mettre Ã  jour pÃ©riodiquement
+                setInterval(refreshValidationTab, 15000); // Et le mettre à jour périodiquement
 
                 // Update the favorites badge.
                 const favoritesCount = {{ favorite_photos | length }};
@@ -3315,7 +3308,7 @@
             document.querySelectorAll('.delete-button').forEach(button => {
                 button.addEventListener('click', async (event) => {
                     const photo = button.dataset.photo;
-                    const confirmDelete = confirm(`Supprimer la photo ${photo} ?`);
+                    const confirmDelete = confirm(`Delete photo ${photo}?`);
                     if (!confirmDelete) return;
 
                     try {
@@ -3327,8 +3320,8 @@
                             location.reload();
                         }
                     } catch (error) {
-                        console.error('Erreur:', error);
-                        alert("Erreur lors de la suppression.");
+                        console.error('Error:', error);
+                        alert("Error lors de la suppression.");
                     }
                 });
             });
@@ -3337,7 +3330,7 @@
             document.querySelectorAll('.delete-all-btn').forEach(button => {
                 button.addEventListener('click', async (event) => {
                     const source = button.dataset.source;
-                    const confirmDelete = confirm(`ÃŠtes-vous sÃ»r de vouloir supprimer TOUTES les photos de la source "${button.dataset.sourceLabel}" ? Cette action est irrÃ©versible.`);
+                    const confirmDelete = confirm(`Are you sure you want to delete ALL photos from the source "${button.dataset.sourceLabel}" ? Cette action est irréversible.`);
                     if (!confirmDelete) return;
 
                     try {
@@ -3348,11 +3341,11 @@
                             location.reload();
                         } else {
                             const result = await response.json();
-                            alert(`Erreur lors de la suppression : ${result.message || 'Erreur inconnue'}`);
+                            alert(`Error lors de la suppression : ${result.message || 'Error inconnue'}`);
                         }
                     } catch (error) {
-                        console.error('Erreur:', error);
-                        alert("Erreur de communication lors de la suppression.");
+                        console.error('Error:', error);
+                        alert("Error de communication lors de la suppression.");
                     }
                 });
             });
@@ -3414,7 +3407,7 @@
                         const btn = event.currentTarget;
                         const photo = btn.dataset.photo;
 
-                        btn.disabled = true; // EmpÃªcher les clics multiples
+                        btn.disabled = true; // Empêcher les clics multiples
 
                         try {
                             const result = await photoEditor.favorite(photo);
@@ -3442,8 +3435,8 @@
                                 const noFavMsg = document.getElementById('no-favorites-message');
                                 if (noFavMsg && count === 0) noFavMsg.classList.remove('hidden');
 
-                            } else { alert(`Erreur: ${result.message}`); }
-                        } catch (error) { alert("Erreur de communication avec le serveur."); }
+                            } else { alert(`Error: ${result.message}`); }
+                        } catch (error) { alert("Error de communication avec le serveur."); }
                         finally { btn.disabled = false; }
                     });
                 });
@@ -3595,7 +3588,7 @@
                                     body: JSON.stringify({ id: playlistId })
                                 });
                                 const result = await response.json();
-                                alert(result.message); // Affiche le message de succÃ¨s ou d'erreur
+                                alert(result.message); // Affiche le message de succès ou d'erreur
                             } catch (e) {
                                 alert("{{ _('Communication error.') }}");
                             } finally {
@@ -3631,7 +3624,7 @@
                         const photoPath = addToPlaylistBtn.dataset.photo;
                         const menu = addToPlaylistBtn.closest('.photo-tile').querySelector('.add-to-playlist-menu');
 
-                        // Fermer les autres menus ouverts
+                        // Close any other open menus
                         document.querySelectorAll('.add-to-playlist-menu').forEach(m => { if (m !== menu) m.classList.add('hidden'); });
 
                         // Populate and display the menu.
@@ -3781,7 +3774,7 @@
                                 restoreButtons();
                             }
                         } catch (e) {
-                            displayMessage(statusDiv, "{{ _('DonnÃ©es d\'import invalides reÃ§ues du serveur.') }}", 'error');
+                            displayMessage(statusDiv, "{{ _('Data d\'import invalides reçues du serveur.') }}", 'error');
                             importEventSource.close();
                             restoreButtons();
                         }
@@ -3811,7 +3804,7 @@
                         if (data.success) {
                             tideLastUpdate.textContent = data.last_update || 'N/A';
                             tideApiStatus.textContent = data.api_status || 'OK';
-                            tideApiStatus.className = data.api_status.includes('cooldown') || data.api_status.includes('Erreur') ? 'font-mono text-yellow-600' : 'font-mono text-green-600';
+                            tideApiStatus.className = data.api_status.includes('cooldown') || data.api_status.includes('Error') ? 'font-mono text-yellow-600' : 'font-mono text-green-600';
 
                             if (data.tides && data.tides.length > 0) {
                                 data.tides.forEach(tide => {
@@ -3827,7 +3820,7 @@
                             tideApiStatus.className = 'font-mono text-red-600';
                         }
                     } catch (error) {
-                        console.error("Erreur de communication avec l'API des marÃ©es:", error);
+                        console.error("Error communicating with the tides API:", error);
                         tideApiStatus.textContent = "{{ _('Server connection error.') }}";
                         tideApiStatus.className = 'font-mono text-red-600';
                     }
@@ -3862,7 +3855,7 @@
                             statusSpan.className = result.success ? "ml-4 font-medium text-green-600" : "ml-4 font-medium text-red-600";
 
                         } catch (error) {
-                            statusSpan.textContent = "Erreur de communication avec le serveur.";
+                            statusSpan.textContent = "Error de communication avec le serveur.";
                             statusSpan.className = "ml-4 font-medium text-red-600";
                         } finally {
                             btn.disabled = false;
@@ -3892,7 +3885,7 @@
                             statusSpan.className = result.success ? "ml-4 font-medium text-green-600" : "ml-4 font-medium text-red-600";
 
                             if (result.success) {
-                                fetchTideInfo(); // RafraÃ®chir l'affichage de l'Ã©tat des marÃ©es
+                                fetchTideInfo(); // Rafraîchir l'affichage de l'état des marées
                             }
                         } catch (error) {
                             statusSpan.textContent = "{{ _('Communication error with the server.') }}";
@@ -3905,7 +3898,7 @@
 
                 // Periodic update.
                 fetchTideInfo(); // Appel initial
-                setInterval(fetchTideInfo, 30000); // Mise Ã  jour toutes les 30 secondes
+                setInterval(fetchTideInfo, 30000); // Mise à jour toutes les 30 secondes
 
                 // ----- IMPORT SMARTPHONE -----
                 const photoFilesInput = document.getElementById('photo-files-input');
@@ -3953,7 +3946,7 @@
                                 if (response.status === 413) {
                                     throw new Error({{ _("Selection exceeds the 500 MB upload limit. Import fewer photos at a time.") | tojson }});
                                 }
-                                throw new Error(`Erreur HTTP: ${response.status}`);
+                                throw new Error(`Error HTTP: ${response.status}`);
                             }
                             const reader = response.body.getReader();
                             const decoder = new TextDecoder();
@@ -4033,7 +4026,7 @@
                                 musicUploadInput.value = '';
                                 musicUploadFilename.textContent = '';
                                 musicUploadBtn.classList.add('hidden');
-                                await loadMusicFiles(); // RafraÃ®chir les listes de sÃ©lection de musique
+                                await loadMusicFiles(); // Rafraîchir les listes de sélection de musique
                             } else { displayMessage(musicUploadStatus, result.message, 'error'); }
                         } catch (error) {
                             displayMessage(musicUploadStatus, "{{ _('Communication error.') }}", 'error');
@@ -4059,7 +4052,7 @@
                                     const result = await response.json();
                                     if (result.success) {
                                         showToast(result.message);
-                                        await loadMusicFiles(); // RafraÃ®chir les listes partout
+                                        await loadMusicFiles(); // Rafraîchir les listes partout
                                     } else { alert(result.message); }
                                 } catch (e) { alert(i18n.commErrorServer); }
                             }
@@ -4170,7 +4163,7 @@
                         const response = await fetch(`/api/slideshow/${command}`, { method: 'POST' });
                         const result = await response.json();
                         if (!result.success) {
-                            alert(`Erreur: ${result.message}`);
+                            alert(`Error: ${result.message}`);
                         }
                         // Update the control state after sending a command.
                         updateSlideshowControlsState();
@@ -4200,7 +4193,7 @@
                                 updateSlideshowControlsState();
                             }
                         } catch (error) {
-                            console.error("Erreur toggle notifications:", error);
+                            console.error("Error toggle notifications:", error);
                         }
                     });
                 });
@@ -4285,12 +4278,12 @@
                         }
 
                     } catch (error) {
-                        console.error("Impossible de rÃ©cupÃ©rer l'Ã©tat du diaporama:", error);
+                        console.error("Impossible de récupérer l'état du diaporama:", error);
                     }
                 }
 
-                fetchAndPopulateResolutions(); // Charger les rÃ©solutions au dÃ©marrage
-                setInterval(updateSlideshowControlsState, 5000); // Mettre Ã  jour l'Ã©tat des boutons
+                fetchAndPopulateResolutions(); // Charger les résolutions au démarrage
+                setInterval(updateSlideshowControlsState, 5000); // Mettre à jour l'état des boutons
                 updateSlideshowControlsState(); // Appel initial
 
                 // --- Resolution detection ---
@@ -4312,7 +4305,7 @@
                                 document.getElementById('display_width').value = data.width;
                                 document.getElementById('display_height').value = data.height;
                                 detectResBtn.innerHTML = "{{ _('Detected!') }}";
-                                detectResBtn.title = `DÃ©tectÃ© : ${data.width}x${data.height}`;
+                                detectResBtn.title = `Detected: ${data.width}x${data.height}`;
                             } else {
                                 detectResBtn.innerHTML = "{{ _('Failure') }}";
                                 detectResBtn.title = data.message || "{{ _('Error during detection.') }}";
@@ -4476,11 +4469,11 @@
                                 maintainAspectRatio: false,
                                 scales: {
                                     y: {
-                                        beginAtZero: true, // Forcer l'axe Y Ã  commencer Ã  0
-                                        max: 100, // L'utilisation ne peut pas dÃ©passer 100%
+                                        beginAtZero: true, // Forcer l'axe Y à commencer à 0
+                                        max: 100, // L'utilisation ne peut pas dépasser 100%
                                         ticks: {
                                             callback: function (value) {
-                                                return value + '%'; // Ajouter le symbole %
+                                                return value + '%'; // Append the percent symbol
                                             }
                                         }
                                     }
@@ -4514,13 +4507,13 @@
                             data: {
                                 labels: labels,
                                 datasets: [{
-                                    label: 'TempÃ©rature CPU (Â°C)',
+                                    label: 'CPU temperature (C)',
                                     data: temps,
                                     borderColor: 'rgba(239, 68, 68, 1)', // red-500
                                     backgroundColor: 'rgba(252, 165, 165, 0.2)', // red-300 avec transparence
                                     borderWidth: 2,
                                     fill: true,
-                                    tension: 0.3 // Lignes lÃ©gÃ¨rement incurvÃ©es
+                                    tension: 0.3 // Lignes légèrement incurvées
                                 }]
                             },
                             options: {
@@ -4528,10 +4521,10 @@
                                 maintainAspectRatio: false,
                                 scales: {
                                     y: {
-                                        beginAtZero: false, // Ne pas forcer l'axe Y Ã  commencer Ã  0
+                                        beginAtZero: false, // Ne pas forcer l'axe Y à commencer à 0
                                         ticks: {
                                             callback: function (value) {
-                                                return value + 'Â°C';
+                                                return value + 'C';
                                             }
                                         }
                                     }
@@ -4613,7 +4606,7 @@
                         updateElements(actionsLivePreviewStatus, actionsLivePreviewImage, actionsLivePreviewControls, actionsLivePreviewBox);
                         updateElements(playlistLivePreviewStatus, playlistLivePreviewImage);
                     } catch (error) {
-                        console.error('Erreur de mise Ã  jour de l\'aperÃ§u en direct:', error);
+                        console.error('Error de mise à jour de l\'aperçu en direct:', error);
                         ['live-preview-metadata', 'playlist-live-preview-metadata',
                          'live-preview-location', 'playlist-live-preview-location'].forEach(id => {
                             const caption = document.getElementById(id);
@@ -4654,22 +4647,22 @@
                         const data = await response.json();
                         if (data.success) {
                             if (data.is_connected) {
-                                stateSpan.textContent = "ConnectÃ©";
+                                stateSpan.textContent = "Connected";
                                 stateSpan.className = "text-green-600 font-semibold";
                                 ssidSpan.textContent = data.ssid;
                                 ipSpan.textContent = data.ip_address;
                             } else {
-                                stateSpan.textContent = "Non connectÃ©";
+                                stateSpan.textContent = "Not connected";
                                 stateSpan.className = "text-red-600 font-semibold";
                                 ssidSpan.textContent = "N/A";
                                 ipSpan.textContent = "N/A";
                             }
                         } else {
-                            throw new Error("RÃ©ponse de l'API invalide");
+                            throw new Error("Invalid API response");
                         }
                     } catch (error) {
-                        console.error("Erreur de communication avec l'API Wi-Fi:", error);
-                        stateSpan.textContent = "Erreur de connexion";
+                        console.error("Error de communication avec l'API Wi-Fi:", error);
+                        stateSpan.textContent = "Connection error";
                         stateSpan.className = "text-red-600 font-semibold";
                         ssidSpan.textContent = "N/A";
                         ipSpan.textContent = "N/A";
@@ -4690,34 +4683,34 @@
 
                         if (data.success) {
                             if (data.state === "UP") {
-                                stateSpan.textContent = "ActivÃ©e";
+                                stateSpan.textContent = "Enabled";
                                 stateSpan.className = "font-mono text-green-600";
                                 ipSpan.textContent = data.ip_address;
-                                toggleBtn.textContent = "DÃ©sactiver";
+                                toggleBtn.textContent = "Disable";
                                 toggleBtn.className = "system-button bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded";
                                 toggleBtn.dataset.nextState = "down";
                             } else if (data.state === "DOWN") {
-                                stateSpan.textContent = "DÃ©sactivÃ©e";
+                                stateSpan.textContent = "Disabled";
                                 stateSpan.className = "font-mono text-gray-500";
                                 ipSpan.textContent = "N/A";
-                                toggleBtn.textContent = "Activer";
+                                toggleBtn.textContent = "Enable";
                                 toggleBtn.className = "system-button bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded";
                                 toggleBtn.dataset.nextState = "up";
                             } else { // NOT_FOUND
-                                stateSpan.textContent = "Non trouvÃ©e";
+                                stateSpan.textContent = "Not found";
                                 stateSpan.className = "font-mono text-red-600";
                                 ipSpan.textContent = "N/A";
-                                toggleBtn.textContent = "Indisponible";
+                                toggleBtn.textContent = "Unavailable";
                                 toggleBtn.className = "system-button bg-gray-400 text-white font-bold py-2 px-4 rounded cursor-not-allowed";
                                 toggleBtn.disabled = true;
                                 return;
                             }
                             toggleBtn.disabled = false;
-                        } else { throw new Error(data.message || "RÃ©ponse API invalide"); }
+                        } else { throw new Error(data.message || "Invalid API response"); }
                     } catch (error) {
-                        console.error(`Erreur de communication pour l'interface ${interfaceName}:`, error);
-                        stateSpan.textContent = "Erreur"; ipSpan.textContent = "N/A";
-                        toggleBtn.textContent = "Erreur"; toggleBtn.disabled = true;
+                        console.error(`Error de communication pour l'interface ${interfaceName}:`, error);
+                        stateSpan.textContent = "Error"; ipSpan.textContent = "N/A";
+                        toggleBtn.textContent = "Error"; toggleBtn.disabled = true;
                     }
                 }
 
@@ -4737,10 +4730,10 @@
                                 body: JSON.stringify({ interface: interfaceName, state: nextState })
                             });
                             const result = await response.json();
-                            if (!result.success) { alert(`Erreur: ${result.message}`); }
+                            if (!result.success) { alert(`Error: ${result.message}`); }
                             setTimeout(() => fetchInterfaceStatus(interfaceName), 1000);
                         } catch (error) {
-                            alert("Erreur de communication avec le serveur.");
+                            alert("Error de communication avec le serveur.");
                             fetchInterfaceStatus(interfaceName);
                         }
                     });
@@ -4779,7 +4772,7 @@
                             document.getElementById('disk-usage').textContent = i18n.notAvailable;
                         }
                     } catch (error) {
-                        console.error("{{ _('Erreur de communication avec l\'API systÃ¨me:') }}", error);
+                        console.error("{{ _('Error de communication avec l\'API système:') }}", error);
                         document.getElementById('cpu-temp').textContent = i18n.error;
                         document.getElementById('cpu-usage').textContent = i18n.error;
                         document.getElementById('ram-usage').textContent = i18n.error;
@@ -4812,8 +4805,8 @@
                             logContentElement.textContent = `{{ _('Error:') }} ${data.message}`;
                         }
                     } catch (error) {
-                        console.error("Erreur de communication avec l'API logs:", error);
-                        logContentElement.textContent = "{{ _('Erreur de connexion Ã  l\'API des logs.') }}";
+                        console.error("Error de communication avec l'API logs:", error);
+                        logContentElement.textContent = "{{ _('Connection error à l\'API des logs.') }}";
                     }
                 }
 
@@ -4845,7 +4838,7 @@
                 // Update system information (use longer intervals to reduce load).
                 setInterval(fetchSystemInfo, 10000); // 10 secondes
                 setTimeout(() => {
-                    fetchWifiStatus();  // Premier ping aprÃ¨s 15s
+                    fetchWifiStatus();  // Premier ping après 15s
                     setInterval(fetchWifiStatus, 3000);  // Puis toutes les 3s
                 }, 15000);
 
@@ -4875,18 +4868,18 @@
                         });
                         const data = await response.json();
                         if (data.success) {
-                            fetchLogs(); // RafraÃ®chir la vue pour montrer que le log est vide
+                            fetchLogs(); // Rafraîchir la vue pour montrer que le log est vide
                         } else {
-                            alert(`{{ _('Erreur lors de l\'effacement du log :') }} ${data.message}`);
+                            alert(`{{ _('Error lors de l\'effacement du log :') }} ${data.message}`);
                         }
                     } catch (error) {
-                        alert("{{ _('Erreur de connexion Ã  l\'API pour effacer les logs.') }}");
+                        alert("{{ _('Connection error à l\'API pour effacer les logs.') }}");
                     }
                 });
 
                 // Initial call on page load for system information and logs.
                 fetchSystemInfo();
-                loadLogFiles(); // Remplacer l'appel direct Ã  fetchLogs par celui-ci
+                loadLogFiles(); // Remplacer l'appel direct à fetchLogs par celui-ci
                 fetchInterfaceStatus('eth0');
                 fetchWifiStatus();
 
@@ -4899,7 +4892,7 @@
                 if (scanBtn) {
                     // Function to get a colored Wi-Fi icon based on signal strength.
                     function getSignalIconHtml(signal) {
-                        let colorClass = 'text-gray-400'; // Faible ou par dÃ©faut
+                        let colorClass = 'text-gray-400'; // Faible ou par défaut
                         if (signal > 75) {
                             colorClass = 'text-green-500'; // Fort
                         } else if (signal > 50) {
@@ -5049,7 +5042,7 @@
                     const msgCommErrorShort = {{ _("Communication error.") | tojson }};
                     const msgRestoring = {{ _("Restoring...") | tojson }};
 
-                    // Refresh button â€” re-checks git status without full page reload.
+                    // Refresh button - re-checks git status without full page reload.
                     const refreshBtn = document.getElementById('refresh-update-status-btn');
                     refreshBtn.addEventListener('click', () => {
                         refreshBtn.disabled = true;
@@ -5070,7 +5063,7 @@
                     updateBtn.addEventListener('click', () => {
                         if (!confirm(confirmUpdate)) return;
                         updateBtn.disabled = true;
-                        // Show the waiting overlay IMMEDIATELY â€” the server may
+                        // Show the waiting overlay IMMEDIATELY - the server may
                         // exit before the fetch response arrives.
                         window.__waitForServerRestart('{{ APP_INSTANCE_ID }}', {{ _("Updating...") | tojson }});
                         fetch('/api/trigger_update', { method: 'POST' })
@@ -5088,7 +5081,7 @@
                                 }
                             })
                             .catch(() => {
-                                // Expected â€” the server is shutting down.
+                                // Expected - the server is shutting down.
                             });
                     });
 
@@ -5110,7 +5103,7 @@
                                 }
                             })
                             .catch(() => {
-                                // Expected â€” the server is shutting down.
+                                // Expected - the server is shutting down.
                             });
                     });
 
@@ -5179,7 +5172,7 @@
                                             try {
                                                 const data = JSON.parse(line.substring(6));
                                                 displayMessage(statusDiv, data.message, data.type.toLowerCase());
-                                            } catch (e) { console.error("Erreur parsing JSON:", e, "Ligne:", line); }
+                                            } catch (e) { console.error("Error parsing JSON:", e, "Ligne:", line); }
                                         }
                                     });
                                     processStream();
@@ -5188,7 +5181,7 @@
                             processStream();
                         })
                         .catch(error => {
-                            displayMessage(statusDiv, `Erreur de communication: ${error}`, 'error');
+                            displayMessage(statusDiv, `Error de communication: ${error}`, 'error');
                             enableAllButtons();
                         });
                 });
@@ -5196,7 +5189,7 @@
 
         </script>
 
-    <!-- Inline update/restart overlay â€” shown when the app exits for an update.
+    <!-- Inline update/restart overlay - shown when the app exits for an update.
          Polls /api/ping until the server is back with a new instance ID. -->
     <div id="update-overlay" class="hidden fixed inset-0 z-50 flex items-start justify-center pt-12"
          style="background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);">
@@ -5234,10 +5227,10 @@
                 let remaining = 90;
                 const countdownInterval = setInterval(() => {
                     remaining--;
-                    overlayCountdown.textContent = remaining > 0 ? remaining + 's' : 'â�³';
+                    overlayCountdown.textContent = remaining > 0 ? remaining + 's' : 'â³';
                 }, 1000);
 
-                // Wait 15s before first poll â€” gives the old server time to
+                // Wait 15s before first poll - gives the old server time to
                 // shut down so we don't falsely detect it as "back online".
                 let consecutiveHits = 0;
                 let startedPolling = false;
@@ -5250,7 +5243,7 @@
                             if (!resp.ok) throw new Error('not ok');
                             const data = await resp.json();
 
-                            // Server responded â€” check if it's a new instance.
+                            // Server responded - check if it's a new instance.
                             if (!oldInstanceId || (data.instance && data.instance !== oldInstanceId)) {
                                 consecutiveHits++;
                                 if (consecutiveHits >= 3) {
@@ -5259,7 +5252,7 @@
                                     clearInterval(checkInterval);
                                     clearInterval(countdownInterval);
                                     overlayStatus.textContent = {{ _("Server is back online! Redirecting...") | tojson }};
-                                    overlayCountdown.textContent = 'âœ…';
+                                    overlayCountdown.textContent = 'âœ...';
                                     setTimeout(() => { window.location.href = '/configure'; }, 1500);
                                 } else {
                                     overlayStatus.textContent = {{ _("Server is responding, verifying...") | tojson }};
@@ -5270,7 +5263,7 @@
                             }
                         } catch (e) {
                             consecutiveHits = 0;
-                            // Server is still down â€” expected during update.
+                            // Server is still down - expected during update.
                             overlayStatus.textContent = {{ _("Waiting for the server to come back...") | tojson }};
                         }
                     }, 3000);

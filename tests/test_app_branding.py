@@ -33,7 +33,7 @@ class AppBrandingTests(unittest.TestCase):
         response.close()
 
     def test_translations_use_the_new_brand(self):
-        for locale in ("en", "he"):
+        for locale in ("en",):
             folder = ROOT / "translations" / locale / "LC_MESSAGES"
             catalog = polib.pofile(str(folder / "messages.po"))
             translator = gettext.translation("messages", ROOT / "translations", [locale])
