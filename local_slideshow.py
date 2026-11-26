@@ -1935,8 +1935,8 @@ def start_slideshow():
         
       
         
-        time.sleep(2)
-        logger.debug(f"📸 Attente de 2s pour stabilisation ")
+        time.sleep(0.5)
+        logger.debug(f"📸 Attente de 0.5s pour stabilisation ")
         logger.info("[startup] stabilization wait done at %.1fs", time.monotonic() - _t0)
         
         # ✅ NEW: Initialize only the display and font modules to save CPU (avoid initializing the mixer).

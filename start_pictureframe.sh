@@ -67,7 +67,10 @@ fi
 
 # Check and install core requirements if missing.
 log "📦 Checking dependencies..."
-if ! $PYTHON_CMD -c "import flask, PIL, pygame, psutil, requests, flask_babel, piexif" 2>/dev/null; then
+DEPS_STAMP=".deps_ok"
+if [ -f "$DEPS_STAMP" ] && [ "$DEPS_STAMP" -nt requirements.txt ]; then
+    log "📦 Dependencies previously verified"
+elif ! $PYTHON_CMD -c "import flask, PIL, pygame, psutil, requests, flask_babel, piexif" 2>/dev/null; then
     log "📦 Installing core dependencies from requirements.txt..."
     log "📦 Using: $PIP_CMD -r requirements.txt"
     $PIP_CMD -r requirements.txt 2>&1 | tee -a logs/pictureframe.log
@@ -76,6 +79,7 @@ if ! $PYTHON_CMD -c "import flask, PIL, pygame, psutil, requests, flask_babel, p
         log "❌ Failed to install dependencies. Trying with pip3 directly..."
         pip3 install flask-babel 2>&1 | tee -a logs/pictureframe.log
     fi
+touch "$DEPS_STAMP"
     if ! $PYTHON_CMD -c "import flask_babel" 2>/dev/null; then
         log "❌ Cannot import flask_babel after install. Please run manually:"
         log "❌   $PIP_CMD -r requirements.txt"
