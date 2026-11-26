@@ -801,3 +801,16 @@ cd /d/dev/picFrame && ssh henry-pi "cd /home/henry/picFrame && tar cf - \
   letterbox bars.
 - Regenerate splash images with `./venv/bin/python3 scripts/make_splash.py`
   (bakes the current version and the wlan0 IP into both images).
+
+### Disk hygiene on the Pi
+
+- **Core dumps are disabled system-wide** (they once filled the card with 19 GB):
+  `/etc/sysctl.d/99-no-core-dumps.conf` sets `kernel.core_pattern=|/bin/false` and
+  `fs.suid_dumpable=0`; `DefaultLimitCORE=0` in `systemd/system.conf` and
+  `systemd/user.conf`; `* hard core 0` in `/etc/security/limits.conf`.
+  Re-verify with a crash test: no `core.*` file should appear.
+- Only the running kernel (6.18.60) is installed; older 6.18.50 packages and their
+  initramfs copies were purged.
+- Cleanup reference: `~/core.*`, `/tmp` captures, `logs/pimmich.log` (legacy) and
+  rotated `pictureframe.log.1` are safe to delete. Keep `.update_backup/` and the
+  `/boot/firmware/*.bak-*` files.
