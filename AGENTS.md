@@ -814,3 +814,12 @@ cd /d/dev/picFrame && ssh henry-pi "cd /home/henry/picFrame && tar cf - \
 - Cleanup reference: `~/core.*`, `/tmp` captures, `logs/pimmich.log` (legacy) and
   rotated `pictureframe.log.1` are safe to delete. Keep `.update_backup/` and the
   `/boot/firmware/*.bak-*` files.
+
+### After Raspberry Pi OS upgrades
+
+- Upgrading the `rpd-*` packages resets the Plymouth default theme to `pix`.
+  Always re-run `sudo -n plymouth-set-default-theme -R pictureframe` afterwards
+  (or `scripts/install_plymouth.sh`) and confirm `Theme=pictureframe` in
+  `/etc/plymouth/plymouthd.conf`.
+- A reboot is required after mesa/wlroots upgrades; verify the frame afterwards:
+  output `HDMI-A-2` at 1920x1200, slideshow running, web UI answering.
